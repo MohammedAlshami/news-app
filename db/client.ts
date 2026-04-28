@@ -1,13 +1,14 @@
 import { drizzle } from "drizzle-orm/sqlite-proxy"
 
 import * as schema from "./schema"
+import { getRuntimeEnv } from "@/lib/cloudflare-runtime-env"
 
 type Db = ReturnType<typeof drizzle<typeof schema>>
 
 let _db: Db | undefined
 
 function getRequiredEnv(name: string) {
-  const value = process.env[name]
+  const value = getRuntimeEnv(name)
   if (!value) {
     throw new Error(`Missing ${name} in .env.local`)
   }

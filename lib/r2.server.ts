@@ -5,6 +5,7 @@ import {
   PutObjectCommand,
   S3Client,
 } from "@aws-sdk/client-s3"
+import { getRuntimeEnv } from "@/lib/cloudflare-runtime-env"
 
 /**
  * Cloudflare R2 (S3-compatible). Set env vars in `.env.local` after creating
@@ -12,11 +13,11 @@ import {
  */
 export function isR2Configured(): boolean {
   return Boolean(
-    process.env.R2_ACCOUNT_ID &&
-      process.env.R2_ACCESS_KEY_ID &&
-      process.env.R2_SECRET_ACCESS_KEY &&
-      process.env.R2_BUCKET_NAME &&
-      process.env.R2_PUBLIC_URL,
+    getRuntimeEnv("R2_ACCOUNT_ID") &&
+      getRuntimeEnv("R2_ACCESS_KEY_ID") &&
+      getRuntimeEnv("R2_SECRET_ACCESS_KEY") &&
+      getRuntimeEnv("R2_BUCKET_NAME") &&
+      getRuntimeEnv("R2_PUBLIC_URL"),
   )
 }
 
@@ -28,19 +29,19 @@ function requireR2Config(): {
   if (!isR2Configured()) {
     throw new Error("R2 is not configured (missing env vars).")
   }
-  const accountId = process.env.R2_ACCOUNT_ID!
+  const accountId = getRuntimeEnv("R2_ACCOUNT_ID")!
   const client = new S3Client({
     region: "auto",
     endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
     credentials: {
-      accessKeyId: process.env.R2_ACCESS_KEY_ID!,
-      secretAccessKey: process.env.R2_SECRET_ACCESS_KEY!,
+      accessKeyId: getRuntimeEnv("R2_ACCESS_KEY_ID")!,
+      secretAccessKey: getRuntimeEnv("R2_SECRET_ACCESS_KEY")!,
     },
   })
   return {
     client,
-    bucket: process.env.R2_BUCKET_NAME!,
-    publicBase: process.env.R2_PUBLIC_URL!.replace(/\/$/, ""),
+    bucket: getRuntimeEnv("R2_BUCKET_NAME")!,
+    publicBase: getRuntimeEnv("R2_PUBLIC_URL")!.replace(/\/$/, ""),
   }
 }
 
