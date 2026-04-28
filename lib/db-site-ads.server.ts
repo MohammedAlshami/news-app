@@ -1,13 +1,27 @@
 import "server-only"
 
-import { and, desc, eq, sql } from "drizzle-orm"
+import { and, desc, eq } from "drizzle-orm"
 
 import { getDb } from "@/db/client"
 import { siteAds } from "@/db/schema"
 import type { AdminSiteAdListItem, SiteAdPublic } from "@/lib/site-types"
 
-/** Platinum → … → standard when listing ads. */
-const tierRankExpr = sql`(case ${siteAds.tier} when 'platinum' then 0 when 'premium' then 1 when 'gold' then 2 else 3 end)`
+const tierRank: Record<string, number> = {
+  platinum: 0,
+  premium: 1,
+  gold: 2,
+  standard: 3,
+}
+
+function sortByTierAndCreatedAt<T extends { tier: string; createdAt: Date }>(
+  rows: T[],
+) {
+  return rows.sort((a, b) => {
+    const rank = (tierRank[a.tier] ?? 3) - (tierRank[b.tier] ?? 3)
+    if (rank !== 0) return rank
+    return b.createdAt.getTime() - a.createdAt.getTime()
+  })
+}
 
 function rowToPublic(r: {
   id: string
@@ -31,6 +45,8 @@ export async function getActiveSiteAdsForHome(): Promise<SiteAdPublic[]> {
       imageUrl: siteAds.imageUrl,
       href: siteAds.href,
       name: siteAds.name,
+      tier: siteAds.tier,
+      createdAt: siteAds.createdAt,
     })
     .from(siteAds)
     .where(
@@ -39,10 +55,10 @@ export async function getActiveSiteAdsForHome(): Promise<SiteAdPublic[]> {
         eq(siteAds.showOnHome, true),
       ),
     )
-    .orderBy(tierRankExpr, desc(siteAds.createdAt))
+    .orderBy(desc(siteAds.createdAt))
 
-  return rows
-    .map((r) => rowToPublic(r))
+  return sortByTierAndCreatedAt(rows)
+    .map(({ tier: _tier, createdAt: _createdAt, ...r }) => rowToPublic(r))
     .filter((x): x is SiteAdPublic => x !== null)
 }
 
@@ -53,6 +69,8 @@ export async function getActiveSiteAdsForArticle(): Promise<SiteAdPublic[]> {
       imageUrl: siteAds.imageUrl,
       href: siteAds.href,
       name: siteAds.name,
+      tier: siteAds.tier,
+      createdAt: siteAds.createdAt,
     })
     .from(siteAds)
     .where(
@@ -61,10 +79,10 @@ export async function getActiveSiteAdsForArticle(): Promise<SiteAdPublic[]> {
         eq(siteAds.showOnArticle, true),
       ),
     )
-    .orderBy(tierRankExpr, desc(siteAds.createdAt))
+    .orderBy(desc(siteAds.createdAt))
 
-  return rows
-    .map((r) => rowToPublic(r))
+  return sortByTierAndCreatedAt(rows)
+    .map(({ tier: _tier, createdAt: _createdAt, ...r }) => rowToPublic(r))
     .filter((x): x is SiteAdPublic => x !== null)
 }
 
@@ -79,11 +97,12 @@ export async function getAdminSiteAdList(): Promise<AdminSiteAdListItem[]> {
       showOnArticle: siteAds.showOnArticle,
       isActive: siteAds.isActive,
       tier: siteAds.tier,
+      createdAt: siteAds.createdAt,
     })
     .from(siteAds)
-    .orderBy(tierRankExpr, desc(siteAds.createdAt))
+    .orderBy(desc(siteAds.createdAt))
 
-  return rows
+  return sortByTierAndCreatedAt(rows)
 }
 
 export async function getAdminSiteAdById(id: string) {

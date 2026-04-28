@@ -1,0 +1,4 @@
+declare interface CloudflareEnv {
+  DB: D1Database
+  MEDIA: R2Bucket
+}

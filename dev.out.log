@@ -1,0 +1,12 @@
+
+> next-app@0.0.1 dev
+> next dev --turbopack
+
+▲ Next.js 16.1.7 (Turbopack)
+- Local:         http://localhost:3001
+- Network:       http://169.254.152.201:3001
+- Environments: .env.local
+
+✓ Starting...
+  Suggestion: If you intended to restart next dev, terminate the other process, and then try again.
+[?25h
