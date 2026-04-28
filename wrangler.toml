@@ -1,7 +1,7 @@
 "$schema" = "./node_modules/wrangler/config-schema.json"
 name = "news-site"
 main = ".open-next/worker.js"
-compatibility_date = "2026-04-29"
+compatibility_date = "2026-04-28"
 compatibility_flags = ["nodejs_compat"]
 
 [assets]
