@@ -1,0 +1,51 @@
+WARN OpenNext is not fully compatible with Windows.
+WARN For optimal performance, it is recommended to use Windows Subsystem for Linux (WSL).
+WARN While OpenNext may function on Windows, it could encounter unpredictable failures during runtime.
+⚠ The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+X [ERROR] Could not resolve "C:UsersUSERDesktopWorkFreelance\news.nextserveredgechunks\node_modules_next_dist_esm_build_templates_edge-wrapper_3b93bb62.js"
+
+    node_modules/@opennextjs/aws/dist/core/edgeFunctionHandler.js:8:8:
+      8 │ require("C:\Users\USER\Desktop\Work\Freelance\news\.next\server\edg...
+        ╵         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  You can mark the path "C:UsersUSERDesktopWorkFreelance\news.nextserveredgechunks\node_modules_next_dist_esm_build_templates_edge-wrapper_3b93bb62.js" as external to exclude it from the bundle, which will remove this error. You can also surround this "require" call with a try/catch block to handle this failure at run-time instead of bundle-time.
+
+X [ERROR] Could not resolve "C:UsersUSERDesktopWorkFreelance\news.nextserveredgechunks[root-of-the-server]__db54bf8a._.js"
+
+    node_modules/@opennextjs/aws/dist/core/edgeFunctionHandler.js:9:8:
+      9 │ require("C:\Users\USER\Desktop\Work\Freelance\news\.next\server\edg...
+        ╵         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  You can mark the path "C:UsersUSERDesktopWorkFreelance\news.nextserveredgechunks[root-of-the-server]__db54bf8a._.js" as external to exclude it from the bundle, which will remove this error. You can also surround this "require" call with a try/catch block to handle this failure at run-time instead of bundle-time.
+
+X [ERROR] Could not resolve "C:UsersUSERDesktopWorkFreelance\news.nextserveredgechunks\turbopack-node_modules_next_dist_esm_build_templates_edge-wrapper_f739badf.js"
+
+    node_modules/@opennextjs/aws/dist/core/edgeFunctionHandler.js:10:8:
+      10 │ require("C:\Users\USER\Desktop\Work\Freelance\news\.next\server\ed...
+         ╵         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  You can mark the path "C:UsersUSERDesktopWorkFreelance\news.nextserveredgechunks\turbopack-node_modules_next_dist_esm_build_templates_edge-wrapper_f739badf.js" as external to exclude it from the bundle, which will remove this error. You can also surround this "require" call with a try/catch block to handle this failure at run-time instead of bundle-time.
+
+C:\Users\USER\Desktop\Work\Freelance\news\node_modules\@opennextjs\aws\node_modules\esbuild\lib\main.js:1649
+  let error = new Error(text);
+              ^
+
+Error: Build failed with 3 errors:
+node_modules/@opennextjs/aws/dist/core/edgeFunctionHandler.js:8:8: ERROR: Could not resolve "C:UsersUSERDesktopWorkFreelance\news.nextserveredgechunks\node_modules_next_dist_esm_build_templates_edge-wrapper_3b93bb62.js"
+node_modules/@opennextjs/aws/dist/core/edgeFunctionHandler.js:9:8: ERROR: Could not resolve "C:UsersUSERDesktopWorkFreelance\news.nextserveredgechunks[root-of-the-server]__db54bf8a._.js"
+node_modules/@opennextjs/aws/dist/core/edgeFunctionHandler.js:10:8: ERROR: Could not resolve "C:UsersUSERDesktopWorkFreelance\news.nextserveredgechunks\turbopack-node_modules_next_dist_esm_build_templates_edge-wrapper_f739badf.js"
+    at failureErrorWithLog (C:\Users\USER\Desktop\Work\Freelance\news\node_modules\@opennextjs\aws\node_modules\esbuild\lib\main.js:1649:15)
+    at C:\Users\USER\Desktop\Work\Freelance\news\node_modules\@opennextjs\aws\node_modules\esbuild\lib\main.js:1058:25
+    at runOnEndCallbacks (C:\Users\USER\Desktop\Work\Freelance\news\node_modules\@opennextjs\aws\node_modules\esbuild\lib\main.js:1484:45)
+    at buildResponseToResult (C:\Users\USER\Desktop\Work\Freelance\news\node_modules\@opennextjs\aws\node_modules\esbuild\lib\main.js:1056:7)
+    at C:\Users\USER\Desktop\Work\Freelance\news\node_modules\@opennextjs\aws\node_modules\esbuild\lib\main.js:1085:16
+    at responseCallbacks.<computed> (C:\Users\USER\Desktop\Work\Freelance\news\node_modules\@opennextjs\aws\node_modules\esbuild\lib\main.js:703:9)
+    at handleIncomingPacket (C:\Users\USER\Desktop\Work\Freelance\news\node_modules\@opennextjs\aws\node_modules\esbuild\lib\main.js:762:9)
+    at Socket.readFromStdout (C:\Users\USER\Desktop\Work\Freelance\news\node_modules\@opennextjs\aws\node_modules\esbuild\lib\main.js:679:7)
+    at Socket.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12) {
+  errors: [Getter/Setter],
+  warnings: [Getter/Setter]
+}
+
+Node.js v24.13.0

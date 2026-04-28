@@ -10,10 +10,34 @@ import type { FeedArticle } from "@/lib/site-types"
 export async function getPublishedArticleIdsForStaticParams(): Promise<
   { id: string }[]
 > {
-  return getDb()
+  return (await getDb())
     .select({ id: articles.id })
     .from(articles)
     .where(eq(articles.isPublished, true))
+}
+
+export async function getPublishedArticles() {
+  const rows = await getDb()
+    .select({
+      id: articles.id,
+      title: articles.title,
+      excerpt: articles.excerpt,
+      createdAt: articles.createdAt,
+      categoryId: articles.categoryId,
+      coverImageUrl: articles.coverImageUrl,
+    })
+    .from(articles)
+    .where(eq(articles.isPublished, true))
+    .orderBy(desc(articles.updatedAt))
+
+  return rows.map((r) => ({
+    id: r.id,
+    title: r.title,
+    excerpt: r.excerpt,
+    date: r.createdAt.toISOString().slice(0, 10),
+    categoryIds: r.categoryId ? [r.categoryId] : [],
+    coverImageUrl: r.coverImageUrl,
+  }))
 }
 
 export async function getPublishedArticleRowById(id: string) {
@@ -28,7 +52,7 @@ export async function getPublishedArticleRowById(id: string) {
 export async function getFeedArticlesByPageId(
   pageId: string,
 ): Promise<FeedArticle[]> {
-  const db = getDb()
+  const db = await getDb()
   const cols = {
     id: articles.id,
     title: articles.title,

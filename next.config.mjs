@@ -1,5 +1,4 @@
 /** @type {import('next').NextConfig} */
-
 const r2Patterns = []
 const base = process.env.R2_PUBLIC_URL
 if (base) {

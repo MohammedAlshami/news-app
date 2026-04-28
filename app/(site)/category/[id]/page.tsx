@@ -21,14 +21,6 @@ type PageProps = {
 
 export const dynamic = "force-dynamic"
 
-export async function generateStaticParams() {
-  const categories = await getCategories()
-  return [
-    { id: ALL_CATEGORIES_ID },
-    ...categories.map((c) => ({ id: c.id })),
-  ]
-}
-
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { id } = await params
   if (!(await isValidCategoryPageId(id))) {

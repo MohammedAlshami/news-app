@@ -1,11 +1,12 @@
-import { pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core"
+import { sql } from "drizzle-orm"
+import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core"
 
 /**
  * Public «advertise with us» submissions (Neon).
  * `status`: `new` | `read` | `archived`
  */
-export const advertiseInquiries = pgTable("advertise_inquiries", {
-  id: uuid("id").defaultRandom().primaryKey(),
+export const advertiseInquiries = sqliteTable("advertise_inquiries", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
   name: text("name").notNull(),
   email: text("email").notNull(),
   phone: text("phone"),
@@ -14,12 +15,12 @@ export const advertiseInquiries = pgTable("advertise_inquiries", {
   status: text("status").notNull().default("new"),
   /** Internal notes (admin only). */
   adminNotes: text("admin_notes"),
-  createdAt: timestamp("created_at", { withTimezone: true })
-    .defaultNow()
-    .notNull(),
-  updatedAt: timestamp("updated_at", { withTimezone: true })
-    .defaultNow()
-    .notNull(),
+  createdAt: integer("created_at", { mode: "timestamp_ms" })
+    .notNull()
+    .default(sql`(unixepoch() * 1000)`),
+  updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+    .notNull()
+    .default(sql`(unixepoch() * 1000)`),
 })
 
 export type AdvertiseInquiry = typeof advertiseInquiries.$inferSelect

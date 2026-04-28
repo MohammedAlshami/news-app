@@ -13,23 +13,10 @@ import { ar } from "@/lib/ui-ar"
 import { cn } from "@/lib/utils"
 import { motion } from "framer-motion"
 import {
-  Activity,
-  DollarSign,
   Home,
   Images,
-  Infinity,
-  LinkIcon,
   Megaphone,
   Newspaper,
-  Package2,
-  Percent,
-  PieChart,
-  Settings,
-  ShoppingBag,
-  Sparkles,
-  Store,
-  TrendingUp,
-  Users,
   PanelLeft,
 } from "lucide-react"
 import Link from "next/link"
@@ -73,83 +60,6 @@ const dashboardRoutes: Route[] = [
     title: ar.adminNavSiteAds,
     icon: <Images className="size-4" />,
     link: "/admin/ads",
-  },
-  {
-    id: "products",
-    title: ar.adminNavProducts,
-    icon: <Package2 className="size-4" />,
-    link: "#",
-    subs: [
-      { title: ar.adminNavCatalog, link: "#", icon: <Package2 className="size-4" /> },
-      { title: ar.adminNavCheckoutLinks, link: "#", icon: <LinkIcon className="size-4" /> },
-      { title: ar.adminNavDiscounts, link: "#", icon: <Percent className="size-4" /> },
-    ],
-  },
-  {
-    id: "usage-billing",
-    title: ar.adminNavUsageBilling,
-    icon: <PieChart className="size-4" />,
-    link: "#",
-    subs: [
-      { title: ar.adminNavMeters, link: "#", icon: <PieChart className="size-4" /> },
-      { title: ar.adminNavEvents, link: "#", icon: <Activity className="size-4" /> },
-    ],
-  },
-  {
-    id: "benefits",
-    title: ar.adminNavBenefits,
-    icon: <Sparkles className="size-4" />,
-    link: "#",
-  },
-  {
-    id: "customers",
-    title: ar.adminNavCustomers,
-    icon: <Users className="size-4" />,
-    link: "#",
-  },
-  {
-    id: "sales",
-    title: ar.adminNavSales,
-    icon: <ShoppingBag className="size-4" />,
-    link: "#",
-    subs: [
-      { title: ar.adminNavOrders, link: "#", icon: <ShoppingBag className="size-4" /> },
-      { title: ar.adminNavSubscriptions, link: "#", icon: <Infinity className="size-4" /> },
-    ],
-  },
-  {
-    id: "storefront",
-    title: ar.adminNavStorefront,
-    icon: <Store className="size-4" />,
-    link: "#",
-  },
-  {
-    id: "analytics",
-    title: ar.adminNavAnalytics,
-    icon: <TrendingUp className="size-4" />,
-    link: "#",
-  },
-  {
-    id: "finance",
-    title: ar.adminNavFinance,
-    icon: <DollarSign className="size-4" />,
-    link: "#",
-    subs: [
-      { title: ar.adminNavIncoming, link: "#" },
-      { title: ar.adminNavOutgoing, link: "#" },
-      { title: ar.adminNavPayout, link: "#" },
-    ],
-  },
-  {
-    id: "settings",
-    title: ar.adminNavSettings,
-    icon: <Settings className="size-4" />,
-    link: "#",
-    subs: [
-      { title: ar.adminNavGeneral, link: "#" },
-      { title: ar.adminNavWebhooks, link: "#" },
-      { title: ar.adminNavCustomFields, link: "#" },
-    ],
   },
 ]
 
