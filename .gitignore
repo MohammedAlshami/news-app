@@ -38,3 +38,6 @@ pnpm-debug.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# one-shot BBC export (regenerate locally)
+scripts/articles-by-category.export.json

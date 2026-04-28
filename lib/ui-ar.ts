@@ -153,6 +153,31 @@ export const ar = {
   footerRights: "© 2026 «أخبار»",
   footerAdvertise: "أعلن معنا",
 
+  /** علامة العرض في الشريط والتذييل */
+  siteMark: "نـبـض",
+  siteFooterBlurb:
+    "بوابتكم الإخبارية الأولى لمتابعة آخر المستجدات حول العالم، بمصداقية وشفافية وسرعة على مدار الساعة.",
+  footerColSections: "الأقسام",
+  footerColAbout: "عن المنصة",
+  footerAboutWho: "من نحن",
+  footerPrivacy: "سياسة الخصوصية",
+  footerTerms: "شروط الاستخدام",
+  footerContact: "اتصل بنا",
+  footerNewsletterTitle: "النشرة البريدية",
+  footerNewsletterDesc: "اشترك ليصلك أهم الأنباء فور صدورها.",
+  footerNewsletterPlaceholder: "بريدك الإلكتروني",
+  footerNewsletterSubmit: "اشتراك",
+  footerNewsletterSoon: "سيتم تفعيل الاشتراك قريباً.",
+  footerSocialTwitter: "تويتر",
+  footerSocialFacebook: "فيسبوك",
+  footerSocialInstagram: "انستغرام",
+  footerCopyrightNote: (year: number) =>
+    `© ${year} منصة نبض الإخبارية. جميع الحقوق محفوظة.`,
+  siteNavSearchAria: "تصفح الأخبار",
+  siteNavMenuOpen: "فتح القائمة",
+  siteNavMenuTitle: "القائمة",
+  adPlaceholderLeaderboard: "مساحة إعلانية (728 × 90)",
+
   /** Public — banner ads */
   siteAdsAriaLabel: "مساحات إعلانية",
 
