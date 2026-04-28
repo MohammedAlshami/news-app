@@ -1,0 +1,13 @@
+diff --git a/node_modules/@opennextjs/aws/dist/plugins/edge.js b/node_modules/@opennextjs/aws/dist/plugins/edge.js
+index 44a7907..5b9ea1c 100644
+--- a/node_modules/@opennextjs/aws/dist/plugins/edge.js
++++ b/node_modules/@opennextjs/aws/dist/plugins/edge.js
+@@ -98,7 +98,7 @@ if (!globalThis.URLPattern) {
+ }
+ `}
+ ${importWasm(wasmFiles, { isInCloudflare })}
+-${entryFiles.map((file) => `require("${file}");`).join("\n")}
++${entryFiles.map((file) => `require(${JSON.stringify(file)});`).join("\n")}
+ ${contents}
+         `;
+                 return {
