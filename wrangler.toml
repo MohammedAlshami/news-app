@@ -1,0 +1,10 @@
+# Optional: documents the R2 bucket name for Wrangler / Workers. This Next.js app
+# uses the S3 API from the server with R2_* env vars in `.env.local` — not this binding.
+# See: https://developers.cloudflare.com/r2/buckets/create-buckets/
+
+name = "news-site"
+compatibility_date = "2024-10-22"
+
+[[r2_buckets]]
+binding = "MEDIA"
+bucket_name = "news"
