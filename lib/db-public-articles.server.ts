@@ -59,6 +59,7 @@ export async function getFeedArticlesByPageId(
     excerpt: articles.excerpt,
     createdAt: articles.createdAt,
     categoryId: articles.categoryId,
+    coverImageUrl: articles.coverImageUrl,
   }
 
   /** `/category/all`: every published article, any category (or uncategorized). */
@@ -83,5 +84,6 @@ export async function getFeedArticlesByPageId(
     excerpt: r.excerpt,
     date: r.createdAt.toISOString().slice(0, 10),
     categoryIds: r.categoryId ? [r.categoryId] : [],
+    coverImageUrl: r.coverImageUrl,
   }))
 }

@@ -38,6 +38,18 @@ function rowToPublic(r: {
   }
 }
 
+/** Same image URL on multiple rows (e.g. duplicate campaigns) would stack in the UI; keep the first after tier sort. */
+function dedupeSiteAdsByImageUrl(ads: SiteAdPublic[]): SiteAdPublic[] {
+  const seen = new Set<string>()
+  const out: SiteAdPublic[] = []
+  for (const ad of ads) {
+    if (seen.has(ad.imageUrl)) continue
+    seen.add(ad.imageUrl)
+    out.push(ad)
+  }
+  return out
+}
+
 export async function getActiveSiteAdsForHome(): Promise<SiteAdPublic[]> {
   const rows = await getDb()
     .select({
@@ -57,9 +69,11 @@ export async function getActiveSiteAdsForHome(): Promise<SiteAdPublic[]> {
     )
     .orderBy(desc(siteAds.createdAt))
 
-  return sortByTierAndCreatedAt(rows)
+  const publicAds = sortByTierAndCreatedAt(rows)
     .map(({ tier: _tier, createdAt: _createdAt, ...r }) => rowToPublic(r))
     .filter((x): x is SiteAdPublic => x !== null)
+
+  return dedupeSiteAdsByImageUrl(publicAds)
 }
 
 export async function getActiveSiteAdsForArticle(): Promise<SiteAdPublic[]> {
@@ -81,9 +95,11 @@ export async function getActiveSiteAdsForArticle(): Promise<SiteAdPublic[]> {
     )
     .orderBy(desc(siteAds.createdAt))
 
-  return sortByTierAndCreatedAt(rows)
+  const publicAds = sortByTierAndCreatedAt(rows)
     .map(({ tier: _tier, createdAt: _createdAt, ...r }) => rowToPublic(r))
     .filter((x): x is SiteAdPublic => x !== null)
+
+  return dedupeSiteAdsByImageUrl(publicAds)
 }
 
 export async function getAdminSiteAdList(): Promise<AdminSiteAdListItem[]> {

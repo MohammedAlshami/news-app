@@ -15,7 +15,9 @@
     "typecheck": "tsc --noEmit",
     "db:generate": "drizzle-kit generate --config drizzle.config.ts",
     "db:push": "drizzle-kit push --config drizzle.config.ts",
-    "db:studio": "drizzle-kit studio"
+    "db:studio": "drizzle-kit studio",
+    "export:articles-by-category": "npx tsx scripts/export-articles-by-category.ts",
+    "db:seed-from-bbc-export": "npx tsx scripts/seed-d1-articles-from-bbc-export.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1038.0",

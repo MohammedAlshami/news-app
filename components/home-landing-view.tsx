@@ -1,6 +1,5 @@
 import Link from "next/link"
 
-import { CategoryNav } from "@/components/category-nav"
 import { SiteAdSpots } from "@/components/site-ad-spots"
 import { AdPlaceholder, SectionHeader, StoryCard, StoryListItem } from "@/components/news-landing"
 import { ar } from "@/lib/ui-ar"
@@ -225,10 +224,6 @@ export async function HomeLandingView({
 
   return (
     <div className="min-h-svh bg-white text-[#1a1a1a]">
-      <div className="mx-auto max-w-[1400px] px-4 py-4">
-        <AdPlaceholder text="مساحة إعلانية (728 × 90)" className="h-24" />
-      </div>
-
       <section className="mx-auto max-w-[1400px] px-4 py-8">
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           <Link href={hero ? `/news/${hero.id}` : "#"} className="group relative overflow-hidden rounded-2xl lg:col-span-2">
@@ -299,19 +294,14 @@ export async function HomeLandingView({
         ))}
 
         <div className="py-8">
-          <AdPlaceholder text="إعلان ممول" className="h-32" />
+          {ads.length > 0 ? (
+            <section className="py-6">
+              <SiteAdSpots ads={ads} />
+            </section>
+          ) : (
+            <AdPlaceholder text="إعلان ممول" className="h-32" />
+          )}
         </div>
-
-        {ads.length > 0 ? (
-          <section className="py-6">
-            <SiteAdSpots ads={ads} />
-          </section>
-        ) : null}
-
-        <section className="mb-16">
-          <SectionHeader title="جميع الأقسام" accentClassName="bg-gray-900" />
-          <CategoryNav active={null} />
-        </section>
       </main>
     </div>
   )

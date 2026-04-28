@@ -12,6 +12,8 @@ export type FeedArticle = {
   /** ISO `YYYY-MM-DD` — used in `<time dateTime>`; format with `formatArticleDate`. */
   date: string
   categoryIds: string[]
+  /** Hero image for cards (absolute URL or `/uploads/...`). */
+  coverImageUrl?: string | null
 }
 
 /** Alias for components that imported `Article` for feed/list usage. */

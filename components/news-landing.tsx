@@ -24,11 +24,11 @@ export function StoryCard({
 }: StoryCardProps) {
   return (
     <Link href={href} className={cn("group cursor-pointer", className)}>
-      <div className="overflow-hidden rounded-2xl bg-gray-100">
+      <div className="relative aspect-video w-full overflow-hidden rounded-2xl bg-gray-100">
         <img
           src={image}
           alt={title}
-          className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+          className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-105"
         />
       </div>
       <span className="mt-4 block text-xs font-bold uppercase tracking-wider text-red-600">
