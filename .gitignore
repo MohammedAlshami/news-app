@@ -41,3 +41,7 @@ next-env.d.ts
 
 # one-shot BBC export (regenerate locally)
 scripts/articles-by-category.export.json
+node_modules/ 
+.open-next/ 
+.env 
+.env.* 
