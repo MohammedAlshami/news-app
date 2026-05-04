@@ -34,10 +34,10 @@ export function StoryCard({
       <span className="mt-4 block text-xs font-bold uppercase tracking-wider text-red-600">
         {category}
       </span>
-      <h3 className="mt-2 text-lg font-bold leading-snug transition group-hover:text-red-600">
+      <h3 className="mt-2 line-clamp-2 text-lg font-bold leading-snug transition group-hover:text-red-600">
         {title}
       </h3>
-      <p className="mt-2 text-sm leading-6 text-gray-500">{excerpt}</p>
+      <p className="mt-2 line-clamp-3 text-sm leading-6 text-gray-500">{excerpt}</p>
     </Link>
   )
 }
@@ -67,14 +67,14 @@ export function StoryListItem({
         !compact && "border-t pt-6",
       )}
     >
-      <img
-        src={image}
-        alt={title}
-        className="h-24 w-24 shrink-0 rounded-lg object-cover"
-      />
+        <img
+          src={image}
+          alt={title}
+          className="h-24 w-24 shrink-0 rounded-lg object-cover"
+        />
       <div>
         <span className="text-xs font-bold text-red-600">{category}</span>
-        <h3 className="text-lg font-bold leading-snug transition group-hover:text-red-600">
+        <h3 className="line-clamp-2 text-lg font-bold leading-snug transition group-hover:text-red-600">
           {title}
         </h3>
         <span className="text-xs text-gray-400">{time}</span>
@@ -98,7 +98,7 @@ export function SectionHeader({
     <div className="mb-8 flex items-center justify-between border-b border-gray-100 pb-4">
       <h2 className="flex items-center gap-2 text-2xl font-bold">
         <span className={cn("h-8 w-2", accentClassName ?? "bg-black")} />
-        {title}
+        <span className="line-clamp-1">{title}</span>
       </h2>
       <Link href={href} className="text-sm text-gray-500 hover:text-black">
         عرض الكل ←

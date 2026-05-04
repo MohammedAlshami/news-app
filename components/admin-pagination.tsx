@@ -13,7 +13,9 @@ type Props = {
   page: number
   pageSize: number
   total: number
-  basePath: string
+  basePath?: string
+  prevHref?: string
+  nextHref?: string
   className?: string
 }
 
@@ -33,11 +35,14 @@ export function AdminPagination({
   pageSize,
   total,
   basePath,
+  prevHref,
+  nextHref,
   className,
 }: Props) {
   const router = useRouter()
   const pageCount = Math.max(1, Math.ceil(total / pageSize))
   const [draftPage, setDraftPage] = useState(String(page))
+  const hrefBase = basePath ?? ""
 
   const pages = useMemo(() => visiblePages(page, pageCount), [page, pageCount])
   if (pageCount <= 1) return null
@@ -46,15 +51,16 @@ export function AdminPagination({
     const next = Number(rawValue)
     if (!Number.isInteger(next)) return
     const clamped = Math.min(pageCount, Math.max(1, next))
-    router.push(buildHref(basePath, clamped))
+    if (!hrefBase) return
+    router.push(buildHref(hrefBase, clamped))
   }
 
   return (
     <div className={cn("flex flex-wrap items-center justify-between gap-3", className)}>
       <div className="flex items-center gap-2">
-        {page > 1 ? (
+        {(prevHref || hrefBase) ? (
           <Button variant="outline" size="sm" asChild>
-            <Link href={buildHref(basePath, page - 1)}>
+            <Link href={prevHref ?? buildHref(hrefBase, page - 1)}>
               <ChevronRight className="size-4" />
               السابق
             </Link>
@@ -80,7 +86,7 @@ export function AdminPagination({
                 </Button>
               ) : (
                 <Button variant="outline" size="sm" asChild className="min-w-8">
-                  <Link href={buildHref(basePath, n)}>{n}</Link>
+                  <Link href={buildHref(hrefBase, n)}>{n}</Link>
                 </Button>
               )}
             </div>
@@ -106,9 +112,9 @@ export function AdminPagination({
       </div>
 
       <div className="flex items-center gap-2">
-        {page < pageCount ? (
+        {page < pageCount && (nextHref || hrefBase) ? (
           <Button variant="outline" size="sm" asChild>
-            <Link href={buildHref(basePath, page + 1)}>
+            <Link href={nextHref ?? buildHref(hrefBase, page + 1)}>
               التالي
               <ChevronLeft className="size-4" />
             </Link>
