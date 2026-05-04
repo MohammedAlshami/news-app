@@ -1,10 +1,9 @@
 "use client"
 
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useMemo, useRef } from "react"
 import { EditorContent, EditorContext, useEditor } from "@tiptap/react"
+import type { ReactNode } from "react"
 
-// --- UI Primitives ---
-import { Button } from "@/components/tiptap-ui-primitive/button"
 import { Spacer } from "@/components/tiptap-ui-primitive/spacer"
 import {
   Toolbar,
@@ -26,23 +25,13 @@ import { HeadingDropdownMenu } from "@/components/tiptap-ui/heading-dropdown-men
 import { ImageUploadButton } from "@/components/tiptap-ui/image-upload-button"
 import { ListDropdownMenu } from "@/components/tiptap-ui/list-dropdown-menu"
 import { BlockquoteButton } from "@/components/tiptap-ui/blockquote-button"
-import {
-  LinkPopover,
-  LinkContent,
-  LinkButton,
-} from "@/components/tiptap-ui/link-popover"
+import { LinkPopover, LinkButton } from "@/components/tiptap-ui/link-popover"
 import { MarkButton } from "@/components/tiptap-ui/mark-button"
 import { TextAlignButton } from "@/components/tiptap-ui/text-align-button"
 import { UndoRedoButton } from "@/components/tiptap-ui/undo-redo-button"
 
-// --- Icons ---
-import { ArrowLeftIcon } from "@/components/tiptap-icons/arrow-left-icon"
-import { LinkIcon } from "@/components/tiptap-icons/link-icon"
-
 // --- Hooks ---
 import { useIsBreakpoint } from "@/hooks/use-is-breakpoint"
-import { useWindowSize } from "@/hooks/use-window-size"
-import { useCursorVisibility } from "@/hooks/use-cursor-visibility"
 
 // --- Lib ---
 import { getArticleTiptapExtensions } from "@/lib/tiptap-article-extensions"
@@ -113,26 +102,13 @@ const MainToolbarContent = ({
   )
 }
 
-const MobileToolbarContent = ({ onBack }: { onBack: () => void }) => (
-  <>
-    <ToolbarGroup>
-      <Button variant="ghost" onClick={onBack}>
-        <ArrowLeftIcon className="tiptap-button-icon" />
-        <LinkIcon className="tiptap-button-icon" />
-      </Button>
-    </ToolbarGroup>
-
-    <ToolbarSeparator />
-
-    <LinkContent />
-  </>
-)
-
 type SimpleEditorProps = {
   /** Tiptap JSON. Defaults to the built-in demo document from `data/content.json`. */
   initialDocument?: Record<string, unknown>
   /** Called when the editor instance is ready. Use for saving text/HTML from the parent. */
   onEditorReady?: (editor: Editor) => void
+  /** Called when the editor content changes. */
+  onContentChange?: (json: Record<string, unknown>) => void
   /**
    * Use in admin forms/cards. Disables the template’s `100vw` / `100vh` wrapper so the
    * editor stays within its parent (fixes RTL overflow and empty space on the side).
@@ -140,17 +116,22 @@ type SimpleEditorProps = {
   embedded?: boolean
   /** When set (e.g. admin article editor), inline images upload to R2 / local storage for this article. */
   articleId?: string
+  /** Additional controls rendered in the top toolbar. */
+  toolbarActions?: ReactNode
+  /** Extra className applied to the toolbar container. */
+  toolbarClassName?: string
 }
 
 export function SimpleEditor({
   initialDocument,
   onEditorReady,
+  onContentChange,
   embedded = false,
   articleId,
+  toolbarActions,
+  toolbarClassName,
 }: SimpleEditorProps = {}) {
   const isMobile = useIsBreakpoint()
-  const { height } = useWindowSize()
-  const [mobileView, setMobileView] = useState<"main" | "link">("main")
   const toolbarRef = useRef<HTMLDivElement>(null)
   const doc = initialDocument ?? (content as Record<string, unknown>)
 
@@ -178,49 +159,38 @@ export function SimpleEditor({
       onCreate: ({ editor: e }) => {
         onEditorReady?.(e)
       },
+      onUpdate: ({ editor: e }) => {
+        onContentChange?.(e.getJSON())
+      },
       extensions,
       content: doc,
     },
     [extensions, doc],
   )
 
-  const rect = useCursorVisibility({
-    editor,
-    overlayHeight: toolbarRef.current?.getBoundingClientRect().height ?? 0,
-  })
-
-  useEffect(() => {
-    if (!isMobile && mobileView !== "main") {
-      setMobileView("main")
-    }
-  }, [isMobile, mobileView])
-
   return (
     <div
       className={cn(
-        "simple-editor-wrapper",
+        "simple-editor-wrapper relative",
         embedded && "simple-editor-wrapper--embedded",
       )}
     >
       <EditorContext.Provider value={{ editor }}>
         <Toolbar
           ref={toolbarRef}
-          style={{
-            ...(isMobile
-              ? {
-                  bottom: `calc(100% - ${height - rect.y}px)`,
-                }
-              : {}),
-          }}
+          className={toolbarClassName}
         >
-          {mobileView === "main" ? (
+          {toolbarActions ? (
+            <div className="flex w-full items-center justify-start gap-2 border-b border-border/60 pb-2">
+              {toolbarActions}
+            </div>
+          ) : null}
+          <div className="flex w-full items-center pt-2">
             <MainToolbarContent
-              onLinkClick={() => setMobileView("link")}
+              onLinkClick={() => {}}
               isMobile={isMobile}
             />
-          ) : (
-            <MobileToolbarContent onBack={() => setMobileView("main")} />
-          )}
+          </div>
         </Toolbar>
 
         <EditorContent

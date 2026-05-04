@@ -2,8 +2,9 @@ import type { Metadata } from "next"
 
 import { createSiteAdAction } from "@/app/admin/ads/actions"
 import { AdminAdsTable } from "@/components/admin-ads-table"
+import { AdminPagination } from "@/components/admin-pagination"
 import { Button } from "@/components/ui/button"
-import { getAdminSiteAdList } from "@/lib/db-site-ads.server"
+import { ADMIN_PAGE_SIZE, getAdminSiteAdListPage } from "@/lib/db-site-ads.server"
 import { ar } from "@/lib/ui-ar"
 import { cn } from "@/lib/utils"
 
@@ -15,13 +16,14 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic"
 
 type PageProps = {
-  searchParams: Promise<{ saved?: string }>
+  searchParams: Promise<{ saved?: string; page?: string }>
 }
 
 export default async function AdminSiteAdsPage({ searchParams }: PageProps) {
   const sp = await searchParams
   const showSaved = sp?.saved === "1"
-  const rows = await getAdminSiteAdList()
+  const page = Math.max(1, Number(sp?.page ?? "1") || 1)
+  const { rows, total } = await getAdminSiteAdListPage({ page })
 
   return (
     <div className={cn("flex-1 p-4 md:p-6 lg:p-8")}>
@@ -66,6 +68,14 @@ export default async function AdminSiteAdsPage({ searchParams }: PageProps) {
           tierPremium: ar.adminSiteAdTierPremium,
           tierPlatinum: ar.adminSiteAdTierPlatinum,
         }}
+      />
+      <AdminPagination
+        className="mt-4"
+        page={page}
+        pageSize={ADMIN_PAGE_SIZE}
+        total={total}
+        prevHref={page > 1 ? `/admin/ads?page=${page - 1}` : undefined}
+        nextHref={page * ADMIN_PAGE_SIZE < total ? `/admin/ads?page=${page + 1}` : undefined}
       />
     </div>
   )

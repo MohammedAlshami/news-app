@@ -1,10 +1,10 @@
 import type { Metadata } from "next"
-import Link from "next/link"
 
 import { createDraftArticleAction } from "@/app/admin/articles/actions"
 import { AdminArticlesTable } from "@/components/admin-articles-table"
+import { AdminPagination } from "@/components/admin-pagination"
 import { Button } from "@/components/ui/button"
-import { getAdminArticleList } from "@/lib/db-articles.server"
+import { ADMIN_PAGE_SIZE, getAdminArticleListPage } from "@/lib/db-articles.server"
 import { getCategories } from "@/lib/categories"
 import { ar } from "@/lib/ui-ar"
 import { cn } from "@/lib/utils"
@@ -17,13 +17,14 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic"
 
 type PageProps = {
-  searchParams: Promise<{ saved?: string }>
+  searchParams: Promise<{ saved?: string; page?: string }>
 }
 
 export default async function AdminArticlesPage({ searchParams }: PageProps) {
   const sp = await searchParams
   const showSaved = sp?.saved === "1"
-  const articles = await getAdminArticleList()
+  const page = Math.max(1, Number(sp?.page ?? "1") || 1)
+  const { rows: articles, total } = await getAdminArticleListPage({ page })
   const categories = await getCategories()
 
   return (
@@ -70,6 +71,18 @@ export default async function AdminArticlesPage({ searchParams }: PageProps) {
           preview: ar.adminArticlePreview,
           viewLive: ar.adminArticleViewLive,
         }}
+      />
+      <AdminPagination
+        className="mt-4"
+        page={page}
+        pageSize={ADMIN_PAGE_SIZE}
+        total={total}
+        prevHref={page > 1 ? `/admin/articles?page=${page - 1}` : undefined}
+        nextHref={
+          page * ADMIN_PAGE_SIZE < total
+            ? `/admin/articles?page=${page + 1}`
+            : undefined
+        }
       />
     </div>
   )

@@ -123,6 +123,30 @@
   * {
     @apply border-border outline-ring/50;
     }
+  a,
+  button,
+  [role="button"],
+  input[type="button"],
+  input[type="submit"],
+  input[type="reset"],
+  summary,
+  label:has(input),
+  [data-slot="button"],
+  [data-slot="dropdown-menu-trigger"],
+  [data-slot="dialog-trigger"],
+  [data-slot="sheet-trigger"],
+  [data-slot="tooltip-trigger"],
+  [data-slot="sidebar-menu-button"],
+  [data-slot="sidebar-menu-action"],
+  [data-slot="sidebar-menu-sub-button"] {
+    cursor: pointer;
+  }
+  :disabled,
+  [aria-disabled="true"],
+  button:disabled,
+  a[aria-disabled="true"] {
+    cursor: not-allowed;
+  }
   body {
     @apply bg-background text-foreground;
     }

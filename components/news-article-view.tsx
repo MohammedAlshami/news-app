@@ -1,6 +1,7 @@
 import type { ReactNode } from "react"
 import Image from "next/image"
 import Link from "next/link"
+import { ArrowRight } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { formatArticleDate } from "@/lib/format-date"
@@ -66,7 +67,10 @@ export function NewsArticleView({
                 variant="outline"
                 size="sm"
               >
-                <Link href={back.href}>{back.label}</Link>
+                <Link href={back.href} aria-label={back.label}>
+                  <ArrowRight className="size-4 rotate-180" />
+                  <span className="sr-only">{back.label}</span>
+                </Link>
               </Button>
               {actions}
             </div>

@@ -1,6 +1,6 @@
 import "server-only"
 
-import { and, desc, eq } from "drizzle-orm"
+import { and, desc, eq, sql } from "drizzle-orm"
 
 import { getDb } from "@/db/client"
 import { siteAds } from "@/db/schema"
@@ -12,6 +12,8 @@ const tierRank: Record<string, number> = {
   gold: 2,
   standard: 3,
 }
+
+export const ADMIN_PAGE_SIZE = 10
 
 function sortByTierAndCreatedAt<T extends { tier: string; createdAt: Date }>(
   rows: T[],
@@ -70,7 +72,7 @@ export async function getActiveSiteAdsForHome(): Promise<SiteAdPublic[]> {
     .orderBy(desc(siteAds.createdAt))
 
   const publicAds = sortByTierAndCreatedAt(rows)
-    .map(({ tier: _tier, createdAt: _createdAt, ...r }) => rowToPublic(r))
+    .map((r) => rowToPublic(r))
     .filter((x): x is SiteAdPublic => x !== null)
 
   return dedupeSiteAdsByImageUrl(publicAds)
@@ -96,10 +98,39 @@ export async function getActiveSiteAdsForArticle(): Promise<SiteAdPublic[]> {
     .orderBy(desc(siteAds.createdAt))
 
   const publicAds = sortByTierAndCreatedAt(rows)
-    .map(({ tier: _tier, createdAt: _createdAt, ...r }) => rowToPublic(r))
+    .map((r) => rowToPublic(r))
     .filter((x): x is SiteAdPublic => x !== null)
 
   return dedupeSiteAdsByImageUrl(publicAds)
+}
+
+export async function getAdminSiteAdListPage(input: {
+  page: number
+  pageSize?: number
+}): Promise<{ rows: AdminSiteAdListItem[]; total: number }> {
+  const pageSize = input.pageSize ?? ADMIN_PAGE_SIZE
+  const page = Math.max(1, input.page)
+  const offset = (page - 1) * pageSize
+  const [{ total }] = await getDb()
+    .select({ total: sql<number>`count(*)` })
+    .from(siteAds)
+  const rows = await getDb()
+    .select({
+      id: siteAds.id,
+      name: siteAds.name,
+      imageUrl: siteAds.imageUrl,
+      href: siteAds.href,
+      showOnHome: siteAds.showOnHome,
+      showOnArticle: siteAds.showOnArticle,
+      isActive: siteAds.isActive,
+      tier: siteAds.tier,
+      createdAt: siteAds.createdAt,
+    })
+    .from(siteAds)
+    .orderBy(desc(siteAds.createdAt))
+    .limit(pageSize)
+    .offset(offset)
+  return { rows: sortByTierAndCreatedAt(rows), total: Number(total ?? 0) }
 }
 
 export async function getAdminSiteAdList(): Promise<AdminSiteAdListItem[]> {

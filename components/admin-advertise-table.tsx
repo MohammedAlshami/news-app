@@ -1,11 +1,17 @@
 "use client"
 
-import { ExternalLink, Eye } from "lucide-react"
+import { ExternalLink, Eye, MoreVertical } from "lucide-react"
 import Link from "next/link"
 import { useState } from "react"
 
 import { AdminAdvertiseInquiryModal } from "@/components/admin-advertise-inquiry-modal"
 import { Button } from "@/components/ui/button"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import {
   Table,
   TableBody,
@@ -14,11 +20,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip"
 import { formatArticleDate } from "@/lib/format-date"
 import type { AdminAdvertiseInquiryListItem } from "@/lib/site-types"
 import { ar } from "@/lib/ui-ar"
@@ -69,7 +70,7 @@ export function AdminAdvertiseTable({ rows, labels }: Props) {
       <div className="w-full min-w-0 max-w-full overflow-x-auto rounded-lg border bg-card">
         <Table dir="rtl">
           <TableHeader>
-            <TableRow className="hover:bg-transparent border-b">
+            <TableRow className="border-b hover:bg-transparent">
               <TableHead className="h-12 min-w-[8rem] px-4 text-start font-medium">
                 {labels.colName}
               </TableHead>
@@ -85,7 +86,7 @@ export function AdminAdvertiseTable({ rows, labels }: Props) {
               <TableHead className="h-12 w-[6rem] px-4 text-start font-medium">
                 {labels.colStatus}
               </TableHead>
-              <TableHead className="h-12 min-w-[7.5rem] px-1 text-center font-medium">
+              <TableHead className="h-12 min-w-[5rem] px-2 text-center font-medium">
                 {labels.colActions}
               </TableHead>
             </TableRow>
@@ -94,64 +95,51 @@ export function AdminAdvertiseTable({ rows, labels }: Props) {
             {rows.map((r) => (
               <TableRow key={r.id} className="hover:bg-muted/50">
                 <TableCell className="h-16 max-w-[10rem] px-4 text-start font-medium">
-                  {r.name}
+                  <span className="block max-w-full truncate" title={r.name}>
+                    {r.name}
+                  </span>
                 </TableCell>
                 <TableCell className="h-16 max-w-xs px-4 text-start text-sm text-muted-foreground">
-                  <span dir="ltr" className="inline-block max-w-full break-all">
+                  <span dir="ltr" className="block max-w-full truncate" title={r.email}>
                     {r.email}
                   </span>
                 </TableCell>
                 <TableCell className="h-16 whitespace-nowrap px-4 text-start text-sm text-muted-foreground">
                   {formatArticleDate(r.date)}
                 </TableCell>
-                <TableCell
-                  className="h-16 max-w-md px-4 text-start text-sm text-muted-foreground"
-                  title={r.messagePreview}
-                >
-                  <span className="line-clamp-2">{r.messagePreview}</span>
+                <TableCell className="h-16 max-w-md px-4 text-start text-sm text-muted-foreground" title={r.messagePreview}>
+                  <span className="block truncate whitespace-nowrap">{r.messagePreview}</span>
                 </TableCell>
                 <TableCell className="h-16 px-4 text-start text-sm">
                   {statusLabel(r.status)}
                 </TableCell>
-                <TableCell className="h-16 px-0.5 text-center">
-                  <div className="flex flex-nowrap items-center justify-center gap-0.5">
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="icon"
-                          className="h-8 w-8 shrink-0"
-                          aria-label={labels.view}
-                          onClick={() => {
-                            setModalId(r.id)
-                            setModalOpen(true)
-                          }}
-                        >
-                          <Eye className="size-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>{labels.view}</TooltipContent>
-                    </Tooltip>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          className="h-8 w-8 shrink-0"
-                          asChild
-                        >
-                          <Link
-                            href={`/admin/advertise/${r.id}`}
-                            aria-label={labels.openRecord}
-                          >
-                            <ExternalLink className="size-4" />
-                          </Link>
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>{labels.openRecord}</TooltipContent>
-                    </Tooltip>
-                  </div>
+                <TableCell className="h-16 px-2 text-center">
+                  <DropdownMenu dir="rtl">
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" size="icon" className="h-8 w-8">
+                        <MoreVertical className="size-4" />
+                        <span className="sr-only">{labels.colActions}</span>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start" className="min-w-40">
+                      <DropdownMenuItem
+                        onSelect={(e) => {
+                          e.preventDefault()
+                          setModalId(r.id)
+                          setModalOpen(true)
+                        }}
+                      >
+                        <Eye className="size-4" />
+                        {labels.view}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link href={`/admin/advertise/${r.id}`}>
+                          <ExternalLink className="size-4" />
+                          {labels.openRecord}
+                        </Link>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </TableCell>
               </TableRow>
             ))}
