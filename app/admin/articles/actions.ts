@@ -58,27 +58,16 @@ export async function updateArticleAction(
   const title = input.title.trim()
   const excerpt = input.excerpt.trim()
   const bodyJson = input.bodyJson.trim()
-  if (!title) {
-    return { ok: false, error: ar.adminArticleErrorTitle }
-  }
-  if (!excerpt) {
-    return { ok: false, error: ar.adminArticleErrorExcerpt }
-  }
-  if (!bodyJson) {
-    return { ok: false, error: ar.adminArticleErrorBody }
-  }
-  if (input.categoryIds.length === 0) {
-    return { ok: false, error: ar.adminArticleErrorCategory }
-  }
-
   let parsed: { type?: string } | null = null
-  try {
-    parsed = JSON.parse(bodyJson) as { type?: string }
-  } catch {
-    return { ok: false, error: ar.adminArticleErrorBody }
-  }
-  if (parsed?.type !== "doc") {
-    return { ok: false, error: ar.adminArticleErrorBody }
+  if (bodyJson) {
+    try {
+      parsed = JSON.parse(bodyJson) as { type?: string }
+    } catch {
+      return { ok: false, error: ar.adminArticleErrorBody }
+    }
+    if (parsed?.type !== "doc") {
+      return { ok: false, error: ar.adminArticleErrorBody }
+    }
   }
 
   const [existing] = await getDb()

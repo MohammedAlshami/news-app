@@ -14,13 +14,25 @@ function Sheet({ ...props }: React.ComponentProps<typeof SheetPrimitive.Root>) {
 function SheetTrigger({
   ...props
 }: React.ComponentProps<typeof SheetPrimitive.Trigger>) {
-  return <SheetPrimitive.Trigger data-slot="sheet-trigger" {...props} />
+  return (
+    <SheetPrimitive.Trigger
+      data-slot="sheet-trigger"
+      className="cursor-pointer"
+      {...props}
+    />
+  )
 }
 
 function SheetClose({
   ...props
 }: React.ComponentProps<typeof SheetPrimitive.Close>) {
-  return <SheetPrimitive.Close data-slot="sheet-close" {...props} />
+  return (
+    <SheetPrimitive.Close
+      data-slot="sheet-close"
+      className="cursor-pointer"
+      {...props}
+    />
+  )
 }
 
 function SheetPortal({

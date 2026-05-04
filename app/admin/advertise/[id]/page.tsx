@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 import Link from "next/link"
 import { notFound } from "next/navigation"
+import { ArrowRight } from "lucide-react"
 
 import { AdminAdvertiseInquiryEditor } from "@/components/admin-advertise-inquiry-editor"
 import { Button } from "@/components/ui/button"
@@ -47,7 +48,7 @@ export default async function AdminAdvertiseInquiryPage({ params }: PageProps) {
 
   return (
     <div className={cn("flex-1 p-4 md:p-6 lg:p-8")}>
-      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="text-sm font-medium text-muted-foreground">
             {ar.adminAdvertiseDetailKicker}
@@ -56,8 +57,11 @@ export default async function AdminAdvertiseInquiryPage({ params }: PageProps) {
             {ar.adminAdvertiseDetailTitle}
           </h1>
         </div>
-        <Button variant="outline" asChild>
-          <Link href="/admin/advertise">{ar.adminAdvertiseBack}</Link>
+        <Button variant="outline" size="icon" className="shrink-0" asChild>
+          <Link href="/admin/advertise" aria-label={ar.adminAdvertiseBack}>
+            <ArrowRight className="size-4 rotate-180" />
+            <span className="sr-only">{ar.adminAdvertiseBack}</span>
+          </Link>
         </Button>
       </div>
       <AdminAdvertiseInquiryEditor initial={initial} />
