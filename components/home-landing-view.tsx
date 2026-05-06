@@ -15,6 +15,7 @@ type HomeSection = {
 
 type Props = {
   ads: SiteAdPublic[]
+  showAds: boolean
   hero: Article | null
   sideStories: Article[]
   latestArticles: Article[]
@@ -199,6 +200,7 @@ function SectionVariant({
 
 export async function HomeLandingView({
   ads,
+  showAds,
   hero,
   sideStories,
   latestArticles,
@@ -294,15 +296,17 @@ export async function HomeLandingView({
           />
         ))}
 
-        <div className="py-8">
-          {ads.length > 0 ? (
-            <section className="py-6">
-              <SiteAdSpots ads={ads} />
-            </section>
-          ) : (
-            <AdPlaceholder text="إعلان ممول" className="h-32" />
-          )}
-        </div>
+        {showAds ? (
+          <div className="py-8">
+            {ads.length > 0 ? (
+              <section className="py-6">
+                <SiteAdSpots ads={ads} />
+              </section>
+            ) : (
+              <AdPlaceholder text="إعلان ممول" className="h-32" />
+            )}
+          </div>
+        ) : null}
       </main>
     </div>
   )

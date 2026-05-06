@@ -1,6 +1,6 @@
 /**
  * Deletes all rows in D1 `articles`, then inserts articles from
- * `scripts/articles-by-category.export.json` (run `npm run export:articles-by-category` first).
+ * `scripts/articles-by-category.export.json` (run `pnpm run export:articles-by-category` first).
  *
  *   npx tsx scripts/seed-d1-articles-from-bbc-export.ts
  *
@@ -111,7 +111,7 @@ async function main() {
   }
 
   if (rows.length === 0) {
-    throw new Error("No articles in export file; run npm run export:articles-by-category first.")
+    throw new Error("No articles in export file; run pnpm run export:articles-by-category first.")
   }
 
   const db = getDb()
