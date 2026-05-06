@@ -4,6 +4,15 @@ main = ".open-next/worker.js"
 compatibility_date = "2026-04-28"
 compatibility_flags = ["nodejs_compat"]
 
+# Exposed to the Worker as plain strings (see `populateProcessEnv` in OpenNext worker init).
+# Used by `db/client` HTTP fallback when Drizzle talks to D1 via the Cloudflare API.
+# Set the token as a secret (never commit): `pnpm exec wrangler secret put CLOUDFLARE_D1_TOKEN`
+[vars]
+CLOUDFLARE_ACCOUNT_ID = "e2f9e8d1485dce72d1a18307ed32a47a"
+CLOUDFLARE_DATABASE_ID = "2da1adf6-5917-41f3-b473-c79d8e5c789c"
+# Avoid Next.js dynamic `require()` of `middleware-manifest.json` in the Workers runtime (opennextjs/opennextjs-cloudflare#1232).
+NEXT_PRIVATE_MINIMAL_MODE = "1"
+
 [assets]
 directory = ".open-next/assets"
 binding = "ASSETS"

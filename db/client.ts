@@ -1,11 +1,27 @@
-import { drizzle } from "drizzle-orm/sqlite-proxy"
+import { drizzle as drizzleD1 } from "drizzle-orm/d1"
+import { drizzle as drizzleSqliteProxy } from "drizzle-orm/sqlite-proxy"
 
 import * as schema from "./schema"
 import { getRuntimeEnv } from "@/lib/cloudflare-runtime-env"
 
-type Db = ReturnType<typeof drizzle<typeof schema>>
+/** Public DB type: sqlite-proxy matches builder types used across the repo; D1 uses the same API. */
+export type AppDb = ReturnType<typeof drizzleSqliteProxy<typeof schema>>
 
-let _db: Db | undefined
+const CF_CONTEXT_SYM = Symbol.for("__cloudflare-context__")
+
+/** Same ALS-backed slot OpenNext sets (see `@opennextjs/cloudflare` worker init). */
+function getD1FromBindings(): CloudflareEnv["DB"] | undefined {
+  const slot = (
+    globalThis as typeof globalThis & {
+      [CF_CONTEXT_SYM]?: { env?: CloudflareEnv }
+    }
+  )[CF_CONTEXT_SYM]
+  const db = slot?.env?.DB
+  if (db && typeof db.prepare === "function") {
+    return db
+  }
+  return undefined
+}
 
 function getRequiredEnv(name: string) {
   const value = getRuntimeEnv(name)
@@ -55,8 +71,10 @@ async function runD1Query(
   return { rows }
 }
 
-export function getDb() {
-  if (_db) return _db
-  _db = drizzle(runD1Query, { schema })
-  return _db
+export function getDb(): AppDb {
+  const d1 = getD1FromBindings()
+  if (d1) {
+    return drizzleD1(d1, { schema }) as AppDb
+  }
+  return drizzleSqliteProxy(runD1Query, { schema })
 }
