@@ -2,7 +2,7 @@
 
 import { useActionState } from "react"
 
-import { submitAdvertiseInquiryAction } from "@/app/(site)/advertise/actions"
+import { submitAdvertiseInquiryAction } from "@/app/(site)/(site-shell)/advertise/actions"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"

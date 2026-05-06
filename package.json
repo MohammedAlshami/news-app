@@ -3,9 +3,10 @@
   "version": "0.0.1",
   "type": "module",
   "private": true,
+  "packageManager": "pnpm@10.29.3",
   "scripts": {
     "postinstall": "patch-package",
-    "dev": "next dev --turbopack",
+    "dev": "next dev --webpack",
     "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
     "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
     "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts",
@@ -17,8 +18,8 @@
     "db:generate": "drizzle-kit generate --config drizzle.config.ts",
     "db:push": "drizzle-kit push --config drizzle.config.ts",
     "db:studio": "drizzle-kit studio",
-    "export:articles-by-category": "npx tsx scripts/export-articles-by-category.ts",
-    "db:seed-from-bbc-export": "npx tsx scripts/seed-d1-articles-from-bbc-export.ts"
+    "export:articles-by-category": "tsx scripts/export-articles-by-category.ts",
+    "db:seed-from-bbc-export": "tsx scripts/seed-d1-articles-from-bbc-export.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1038.0",
@@ -47,7 +48,6 @@
     "lodash.throttle": "^4.1.1",
     "lucide-react": "^1.11.0",
     "next": "^16.2.3",
-    "next-themes": "^0.4.6",
     "radix-ui": "^1.4.3",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
@@ -79,6 +79,7 @@
     "prettier-plugin-tailwindcss": "^0.7.2",
     "sass": "^1.99.0",
     "tailwindcss": "^4.2.1",
+    "tsx": "^4.20.0",
     "typescript": "^5.9.3",
     "wrangler": "^4.86.0"
   }

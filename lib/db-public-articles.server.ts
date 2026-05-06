@@ -51,6 +51,7 @@ export async function getPublishedArticleRowById(id: string) {
 
 export async function getFeedArticlesByPageId(
   pageId: string,
+  options?: { limit?: number },
 ): Promise<FeedArticle[]> {
   const db = await getDb()
   const cols = {
@@ -63,20 +64,25 @@ export async function getFeedArticlesByPageId(
   }
 
   /** `/category/all`: every published article, any category (or uncategorized). */
-  const rows =
+  const base =
     pageId === ALL_CATEGORIES_ID
-      ? await db
+      ? db
           .select(cols)
           .from(articles)
           .where(eq(articles.isPublished, true))
           .orderBy(desc(articles.updatedAt))
-      : await db
+      : db
           .select(cols)
           .from(articles)
           .where(
             and(eq(articles.isPublished, true), eq(articles.categoryId, pageId)),
           )
           .orderBy(desc(articles.updatedAt))
+
+  const rows =
+    options?.limit !== undefined
+      ? await base.limit(options.limit)
+      : await base
 
   return rows.map((r) => ({
     id: r.id,

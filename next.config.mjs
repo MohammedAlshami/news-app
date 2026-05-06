@@ -16,10 +16,17 @@ if (base) {
 }
 
 const nextConfig = {
+  turbopack: {
+    root: process.cwd(),
+  },
   images: {
     remotePatterns: [
       ...r2Patterns,
       { protocol: "https", hostname: "**.r2.dev", port: "", pathname: "/**" },
+      { protocol: "https", hostname: "images.unsplash.com", port: "", pathname: "/**" },
+      { protocol: "https", hostname: "plus.unsplash.com", port: "", pathname: "/**" },
+      /** Covers BBC iChef (e.g. imported article covers from BBC export). */
+      { protocol: "https", hostname: "**.bbci.co.uk", port: "", pathname: "/**" },
     ],
   },
 }

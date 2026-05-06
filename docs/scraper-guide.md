@@ -124,7 +124,7 @@ Use this checklist:
 7. Run direct Node tests for:
    - one search query
    - one category page
-8. Run `npm run typecheck`.
+8. Run `pnpm run typecheck`.
 
 ## Scraping Rules
 
@@ -144,7 +144,7 @@ Use this checklist:
 
 Validated locally:
 
-- `npm run typecheck`
+- `pnpm run typecheck`
 - `node` execution of `lib/news-scraper.ts`
 
 Observed outputs:

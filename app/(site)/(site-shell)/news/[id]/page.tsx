@@ -13,6 +13,7 @@ import {
 import { getCategories } from "@/lib/categories"
 import { getActiveSiteAdsForArticle } from "@/lib/db-site-ads.server"
 import { getPublishedArticleRowById } from "@/lib/articles"
+import { areSiteAdsEnabled } from "@/lib/site-ads-enabled"
 import { ar } from "@/lib/ui-ar"
 
 function pageTitle(segment: string) {
@@ -40,10 +41,11 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function NewsArticlePage({ params }: PageProps) {
   const { id } = await params
+  const showAds = areSiteAdsEnabled()
   const [article, categories, articleAds] = await Promise.all([
     getPublishedArticleRowById(id),
     getCategories(),
-    getActiveSiteAdsForArticle(),
+    showAds ? getActiveSiteAdsForArticle() : Promise.resolve([]),
   ])
 
   if (!article) {
@@ -54,6 +56,9 @@ export default async function NewsArticlePage({ params }: PageProps) {
   const back = newsArticleBackFromCategoryIds(categoryIds, categories)
   const categoryByline = newsArticleCategoryBylineFromIds(categoryIds, categories)
   const date = article.createdAt.toISOString().slice(0, 10)
+
+  const adSlot =
+    showAds && articleAds.length > 0 ? <SiteAdSpots ads={articleAds} /> : undefined
 
   return (
     <NewsArticleView
@@ -68,11 +73,7 @@ export default async function NewsArticlePage({ params }: PageProps) {
       date={date}
       title={article.title}
       excerpt={article.excerpt}
-      adSlot={
-        articleAds.length > 0 ? (
-          <SiteAdSpots ads={articleAds} />
-        ) : undefined
-      }
+      adSlot={adSlot}
     >
       <ArticleTiptapReadOnly
         body={article.body}

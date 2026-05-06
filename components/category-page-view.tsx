@@ -1,8 +1,8 @@
 import Link from "next/link"
 
 import { AdPlaceholder } from "@/components/news-landing"
-import type { Article } from "@/lib/articles"
-import { getArticlePath } from "@/lib/articles"
+import { type Article, getArticlePath } from "@/lib/articles"
+import { areSiteAdsEnabled } from "@/lib/site-ads-enabled"
 import { formatArticleDate } from "@/lib/format-date"
 import { ar } from "@/lib/ui-ar"
 import { cn } from "@/lib/utils"
@@ -43,28 +43,33 @@ function CategoryArticleRow({
     <Link
       href={getArticlePath(article.id)}
       className={cn(
-        "group flex cursor-pointer flex-col gap-8 md:flex-row",
+        "group flex cursor-pointer flex-col gap-6 md:flex-row md:gap-10 lg:gap-12",
         alternate && "md:flex-row-reverse",
       )}
     >
-      <div className="overflow-hidden rounded-2xl bg-gray-100 md:w-1/3">
+      <div className="relative aspect-[16/10] w-full shrink-0 overflow-hidden rounded-3xl bg-neutral-100 md:w-[min(100%,380px)] md:max-w-[42%]">
         <img
           src={imgSrc}
           alt=""
-          className="h-48 w-full object-cover transition duration-500 group-hover:scale-105"
+          className="h-full w-full object-cover transition duration-500 ease-out group-hover:scale-[1.03]"
         />
       </div>
-      <div className="md:w-2/3">
-        <span className="mb-2 block text-xs font-bold uppercase tracking-wider text-red-600">
+      <div className="min-w-0 flex-1 text-right">
+        <span className="mb-2 block text-[11px] font-bold uppercase tracking-[0.15em] text-indigo-800">
           {label}
         </span>
-        <h2 className="mb-3 text-2xl font-bold leading-tight transition group-hover:text-red-600">
+        <h2 className="mb-3 text-pretty text-xl font-bold leading-snug text-neutral-900 decoration-2 underline-offset-4 transition group-hover:text-neutral-700 md:text-2xl lg:text-[1.65rem]">
           {article.title}
         </h2>
-        <p className="mb-4 line-clamp-3 text-gray-500">{article.excerpt}</p>
-        <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-gray-400">
-          <time dateTime={article.date}>{formatArticleDate(article.date)}</time>
-        </div>
+        <p className="mb-5 line-clamp-3 text-pretty text-[15px] leading-relaxed text-neutral-600">
+          {article.excerpt}
+        </p>
+        <time
+          dateTime={article.date}
+          className="text-xs font-medium tabular-nums text-neutral-400"
+        >
+          {formatArticleDate(article.date)}
+        </time>
       </div>
     </Link>
   )
@@ -80,35 +85,49 @@ export function CategoryPageView({
 }: CategoryPageViewProps) {
   const mostRead = articles.slice(0, 3)
   const blurb = description.trim() || feedSubheading.trim()
+  const showAds = areSiteAdsEnabled()
 
   return (
-    <div className="min-h-svh bg-white text-[#1a1a1a]">
-      <div className="container mx-auto px-4 py-12">
+    <div dir="rtl" lang="ar" className="min-h-svh bg-white text-neutral-900">
+      <div className="mx-auto w-full max-w-[90rem] px-4 py-12 sm:px-6 md:px-10 md:py-16 lg:px-8 lg:py-20 xl:px-8 2xl:px-10">
         <nav
-          className="mb-4 flex flex-wrap items-center gap-2 text-sm text-gray-400"
-          aria-label="مسار التنقل"
+          className="mb-8 flex flex-wrap items-center justify-end gap-2 text-sm text-neutral-500"
+          aria-label={ar.categoryBreadcrumbAria}
         >
-          <Link href="/" className="transition-colors hover:text-black">
+          <Link href="/" className="transition-colors hover:text-neutral-900">
             {ar.home}
           </Link>
-          <span aria-hidden>/</span>
-          <span className="text-black">{heroTitle}</span>
+          <span className="text-neutral-300" aria-hidden>
+            /
+          </span>
+          <span className="font-medium text-neutral-900">{heroTitle}</span>
         </nav>
 
-        <h1 className="mb-4 text-4xl font-bold">{heroTitle}</h1>
-        <p className="max-w-2xl text-gray-500">{blurb}</p>
+        <header className="mb-12 max-w-3xl text-right md:mb-14">
+          <h1 className="text-pretty text-3xl font-bold tracking-tight text-neutral-900 md:text-4xl lg:text-[2.5rem] lg:leading-tight">
+            {heroTitle}
+          </h1>
+          {blurb ? (
+            <p className="mt-4 text-pretty text-[15px] leading-relaxed text-neutral-600 md:text-base">
+              {blurb}
+            </p>
+          ) : null}
+        </header>
 
-        <div className="mt-12 grid grid-cols-1 gap-8 lg:grid-cols-4">
-          <div className="lg:col-span-3">
+        <div className="grid grid-cols-1 gap-12 lg:grid-cols-12 lg:gap-14 xl:gap-16">
+          <div className="lg:col-span-8 xl:col-span-8">
             {articles.length === 0 ? (
-              <p className="text-gray-500">{ar.noArticles}</p>
+              <p className="text-right text-neutral-600">{ar.noArticles}</p>
             ) : (
               <>
-                <div className="space-y-12">
+                <div className="space-y-0">
                   {articles.map((article, index) => (
                     <div
                       key={article.id}
-                      className={cn(index > 0 && "border-t border-gray-100 pt-12")}
+                      className={cn(
+                        "border-neutral-100 py-10 md:py-12",
+                        index > 0 && "border-t",
+                      )}
                     >
                       <CategoryArticleRow
                         article={article}
@@ -118,44 +137,51 @@ export function CategoryPageView({
                     </div>
                   ))}
                 </div>
-                <div className="pt-12 text-center">
+                <div className="flex justify-center pt-12 md:pt-14">
                   <button
                     type="button"
-                    className="rounded-lg border border-black px-8 py-3 font-bold transition-colors hover:bg-black hover:text-white"
+                    className="rounded-full border border-neutral-900 bg-neutral-900 px-10 py-3.5 text-sm font-bold text-white transition-colors hover:bg-neutral-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-900"
                   >
-                    تحميل المزيد من المقالات
+                    {ar.categoryLoadMore}
                   </button>
                 </div>
               </>
             )}
           </div>
 
-          <aside className="space-y-8 lg:col-span-1">
-            <div className="rounded-2xl bg-gray-50 p-6">
-              <h4 className="mb-4 border-b border-gray-200 pb-2 font-bold">
-                الأكثر قراءة في هذا القسم
-              </h4>
-              {mostRead.length === 0 ? (
-                <p className="text-sm text-gray-500">{ar.noArticles}</p>
-              ) : (
-                <ul className="space-y-4">
-                  {mostRead.map((a, i) => (
-                    <li key={a.id} className="flex gap-3">
-                      <span className="text-2xl font-bold text-gray-200 tabular-nums">
-                        {i + 1}
-                      </span>
-                      <Link
-                        href={getArticlePath(a.id)}
-                        className="text-sm font-bold leading-snug text-foreground transition-colors hover:text-red-600"
-                      >
-                        {a.title}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              )}
+          <aside className="lg:col-span-4 xl:col-span-4">
+            <div className="sticky top-28 space-y-8">
+              <div className="rounded-3xl border border-neutral-100 bg-white p-6 shadow-sm md:p-8">
+                <h2 className="mb-6 border-b border-neutral-100 pb-4 text-right text-lg font-bold text-neutral-900">
+                  {ar.categoryMostReadTitle}
+                </h2>
+                {mostRead.length === 0 ? (
+                  <p className="text-right text-sm text-neutral-500">{ar.noArticles}</p>
+                ) : (
+                  <ul className="space-y-5">
+                    {mostRead.map((a, i) => (
+                      <li key={a.id} className="flex gap-3 text-right">
+                        <span className="w-8 shrink-0 pt-0.5 text-2xl font-bold tabular-nums text-neutral-200">
+                          {i + 1}
+                        </span>
+                        <Link
+                          href={getArticlePath(a.id)}
+                          className="min-w-0 text-pretty text-sm font-bold leading-snug text-neutral-900 transition-colors hover:text-neutral-600"
+                        >
+                          {a.title}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+              {showAds ? (
+                <AdPlaceholder
+                  text={ar.categorySideAdLabel}
+                  className="h-64 rounded-3xl border border-dashed border-neutral-200 bg-neutral-50/80"
+                />
+              ) : null}
             </div>
-            <AdPlaceholder text="إعلان جانبي" className="h-64 rounded-2xl" />
           </aside>
         </div>
       </div>

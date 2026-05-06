@@ -134,6 +134,117 @@ export const ar = {
   homeNoteAll: "الكل",
   homeNoteRest: "يعرض القائمة كاملة.",
 
+  /** الصفحة الرئيسية — قسم المال والتمويل */
+  homeFinanceSectionTitle: "أحدث ما في المال هذا الأسبوع",
+  homeFinanceNavPrev: "اعرض السابق",
+  homeFinanceNavNext: "اعرض التالي",
+  homeFinanceCard1Title:
+    "حلول القروض المتاحة في أستراليا تدعم نمو المجتمعات المحلية",
+  homeFinanceCard1Excerpt:
+    "برامج تمويل مجتمعي توسّع نطاق الوصول إلى الائتمان وتدعم المشاريع الصغيرة والأسر التي تبحث عن فرص مستدامة.",
+  homeFinanceCard2Title:
+    "أدوات التكنولوجيا المالية تمكّن المستثمرين من كل الأحجام في سنغافورة",
+  homeFinanceCard2Excerpt:
+    "بمزيج من التكنولوجيا المتقدمة ودعم الحكومة والمنصات المبتكرة، تعزّز شركات التكنولوجيا المالية في سنغافورة تجربة الاستثمار للجميع.",
+  homeFinanceCard3Title:
+    "المنصّات الرقمية في البرازيل تعزّز الثروة وتوسّع الفرص",
+  homeFinanceCard3Excerpt:
+    "بنية تحتية رقمية وتطبيقات سهلة تفتح مجالات الادّخار والاستثمار أمام شرائح أوسع من المواطنين في المدن والأرياف.",
+  homeFinanceCard4Title:
+    "ثقافة الاستثمار في البورصة الألمانية تغذّي ازدهارًا وطنيًا مستدامًا",
+  homeFinanceCard4Excerpt:
+    "ثقافة طويلة الأمد للاستثمار في الأسهم والادّخار المنتظم تعكس ثقة المواطنين بالاقتصاد المحلي وبشركاتها الكبرى.",
+
+  /** الصفحة الرئيسية — رياضة (صف أفقي قابل للتمرير) */
+  homeSportsSectionTitle: "رياضة",
+  homeSportsCard1Title: "المنتخب يؤكّد جاهزيته قبل مواجهة الحسم في تصفيات المنطقة",
+  homeSportsCard1Excerpt:
+    "تدريبات ختامية تركّز على الجانب الدفاعي والسلّة السريعة، مع غياب لاعب واحد لأسباب احترازية.",
+  homeSportsCard2Title: "بطل سباق الماراثون المحلي يحطّم الرقم القياسي في خط النهاية",
+  homeSportsCard2Excerpt:
+    "سباق شهد منافسة قوية على آخر كيلومترات وسط حضور جماهيري غير مسبوق وسط المدينة.",
+  homeSportsCard3Title: "الدوري يعلن مواعيد الجولة القادمة مع نقل مباراة إلى ملعب محايد",
+  homeSportsCard3Excerpt:
+    "قرار يهدف إلى ضمان السلامة بعد صيانة أرضية أحد الملاعب، مع تحديث التذاكر إلكترونياً.",
+  homeSportsCard4Title: "لاعبة التنس تبلغ ربع النهائي بعد فوزها العنيد على المصنّفة الثالثة",
+  homeSportsCard4Excerpt:
+    "مباراة امتدت لثلاث مجموعات قاسية، وأظهرت اللاعبة تركيزاً عالياً في الكرات الحاسمة.",
+  homeSportsCard5Title: "نادي السلة يمدّد عقد مدربه قبل انطلاق دور المجموعات القاري",
+  homeSportsCard5Excerpt:
+    "إدارة النادي تشيد بالاستقرار الفني وتخطط لتعزيز التصويب من خارج القوس في الميركاتو الشتوي.",
+
+  /** الصفحة الرئيسية — تقنية (نفس شكل صف رياضة) */
+  homeTechSectionTitle: "تقنية",
+  homeTechCard1Title: "شركات الشّرائح تستعد لجولة استثمارات جديدة قبل موسم الأجهزة الذكية",
+  homeTechCard1Excerpt:
+    "تقارير تشير إلى طلب متزايد على معالجات الطاقة المنخفضة للأجهزة المحمولة والمنزلية المتصلة.",
+  homeTechCard2Title: "خبراء الأمن يحذّرون من حملات تصيّد تستهدف حسابات الشركات الصغيرة",
+  homeTechCard2Excerpt:
+    "يوصون بتفعيل التحقق بخطوتين وتدريب الموظفين على التحقق من روابط البريد قبل النقر.",
+  homeTechCard3Title: "استطلاع: ثلث المستخدمين يعتمدون على خدمات سحابية لمزامنة ملفات العمل يومياً",
+  homeTechCard3Excerpt:
+    "النسخ الاحتياطي التلقائي وتطبيقات التعاون اللحظي يقلّلان فقدان البيانات في الفرق البعيدة.",
+  homeTechCard4Title: "لوحات تحكم ذكية توحّد بيانات المبيعات والمخزون لمتاجر التجزئة",
+  homeTechCard4Excerpt:
+    "تكامل أسرع مع أنظمة الدفع يساعد المتاجر على ضبط الطلب الموسمي وتقليل الهدر.",
+  homeTechCard5Title: "مختبرات محلية تطلق نموذجاً لغوياً يدعم العربية في السياقات التقنية المتخصصة",
+  homeTechCard5Excerpt:
+    "خطوة تهدف إلى تحسين ملخصات الوثائق والدعم الآلي للشركات الناشئة في المنطقة.",
+
+  /** الصفحة الرئيسية — شبكة أخبار الحرم */
+  homeCampusNewsTitle: "أخبار الحرم الجامعي",
+  homeCampusNewsSeeAll: "عرض كل الأخبار",
+  homeCampusNewsEmpty: "لا توجد مقالات منشورة بعد.",
+  /** محتوى ثابت للمعاينة — صور Unsplash */
+  homeCampusHardFeaturedTitle:
+    "معرض الفنون يفتتح موسماً جديداً من الأعمال المعاصرة على الحرم",
+  homeCampusHardFeaturedTag1: "ثقافة",
+  homeCampusHardFeaturedTag2: "فعاليات",
+  homeCampusHardFeaturedTag3: "الحرم الجامعي",
+  homeCampusHardSide1Title: "ندوة حول التراث المعماري في أوروبا بين القرنين الخامس عشر والتاسع عشر",
+  homeCampusHardSide1Excerpt:
+    "جلسة نقاش مع باحثين من كلية الآداب حول تأثير الطراز القوطي على العمارة الحديثة.",
+  homeCampusHardSide1Tag1: "ندوات",
+  homeCampusHardSide1Tag2: "تاريخ",
+  homeCampusHardSide2Title: "المكتبة المركزية تمدّ ساعات العمل خلال امتحانات نهاية الفصل",
+  homeCampusHardSide2Excerpt:
+    "قاعات القراءة والأرشيف الرقمي متاحة حتى منتصف الليل في الأسابيع الثلاثة القادمة.",
+  homeCampusHardSide2Tag1: "خدمات",
+  homeCampusHardSide2Tag2: "طلاب",
+  homeCampusHardSide3Title: "فريق الروبوتيكس يتأهل إلى المرحلة الوطنية بعد فوزه في التصفيات الإقليمية",
+  homeCampusHardSide3Excerpt:
+    "مشروع الطلاب لهندسة البرمجيات يعرض حلاً لفرز النفايات الذكي داخل الحرم.",
+  homeCampusHardSide3Tag1: "علوم",
+  homeCampusHardSide3Tag2: "إنجاز",
+
+  /** الصفحة الرئيسية — بطل المحرر */
+  homeHeroFeatureCategory: "افتتاحية",
+  homeHeroFeatureTitle: "طموح نووي في المحيط الهندي والهادئ",
+  homeHeroFeatureExcerpt:
+    "هناك أسباب عدة قد تدفع بعض الدول إلى السعي نحو امتلاك قدرات نووية في إقليم المحيط الهندي والهادئ؛ منها رغبة كبح أي عدوان محتمل. تُعدّ الأسلحة النووية رادعاً أقصى لأنها تُحدث دماراً وخسائر بشرية على نطاق يصعب استيعابه. في الوقت نفسه تُثير هذه الطموحات نقاشاً حاداً حول الاستقرار الإقليمي، وبناء الثقة بين الجيران، وحدود الاستخدام السلمي للطاقة مقابل الترسانات التقليدية. وتظل أسئلة الحلفاء والحياد والالتزام بالمعاهدات الدولية في صلب أي قراءة واقعية للمشهد.",
+  homeHeroFeatureAuthor: "نبض — ميشيل أندريس",
+  homeHeroFeatureDate: "٢٢ مارس ٢٠٢٣",
+
+  homeHeroSideCategory: "أرخبيل",
+  homeHeroSideTitle: "بركان ميرابي يثور ويقذف حمماً ساخنة",
+  homeHeroSideExcerpt:
+    "أظهرت لقطات التقطها مرصد بركان ميرابي الحكومي يوم الخميس حمماً متوهجة تخرج من الفوهة وعموداً كثيفاً من الغيوم الساخنة يصل ارتفاعه إلى نحو ١٬٣٠٠ متراً في الجو.",
+  homeHeroSideAuthor: "نبض — جوناثان كالِب",
+  homeHeroSideDate: "٢٣ مارس ٢٠٢٣",
+
+  homeHeroRowCategory: "آسيا والمحيط الهادئ",
+  homeHeroRowTitle: "جوكوي يصل سنغافورة لإجراء محادثات مع رئيس الوزراء لي",
+  homeHeroRowExcerpt:
+    "يصل الرئيس الإندونيسي إلى سنغافورة في زيارة تركز على التجارة والاستقرار الإقليمي والعلاقات الثنائية، وتشمل لقاءات مع القادة لبحث ملفات المناخ والاستثمار والتعاون البحري.",
+  homeHeroRowAuthor: "سي بي إس سي",
+  homeHeroRowDate: "٢٣ مارس ٢٠٢٣",
+
+  /** لافتة اشتراك فوق التذييل */
+  siteSubscribeBannerTitle: "اشترك الآن",
+  siteSubscribeBannerDescription:
+    "النشرة الأسبوعية تصلك بملخص التقارير والتحليلات، بلا ازدحام في الوارد.",
+  siteSubscribeBannerCta: "اشتراك",
+
   categoryKicker: "جريدة اليوم",
   categoryAllTitle: "الموجز",
   categoryAllDescription:
@@ -142,6 +253,10 @@ export const ar = {
   feedAllSub: "مقالات من جميع الأقسام",
   noArticles: "لا توجد مقالات في هذا القسم حتى الآن.",
   uncategorized: "دون تصنيف",
+  categoryBreadcrumbAria: "مسار التنقل",
+  categoryLoadMore: "تحميل المزيد من المقالات",
+  categoryMostReadTitle: "الأكثر قراءة في هذا القسم",
+  categorySideAdLabel: "إعلان جانبي",
 
   backTo: (name: string) => `العودة إلى ${name}`,
   backToSection: "العودة إلى القسم",
@@ -155,6 +270,17 @@ export const ar = {
 
   /** علامة العرض في الشريط والتذييل */
   siteMark: "نـبـض",
+
+  /** شريط التنقل — الصفحة الرئيسية */
+  navPrimaryNews: "أخبار",
+  navPrimaryShows: "برامج",
+  navPrimaryForum: "منتدى",
+  navPrimaryLive: "مباشر",
+  navPrimaryLocal: "محلي",
+  navSearch: "بحث",
+  navSearchAria: "البحث في الموقع",
+  navAccount: "حسابي",
+  navAccountAria: "حساب المستخدم",
   siteFooterBlurb:
     "بوابتكم الإخبارية الأولى لمتابعة آخر المستجدات حول العالم، بمصداقية وشفافية وسرعة على مدار الساعة.",
   footerColSections: "الأقسام",
@@ -173,6 +299,20 @@ export const ar = {
   footerSocialInstagram: "انستغرام",
   footerCopyrightNote: (year: number) =>
     `© ${year} منصة نبض الإخبارية. جميع الحقوق محفوظة.`,
+  /** تذييل داكن — أعمدة الصفحات والدعم والعنوان */
+  footerColPages: "الصفحات",
+  footerColSupport: "الدعم",
+  footerColAddress: "العنوان",
+  footerBlurbDark:
+    "من خلال تعاوننا المستمر وحلول تصميم مبتكرة، نحوّل الرؤى إلى واقع يجمع بين الوظيفة والتعبير.",
+  footerLinkEvents: "الأحداث",
+  footerLinkPrograms: "البرامج",
+  footerSeeOnMap: "عرض على الخريطة",
+  footerAddressLine1: "٩٤٠ إيميلي هاتسون",
+  footerAddressLine2: "طريق جولدنديل، واسيلا، ألاسكا",
+  footerAddressLine3: "٩٩٦٥٤، الولايات المتحدة",
+  footerSocialTelegramAria: "تلغرام",
+  footerSocialLinkedinAria: "لينكد إن",
   siteNavSearchAria: "تصفح الأخبار",
   siteNavMenuOpen: "فتح القائمة",
   siteNavMenuTitle: "القائمة",
