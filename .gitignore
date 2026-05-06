@@ -43,5 +43,6 @@ next-env.d.ts
 scripts/articles-by-category.export.json
 node_modules/ 
 .open-next/ 
+.wrangler/
 .env 
 .env.* 

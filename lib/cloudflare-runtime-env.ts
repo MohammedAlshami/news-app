@@ -2,14 +2,14 @@ type CloudflareContext = {
   env?: Record<string, unknown>
 } | null
 
-function getCloudflareContext(): CloudflareContext {
+function readCloudflareContext(): CloudflareContext {
   return (globalThis as typeof globalThis & {
     [key: symbol]: CloudflareContext
   })[Symbol.for("__cloudflare-context__")] ?? null
 }
 
 export function getRuntimeEnv(name: string): string | undefined {
-  const cloudflareEnv = getCloudflareContext()?.env
+  const cloudflareEnv = readCloudflareContext()?.env
   const value = cloudflareEnv?.[name]
   if (typeof value === "string" && value.length > 0) {
     return value
