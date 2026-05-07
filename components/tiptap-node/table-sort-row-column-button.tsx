@@ -6,8 +6,8 @@ import { forwardRef, useCallback } from "react"
 import { useTiptapEditor } from "@/hooks/use-tiptap-editor"
 
 // --- Tiptap UI ---
-import type { UseTableSortRowColumnConfig } from "@/components/tiptap-node/table-node/ui/table-sort-row-column-button"
-import { useTableSortRowColumn } from "@/components/tiptap-node/table-node/ui/table-sort-row-column-button"
+import type { UseTableSortRowColumnConfig } from "@/components/tiptap-node/use-table-sort-row-column"
+import { useTableSortRowColumn } from "@/components/tiptap-node/use-table-sort-row-column"
 
 // --- UI Primitives ---
 import type { ButtonProps } from "@/components/tiptap-ui-primitive/button"

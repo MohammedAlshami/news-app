@@ -30,7 +30,7 @@ import {
 
 // --- Hooks ---
 import { useUiEditorState } from "@/hooks/use-ui-editor-state"
-import { useScrollToHash } from "@/components/tiptap-ui/copy-anchor-link-button/use-scroll-to-hash"
+import { useScrollToHash } from "@/components/tiptap-ui/use-scroll-to-hash"
 
 // --- Custom Extensions ---
 import { HorizontalRule } from "@/components/tiptap-node/horizontal-rule-node/horizontal-rule-node-extension"
@@ -46,12 +46,12 @@ import { ImageUploadNode } from "@/components/tiptap-node/image-upload-node/imag
 // --- Table Node ---
 import { TableKit } from "@/components/tiptap-node/table-node/extensions/table-node-extension"
 import { TableHandleExtension } from "@/components/tiptap-node/table-node/extensions/table-handle"
-import { TableHandle } from "@/components/tiptap-node/table-node/ui/table-handle/table-handle"
-import { TableSelectionOverlay } from "@/components/tiptap-node/table-node/ui/table-selection-overlay"
-import { TableCellHandleMenu } from "@/components/tiptap-node/table-node/ui/table-cell-handle-menu"
-import { TableExtendRowColumnButtons } from "@/components/tiptap-node/table-node/ui/table-extend-row-column-button"
-import "@/components/tiptap-node/table-node/styles/prosemirror-table.scss"
-import "@/components/tiptap-node/table-node/styles/table-node.scss"
+import { TableHandle } from "@/components/tiptap-node/table-handle"
+import { TableSelectionOverlay } from "@/components/tiptap-node/table-selection-overlay"
+import { TableCellHandleMenu } from "@/components/tiptap-node/table-cell-handle-menu"
+import { TableExtendRowColumnButtons } from "@/components/tiptap-node/table-extend-row-column-button"
+import "@/components/tiptap-node/prosemirror-table.scss"
+import "@/components/tiptap-node/table-node.scss"
 
 import "@/components/tiptap-node/blockquote-node/blockquote-node.scss"
 import "@/components/tiptap-node/code-block-node/code-block-node.scss"
@@ -85,7 +85,7 @@ import { NotionEditorHeader } from "@/components/tiptap-templates/notion-like/no
 import { MobileToolbar } from "@/components/tiptap-templates/notion-like/notion-like-editor-mobile-toolbar"
 import { NotionToolbarFloating } from "@/components/tiptap-templates/notion-like/notion-like-editor-toolbar-floating"
 import { SetupErrorMessage } from "@/components/tiptap-templates/notion-like/setup-error-message"
-import { TocSidebar } from "@/components/tiptap-node/toc-node"
+import { TocSidebar } from "@/components/tiptap-node/toc-sidebar"
 import { TocProvider, useToc } from "@/components/tiptap-node/toc-context"
 import { ListNormalizationExtension } from "@/components/tiptap-extension/list-normalization-extension"
 import { Indent } from "@/components/tiptap-extension/indent-extension"

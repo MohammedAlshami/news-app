@@ -10,7 +10,7 @@ import type { TextOptions } from "@tiptap-pro/extension-ai"
 import { useUiEditorState } from "@/hooks/use-ui-editor-state"
 import { ButtonGroup } from "@/components/tiptap-ui-primitive/button-group"
 
-import "@/components/tiptap-ui/ai-menu/ai-menu-actions/ai-menu-actions.scss"
+import "@/components/tiptap-ui/ai-menu-actions.scss"
 
 export interface AiMenuActionsProps {
   editor: Editor | null

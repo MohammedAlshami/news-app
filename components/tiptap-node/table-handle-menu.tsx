@@ -14,8 +14,8 @@ import type { Node } from "@tiptap/pm/model"
 // --- Hooks ---
 import { useTiptapEditor } from "@/hooks/use-tiptap-editor"
 import { cn, isValidPosition, SR_ONLY } from "@/lib/tiptap-utils"
-import type { Orientation } from "@/components/tiptap-node/table-node/lib/tiptap-table-utils"
-import { selectCellsByCoords } from "@/components/tiptap-node/table-node/lib/tiptap-table-utils"
+import type { Orientation } from "@/components/tiptap-node/tiptap-table-utils"
+import { selectCellsByCoords } from "@/components/tiptap-node/tiptap-table-utils"
 
 // --- Icons ---
 import { MoreVerticalIcon } from "@/components/tiptap-icons/more-vertical-icon"
@@ -33,15 +33,15 @@ import {
 import { Separator } from "@/components/tiptap-ui-primitive/separator"
 
 // --- Tiptap UI ---
-import { useTableDuplicateRowColumn } from "@/components/tiptap-node/table-node/ui/table-duplicate-row-column-button"
-import { useTableMoveRowColumn } from "@/components/tiptap-node/table-node/ui/table-move-row-column-button"
-import { useTableClearRowColumnContent } from "@/components/tiptap-node/table-node/ui/table-clear-row-column-content-button"
-import { useTableHeaderRowColumn } from "@/components/tiptap-node/table-node/ui/table-header-row-column-button"
-import { useTableAddRowColumn } from "@/components/tiptap-node/table-node/ui/table-add-row-column-button"
-import { useTableDeleteRowColumn } from "@/components/tiptap-node/table-node/ui/table-delete-row-column-button"
-import { useTableSortRowColumn } from "@/components/tiptap-node/table-node/ui/table-sort-row-column-button"
+import { useTableDuplicateRowColumn } from "@/components/tiptap-node/use-table-duplicate-row-column"
+import { useTableMoveRowColumn } from "@/components/tiptap-node/use-table-move-row-column"
+import { useTableClearRowColumnContent } from "@/components/tiptap-node/use-table-clear-row-column-content"
+import { useTableHeaderRowColumn } from "@/components/tiptap-node/use-table-header-row-column"
+import { useTableAddRowColumn } from "@/components/tiptap-node/use-table-add-row-column"
+import { useTableDeleteRowColumn } from "@/components/tiptap-node/use-table-delete-row-column"
+import { useTableSortRowColumn } from "@/components/tiptap-node/use-table-sort-row-column"
 import { ColorMenu } from "@/components/tiptap-ui/color-menu"
-import { TableAlignMenu } from "@/components/tiptap-node/table-node/ui/table-alignment-menu"
+import { TableAlignMenu } from "@/components/tiptap-node/table-alignment-menu"
 
 import { dragEnd } from "@/components/tiptap-node/table-node/extensions/table-handle"
 

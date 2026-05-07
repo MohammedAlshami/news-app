@@ -12,11 +12,11 @@ import { useTiptapEditor } from "@/hooks/use-tiptap-editor"
 import type {
   TextAlign,
   UseTextAlignConfig,
-} from "@/components/tiptap-ui/text-align-button"
+} from "@/components/tiptap-ui/text-align-button/use-text-align"
 import {
   TEXT_ALIGN_SHORTCUT_KEYS,
   useTextAlign,
-} from "@/components/tiptap-ui/text-align-button"
+} from "@/components/tiptap-ui/text-align-button/use-text-align"
 
 // --- UI Primitives ---
 import type { ButtonProps } from "@/components/tiptap-ui-primitive/button"

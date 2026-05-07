@@ -11,7 +11,7 @@ import type {
   DragContextMenuProps,
   MenuItemProps,
   NodeChangeData,
-} from "@/components/tiptap-ui/drag-context-menu/drag-context-menu-types"
+} from "@/components/tiptap-ui/drag-context-menu-types"
 
 // ─── Hooks ────────────────────────────────────────────────────────────────────
 import { useTiptapEditor } from "@/hooks/use-tiptap-editor"
@@ -51,7 +51,7 @@ import {
   useCopyAnchorLink,
   CopyAnchorLinkShortcutBadge,
 } from "@/components/tiptap-ui/copy-anchor-link-button"
-import { useResetAllFormatting } from "@/components/tiptap-ui/reset-all-formatting-button"
+import { useResetAllFormatting } from "@/components/tiptap-ui/use-reset-all-formatting"
 import {
   useAiAsk,
   AskAiShortcutBadge,
@@ -67,10 +67,10 @@ import { SlashCommandTriggerButton } from "@/components/tiptap-ui/slash-command-
 import { ColorMenu } from "@/components/tiptap-ui/color-menu"
 
 // ─── Tiptap Node Extensions ───────────────────────────────────────────────────
-import { TableAlignMenu } from "@/components/tiptap-node/table-node/ui/table-alignment-menu"
-import { useTableFitToWidth } from "@/components/tiptap-node/table-node/ui/table-fit-to-width-button"
-import { useTableClearRowColumnContent } from "@/components/tiptap-node/table-node/ui/table-clear-row-column-content-button"
-import { useTocShowTitle } from "@/components/tiptap-node/toc-node/ui/toc-show-title-button"
+import { TableAlignMenu } from "@/components/tiptap-node/table-alignment-menu"
+import { useTableFitToWidth } from "@/components/tiptap-node/use-table-fit-to-width"
+import { useTableClearRowColumnContent } from "@/components/tiptap-node/use-table-clear-row-column-content"
+import { useTocShowTitle } from "@/components/tiptap-node/toc-show-title-button"
 
 // ─── Utils ────────────────────────────────────────────────────────────────────
 import {

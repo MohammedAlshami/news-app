@@ -6,14 +6,16 @@ import * as React from "react"
 import { useTiptapEditor } from "@/hooks/use-tiptap-editor"
 
 // --- Tiptap UI ---
-import type { UseTocShowTitleConfig } from "@/components/tiptap-node/toc-node/ui/toc-show-title-button/toc-show-title"
-import { useTocShowTitle } from "@/components/tiptap-node/toc-node/ui/toc-show-title-button/toc-show-title"
+import type { UseTocShowTitleConfig } from "@/components/tiptap-node/toc-show-title"
+import { useTocShowTitle } from "@/components/tiptap-node/toc-show-title"
 
 // --- UI Primitives ---
 
 import type { ButtonProps } from "@/components/tiptap-ui-primitive/button"
 
 import { Button } from "@/components/tiptap-ui-primitive/button"
+
+export { useTocShowTitle } from "@/components/tiptap-node/toc-show-title"
 
 export interface TocShowTitleButtonProps
   extends Omit<ButtonProps, "type" | "onToggle">, UseTocShowTitleConfig {

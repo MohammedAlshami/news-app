@@ -9,7 +9,7 @@ import { useTiptapEditor } from "@/hooks/use-tiptap-editor"
 
 // --- Lib ---
 import { isExtensionAvailable } from "@/lib/tiptap-utils"
-import type { Orientation } from "@/components/tiptap-node/table-node/lib/tiptap-table-utils"
+import type { Orientation } from "@/components/tiptap-node/tiptap-table-utils"
 import {
   getTable,
   getTableSelectionType,
@@ -17,7 +17,7 @@ import {
   updateSelectionAfterAction,
   selectCellsByCoords,
   getIndexCoordinates,
-} from "@/components/tiptap-node/table-node/lib/tiptap-table-utils"
+} from "@/components/tiptap-node/tiptap-table-utils"
 
 // --- Icons ---
 import { CopyIcon } from "@/components/tiptap-icons/copy-icon"

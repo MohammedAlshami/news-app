@@ -9,13 +9,15 @@ import { parseShortcutKeys } from "@/lib/tiptap-utils"
 import { useTiptapEditor } from "@/hooks/use-tiptap-editor"
 
 // --- Tiptap UI ---
-import type { UseTextConfig } from "@/components/tiptap-ui/text-button"
-import { TEXT_SHORTCUT_KEY, useText } from "@/components/tiptap-ui/text-button"
+import type { UseTextConfig } from "@/components/tiptap-ui/use-text"
+import { TEXT_SHORTCUT_KEY, useText } from "@/components/tiptap-ui/use-text"
 
 // --- UI Primitives ---
 import type { ButtonProps } from "@/components/tiptap-ui-primitive/button"
 import { Button } from "@/components/tiptap-ui-primitive/button"
 import { Badge } from "@/components/tiptap-ui-primitive/badge"
+
+export { TEXT_SHORTCUT_KEY, useText } from "@/components/tiptap-ui/use-text"
 
 export interface TextButtonProps
   extends Omit<ButtonProps, "type">, UseTextConfig {

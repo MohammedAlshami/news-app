@@ -6,8 +6,8 @@ import { forwardRef, useCallback } from "react"
 import { useTiptapEditor } from "@/hooks/use-tiptap-editor"
 
 // --- Tiptap UI ---
-import type { UseTableClearRowColumnContentConfig } from "@/components/tiptap-node/table-node/ui/table-clear-row-column-content-button"
-import { useTableClearRowColumnContent } from "@/components/tiptap-node/table-node/ui/table-clear-row-column-content-button"
+import type { UseTableClearRowColumnContentConfig } from "@/components/tiptap-node/use-table-clear-row-column-content"
+import { useTableClearRowColumnContent } from "@/components/tiptap-node/use-table-clear-row-column-content"
 
 // --- UI Primitives ---
 import type { ButtonProps } from "@/components/tiptap-ui-primitive/button"

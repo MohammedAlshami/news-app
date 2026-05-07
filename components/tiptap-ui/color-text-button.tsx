@@ -9,19 +9,22 @@ import { parseShortcutKeys } from "@/lib/tiptap-utils"
 import { useTiptapEditor } from "@/hooks/use-tiptap-editor"
 
 // --- Tiptap UI ---
-import type { UseColorTextConfig } from "@/components/tiptap-ui/color-text-button"
+import type { UseColorTextConfig } from "@/components/tiptap-ui/use-color-text"
 import {
   COLOR_TEXT_SHORTCUT_KEY,
   useColorText,
-} from "@/components/tiptap-ui/color-text-button"
+} from "@/components/tiptap-ui/use-color-text"
 
 // --- UI Primitives ---
 import type { ButtonProps } from "@/components/tiptap-ui-primitive/button"
 import { Button } from "@/components/tiptap-ui-primitive/button"
 import { Badge } from "@/components/tiptap-ui-primitive/badge"
 
+export { TEXT_COLORS } from "@/components/tiptap-ui/use-color-text"
+export { COLOR_TEXT_SHORTCUT_KEY, useColorText } from "@/components/tiptap-ui/use-color-text"
+
 // --- Styles ---
-import "@/components/tiptap-ui/color-text-button/color-text-button.scss"
+import "@/components/tiptap-ui/color-text-button.scss"
 
 export interface ColorTextButtonProps
   extends Omit<ButtonProps, "type">, UseColorTextConfig {

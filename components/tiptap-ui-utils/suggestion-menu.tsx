@@ -22,11 +22,11 @@ import {
   type SuggestionProps,
 } from "@tiptap/suggestion"
 
-import { calculateStartPosition } from "@/components/tiptap-ui-utils/suggestion-menu/suggestion-menu-utils"
+import { calculateStartPosition } from "@/components/tiptap-ui-utils/suggestion-menu-utils"
 import type {
   SuggestionItem,
   SuggestionMenuProps,
-} from "@/components/tiptap-ui-utils/suggestion-menu/suggestion-menu-types"
+} from "@/components/tiptap-ui-utils/suggestion-menu-types"
 
 /**
  * A component that renders a suggestion menu for Tiptap editors.

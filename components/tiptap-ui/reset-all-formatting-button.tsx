@@ -9,11 +9,11 @@ import { parseShortcutKeys } from "@/lib/tiptap-utils"
 import { useTiptapEditor } from "@/hooks/use-tiptap-editor"
 
 // --- Tiptap UI ---
-import type { UseResetAllFormattingConfig } from "@/components/tiptap-ui/reset-all-formatting-button"
+import type { UseResetAllFormattingConfig } from "@/components/tiptap-ui/use-reset-all-formatting"
 import {
   RESET_ALL_FORMATTING_SHORTCUT_KEY,
   useResetAllFormatting,
-} from "@/components/tiptap-ui/reset-all-formatting-button"
+} from "@/components/tiptap-ui/use-reset-all-formatting"
 
 // --- UI Primitives ---
 import type { ButtonProps } from "@/components/tiptap-ui-primitive/button"

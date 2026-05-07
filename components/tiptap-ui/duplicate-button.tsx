@@ -20,6 +20,8 @@ import type { ButtonProps } from "@/components/tiptap-ui-primitive/button"
 import { Button } from "@/components/tiptap-ui-primitive/button"
 import { Badge } from "@/components/tiptap-ui-primitive/badge"
 
+export { DUPLICATE_SHORTCUT_KEY, useDuplicate } from "@/components/tiptap-ui/use-duplicate"
+
 export interface DuplicateButtonProps
   extends Omit<ButtonProps, "type">, UseDuplicateConfig {
   /**

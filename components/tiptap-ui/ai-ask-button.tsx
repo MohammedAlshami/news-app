@@ -20,6 +20,8 @@ import type { ButtonProps } from "@/components/tiptap-ui-primitive/button"
 import { Button } from "@/components/tiptap-ui-primitive/button"
 import { Badge } from "@/components/tiptap-ui-primitive/badge"
 
+export { AI_ASK_SHORTCUT_KEY, useAiAsk } from "@/components/tiptap-ui/use-ai-ask"
+
 export interface AiAskButtonProps
   extends Omit<ButtonProps, "type">, UseAiAskConfig {
   /**

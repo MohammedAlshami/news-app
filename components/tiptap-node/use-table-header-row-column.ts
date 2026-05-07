@@ -13,13 +13,13 @@ import {
   isExtensionAvailable,
   isValidPosition,
 } from "@/lib/tiptap-utils"
-import type { Orientation } from "@/components/tiptap-node/table-node/lib/tiptap-table-utils"
+import type { Orientation } from "@/components/tiptap-node/tiptap-table-utils"
 import {
   getIndexCoordinates,
   getRowOrColumnCells,
   getTableSelectionType,
   selectCellsByCoords,
-} from "@/components/tiptap-node/table-node/lib/tiptap-table-utils"
+} from "@/components/tiptap-node/tiptap-table-utils"
 
 // --- Icons ---
 import { TableHeaderRowIcon } from "@/components/tiptap-icons/table-header-row-icon"

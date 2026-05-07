@@ -13,14 +13,14 @@ import { useTiptapEditor } from "@/hooks/use-tiptap-editor"
 
 // --- Lib ---
 import { isExtensionAvailable } from "@/lib/tiptap-utils"
-import type { Orientation } from "@/components/tiptap-node/table-node/lib/tiptap-table-utils"
+import type { Orientation } from "@/components/tiptap-node/tiptap-table-utils"
 import {
   getTable,
   getTableSelectionType,
   getRowOrColumnCells,
   setCellAttr,
   isCellEmpty,
-} from "@/components/tiptap-node/table-node/lib/tiptap-table-utils"
+} from "@/components/tiptap-node/tiptap-table-utils"
 
 // --- Icons ---
 import { SquareXIcon } from "@/components/tiptap-icons/square-x-icon"

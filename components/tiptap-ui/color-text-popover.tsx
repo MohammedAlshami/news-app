@@ -50,8 +50,13 @@ import {
 import { chunkArray } from "@/lib/tiptap-advanced-utils"
 
 // --- Styles ---
-import "@/components/tiptap-ui/color-text-popover/color-text-popover.scss"
+import "@/components/tiptap-ui/color-text-popover.scss"
 import { ButtonGroup } from "@/components/tiptap-ui-primitive/button-group"
+
+export {
+  useRecentColors,
+  getColorByValue,
+} from "@/components/tiptap-ui/use-color-text-popover"
 
 // ─── Shared types ────────────────────────────────────────────────────────────
 

@@ -1,6 +1,6 @@
 import { Node, mergeAttributes } from "@tiptap/core"
 import { ReactNodeViewRenderer } from "@tiptap/react"
-import { TocNodeComponent } from "@/components/tiptap-node/toc-node/toc-node"
+import { TocNodeComponent } from "@/components/tiptap-node/toc-node"
 
 export interface TocNodeAttrs {
   /**

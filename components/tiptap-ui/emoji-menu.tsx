@@ -19,10 +19,10 @@ import {
   CardItemGroup,
 } from "@/components/tiptap-ui-primitive/card"
 
-import { getFilteredEmojis } from "@/components/tiptap-ui/emoji-menu/emoji-menu-utils"
+import { getFilteredEmojis } from "@/components/tiptap-ui/emoji-menu-utils"
 
 // --- Styles ---
-import "@/components/tiptap-ui/emoji-menu/emoji-menu.scss"
+import "@/components/tiptap-ui/emoji-menu.scss"
 
 export interface EmojiMenuItemProps<T extends EmojiItem> {
   emoji: T

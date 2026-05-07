@@ -8,7 +8,7 @@ import type { TextOptions, Tone } from "@tiptap-pro/extension-ai"
 import {
   useImproveDropdown,
   type AICommand,
-} from "@/components/tiptap-ui/improve-dropdown"
+} from "@/components/tiptap-ui/use-improve-dropdown"
 
 // --- Icons ---
 import { MicAiIcon } from "@/components/tiptap-icons/mic-ai-icon"
@@ -27,7 +27,7 @@ import { ChevronRightIcon } from "@/components/tiptap-icons/chevron-right-icon"
 import {
   SUPPORTED_LANGUAGES,
   SUPPORTED_TONES,
-} from "@/components/tiptap-ui/ai-menu"
+} from "@/components/tiptap-ui/ai-menu-items-constants"
 import { AiAskButton } from "@/components/tiptap-ui/ai-ask-button"
 
 // --- UI Primitives ---

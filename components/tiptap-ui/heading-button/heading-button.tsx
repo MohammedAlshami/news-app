@@ -9,11 +9,11 @@ import { parseShortcutKeys } from "@/lib/tiptap-utils"
 import type {
   Level,
   UseHeadingConfig,
-} from "@/components/tiptap-ui/heading-button"
+} from "@/components/tiptap-ui/heading-button/use-heading"
 import {
   HEADING_SHORTCUT_KEYS,
   useHeading,
-} from "@/components/tiptap-ui/heading-button"
+} from "@/components/tiptap-ui/heading-button/use-heading"
 
 // --- UI Primitives ---
 import type { ButtonProps } from "@/components/tiptap-ui-primitive/button"

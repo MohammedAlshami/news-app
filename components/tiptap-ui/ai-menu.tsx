@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef } from "react"
 import { type Editor } from "@tiptap/react"
 
-import { AiMenuItems } from "@/components/tiptap-ui/ai-menu/ai-menu-items/ai-menu-items"
+import { AiMenuItems } from "@/components/tiptap-ui/ai-menu-items"
 
 // -- Hooks --
 import { useTiptapEditor } from "@/hooks/use-tiptap-editor"
@@ -16,8 +16,8 @@ import {
 } from "@/lib/tiptap-advanced-utils"
 
 // -- Tiptap UI --
-import { AiMenuInputTextarea } from "@/components/tiptap-ui/ai-menu/ai-menu-input/ai-menu-input"
-import { AiMenuActions } from "@/components/tiptap-ui/ai-menu/ai-menu-actions/ai-menu-actions"
+import { AiMenuInputTextarea } from "@/components/tiptap-ui/ai-menu-input"
+import { AiMenuActions } from "@/components/tiptap-ui/ai-menu-actions"
 
 // -- UI Primitives --
 import {
@@ -37,18 +37,20 @@ import {
   getSelectionRangeRect,
   createVirtualAnchor,
   createEditorWidthAnchorRect,
-} from "@/components/tiptap-ui/ai-menu/ai-menu-utils"
+} from "@/components/tiptap-ui/ai-menu-utils"
+
+export { SUPPORTED_LANGUAGES, SUPPORTED_TONES } from "@/components/tiptap-ui/ai-menu-items"
 import {
   useAiContentTracker,
   useAiMenuState,
   useAiMenuStateProvider,
   useTextSelectionTracker,
-} from "@/components/tiptap-ui/ai-menu/ai-menu-hooks"
+} from "@/components/tiptap-ui/ai-menu-hooks"
 
 // -- Icons --
 import { StopCircle2Icon } from "@/components/tiptap-icons/stop-circle-2-icon"
 
-import "@/components/tiptap-ui/ai-menu/ai-menu.scss"
+import "@/components/tiptap-ui/ai-menu.scss"
 
 export function AiMenuStateProvider({
   children,

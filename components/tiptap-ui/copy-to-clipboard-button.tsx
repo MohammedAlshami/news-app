@@ -20,6 +20,11 @@ import type { ButtonProps } from "@/components/tiptap-ui-primitive/button"
 import { Button } from "@/components/tiptap-ui-primitive/button"
 import { Badge } from "@/components/tiptap-ui-primitive/badge"
 
+export {
+  COPY_TO_CLIPBOARD_SHORTCUT_KEY,
+  useCopyToClipboard,
+} from "@/components/tiptap-ui/use-copy-to-clipboard"
+
 export interface CopyToClipboardButtonProps
   extends Omit<ButtonProps, "type">, UseCopyToClipboardConfig {
   /**

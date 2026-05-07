@@ -20,6 +20,11 @@ import type { ButtonProps } from "@/components/tiptap-ui-primitive/button"
 import { Button } from "@/components/tiptap-ui-primitive/button"
 import { Badge } from "@/components/tiptap-ui-primitive/badge"
 
+export {
+  COPY_ANCHOR_LINK_SHORTCUT_KEY,
+  useCopyAnchorLink,
+} from "@/components/tiptap-ui/use-copy-anchor-link"
+
 export interface CopyAnchorLinkButtonProps
   extends Omit<ButtonProps, "type">, UseCopyAnchorLinkConfig {
   /**
