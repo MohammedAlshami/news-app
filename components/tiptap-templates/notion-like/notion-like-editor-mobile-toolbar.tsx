@@ -79,7 +79,7 @@ import {
 } from "@/components/tiptap-ui-primitive/toolbar"
 import { MoveNodeButton } from "@/components/tiptap-ui/move-node-button"
 import { useCursorVisibility } from "@/hooks/use-cursor-visibility"
-import { ImageNodeFloating } from "@/components/tiptap-node/image-node/image-node-floating"
+import { ImageNodeFloating } from "@/components/tiptap-node/image-node-floating"
 
 // =============================================================================
 // Types & Constants

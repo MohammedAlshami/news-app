@@ -8,7 +8,7 @@ import { useIsBreakpoint } from "@/hooks/use-is-breakpoint"
 import { useFloatingToolbarVisibility } from "@/hooks/use-floating-toolbar-visibility"
 
 // --- Node ---
-import { ImageNodeFloating } from "@/components/tiptap-node/image-node/image-node-floating"
+import { ImageNodeFloating } from "@/components/tiptap-node/image-node-floating"
 
 // --- Icons ---
 import { MoreVerticalIcon } from "@/components/tiptap-icons/more-vertical-icon"

@@ -35,7 +35,7 @@ import { useScrollToHash } from "@/components/tiptap-ui/copy-anchor-link-button/
 // --- Custom Extensions ---
 import { HorizontalRule } from "@/components/tiptap-node/horizontal-rule-node/horizontal-rule-node-extension"
 import { UiState } from "@/components/tiptap-extension/ui-state-extension"
-import { Image } from "@/components/tiptap-node/image-node/image-node-extension"
+import { Image } from "@/components/tiptap-node/image-node-extension"
 import { NodeBackground } from "@/components/tiptap-extension/node-background-extension"
 import { NodeAlignment } from "@/components/tiptap-extension/node-alignment-extension"
 import { TocNode } from "@/components/tiptap-node/toc-node/extensions/toc-node-extension"
