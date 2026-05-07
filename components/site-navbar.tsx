@@ -102,14 +102,14 @@ export function SiteNavbar({ primaryLinks }: SiteNavbarProps) {
                 <Search className="h-5 w-5 stroke-[2.5]" aria-hidden />
                 <span className="hidden sm:inline">{ar.navSearch}</span>
               </button>
-              <button
-                type="button"
+              <Link
+                href="/admin"
                 className="flex items-center gap-2 transition-opacity hover:opacity-70"
                 aria-label={ar.navAccountAria}
               >
                 <User className="h-5 w-5 stroke-[2.5]" aria-hidden />
                 <span className="hidden sm:inline">{ar.navAccount}</span>
-              </button>
+              </Link>
             </div>
           </div>
         </div>
