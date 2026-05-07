@@ -1,10 +1,12 @@
+import Link from "next/link"
+
 import { AdPlaceholder } from "@/components/news-landing"
 import { SiteFooter } from "@/components/site-footer"
 import { SiteNavbar } from "@/components/site-navbar"
+import { getCategoryNavItems } from "@/lib/categories"
 import { getMarqueeArticles } from "@/lib/db-home.server"
 import { areSiteAdsEnabled } from "@/lib/site-ads-enabled"
 import { ar } from "@/lib/ui-ar"
-import Link from "next/link"
 
 /** Toggle to restore the top breaking-news marquee / ticker. */
 const SHOW_NEWS_MARQUEE = false
@@ -15,7 +17,11 @@ export default async function SiteShellLayout({
   children: React.ReactNode
 }>) {
   const latestArticles = SHOW_NEWS_MARQUEE ? await getMarqueeArticles(4) : []
+  const categoryLinks = (await getCategoryNavItems())
+    .filter((item) => item.id !== "all")
+    .slice(0, 5)
   const showAds = areSiteAdsEnabled()
+
   return (
     <>
       {SHOW_NEWS_MARQUEE ? (
@@ -41,14 +47,14 @@ export default async function SiteShellLayout({
         </div>
       ) : null}
       {showAds ? (
-        <div className="container mx-auto px-4 py-4">
+        <div className="container mx-auto px-4 pt-24 md:pt-28">
           <AdPlaceholder
             text={ar.adPlaceholderLeaderboard}
             className="h-24 w-full rounded-lg"
           />
         </div>
       ) : null}
-      <SiteNavbar />
+      <SiteNavbar primaryLinks={categoryLinks} />
       <main className="flex min-h-0 min-w-0 flex-1 flex-col pt-24 md:pt-[5.75rem]">
         {children}
       </main>

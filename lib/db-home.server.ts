@@ -42,7 +42,7 @@ export async function getHomeData(): Promise<HomeData> {
     categories.slice(0, 3).map(async (category) => ({
       id: category.id,
       title: category.name,
-      href: `/category/${category.id}`,
+      href: `/category/${category.slug}`,
       articles: await getFeedArticlesByPageId(category.id, {
         limit: HOME_SECTION_FEED_LIMIT,
       }),

@@ -1,5 +1,13 @@
 name = "news-latest"
 main = "src/index.ts"
-compatibility_date = "2025-04-01"
+compatibility_date = "2026-05-07"
+compatibility_flags = ["nodejs_compat"]
 
-triggers = { crons = ["0 3 * * *"] }
+[triggers]
+crons = ["0 * * * *"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "news-site"
+database_id = "2da1adf6-5917-41f3-b473-c79d8e5c789c"
+remote = true

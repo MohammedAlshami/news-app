@@ -2,6 +2,7 @@ export type SiteCategory = {
   id: string
   name: string
   description: string
+  slug: string
 }
 
 /** Public listing / feed card (Neon-backed). */

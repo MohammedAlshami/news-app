@@ -4,7 +4,7 @@ import { notFound } from "next/navigation"
 import { CategoryPageView } from "@/components/category-page-view"
 import {
   ALL_CATEGORIES_ID,
-  getCategoryById,
+  getCategoryByPageId,
   getCategories,
   isValidCategoryPageId,
 } from "@/lib/categories"
@@ -32,7 +32,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       description: ar.categoryAllDescription,
     }
   }
-  const c = await getCategoryById(id)
+  const c = await getCategoryByPageId(id)
   return {
     title: pageTitle(c?.name ?? ar.newsBrand),
     description: c?.description,
@@ -69,7 +69,7 @@ export default async function CategoryPage({ params }: PageProps) {
     )
   }
 
-  const cat = await getCategoryById(id)
+  const cat = await getCategoryByPageId(id)
   if (!cat) {
     notFound()
   }

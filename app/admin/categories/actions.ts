@@ -5,14 +5,15 @@ import { eq } from "drizzle-orm"
 
 import { getDb } from "@/db/client"
 import { categories } from "@/db/schema"
+import { slugifyCategoryName } from "@/lib/category-slug"
 import { ALL_CATEGORIES_ID } from "@/lib/site-routes"
 
-function revalidateCategoryRoutes(newCategoryId?: string) {
+function revalidateCategoryRoutes(newCategoryPath?: string) {
   revalidatePath("/admin/articles")
   revalidatePath("/")
   revalidatePath(`/category/${ALL_CATEGORIES_ID}`)
-  if (newCategoryId) {
-    revalidatePath(`/category/${newCategoryId}`)
+  if (newCategoryPath) {
+    revalidatePath(`/category/${newCategoryPath}`)
   }
 }
 
@@ -30,6 +31,7 @@ export async function createCategoryAction(input: {
     .insert(categories)
     .values({
       name,
+      slug: slugifyCategoryName(name),
       description: description || null,
     })
     .returning({ id: categories.id })
@@ -38,7 +40,7 @@ export async function createCategoryAction(input: {
     return { ok: false, error: "تعذّر إنشاء القسم." }
   }
 
-  revalidateCategoryRoutes(row.id)
+  revalidateCategoryRoutes(slugifyCategoryName(name))
   return { ok: true, id: row.id }
 }
 
@@ -52,11 +54,18 @@ export async function updateCategoryAction(input: {
     return { ok: false, error: "اسم القسم مطلوب." }
   }
   const description = input.description.trim()
+  const nextSlug = slugifyCategoryName(name)
+  const [existing] = await getDb()
+    .select({ slug: categories.slug })
+    .from(categories)
+    .where(eq(categories.id, input.id))
+    .limit(1)
 
   const updated = await getDb()
     .update(categories)
     .set({
       name,
+      slug: nextSlug,
       description: description || null,
     })
     .where(eq(categories.id, input.id))
@@ -67,6 +76,9 @@ export async function updateCategoryAction(input: {
   }
 
   revalidateCategoryRoutes()
-  revalidatePath(`/category/${input.id}`)
+  if (existing?.slug) {
+    revalidatePath(`/category/${existing.slug}`)
+  }
+  revalidatePath(`/category/${nextSlug}`)
   return { ok: true }
 }

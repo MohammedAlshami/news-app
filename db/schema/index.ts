@@ -5,6 +5,7 @@ export {
 } from "./advertise-inquiries"
 export { articles, type Article, type NewArticle } from "./articles"
 export { categories, type Category, type NewCategory } from "./categories"
+export { priceRates, type NewPriceRate, type PriceRate } from "./price-rates"
 export {
   scrapedNews,
   type NewScrapedNews,

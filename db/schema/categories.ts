@@ -7,6 +7,7 @@ import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core"
 export const categories = sqliteTable("categories", {
   id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
   name: text("name").notNull(),
+  slug: text("slug").notNull().unique(),
   description: text("description"),
   createdAt: integer("created_at", { mode: "timestamp_ms" })
     .notNull()
