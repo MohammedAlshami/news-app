@@ -9,16 +9,21 @@ import { parseShortcutKeys } from "@/lib/tiptap-utils"
 import { useTiptapEditor } from "@/hooks/use-tiptap-editor"
 
 // --- Tiptap UI ---
-import type { UseImageDownloadConfig } from "@/components/tiptap-ui/image-download-button"
+import type { UseImageDownloadConfig } from "@/components/tiptap-ui/use-image-download"
 import {
   IMAGE_DOWNLOAD_SHORTCUT_KEY,
   useImageDownload,
-} from "@/components/tiptap-ui/image-download-button"
+} from "@/components/tiptap-ui/use-image-download"
 
 // --- UI Primitives ---
 import type { ButtonProps } from "@/components/tiptap-ui-primitive/button"
 import { Button } from "@/components/tiptap-ui-primitive/button"
 import { Badge } from "@/components/tiptap-ui-primitive/badge"
+
+export {
+  IMAGE_DOWNLOAD_SHORTCUT_KEY,
+  useImageDownload,
+} from "@/components/tiptap-ui/use-image-download"
 
 export interface ImageDownloadButtonProps
   extends Omit<ButtonProps, "type">, UseImageDownloadConfig {

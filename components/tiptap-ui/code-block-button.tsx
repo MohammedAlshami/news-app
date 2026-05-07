@@ -18,6 +18,8 @@ import {
 // --- UI Primitives ---
 import type { ButtonProps } from "@/components/tiptap-ui-primitive/button"
 import { Button } from "@/components/tiptap-ui-primitive/button"
+
+export { CODE_BLOCK_SHORTCUT_KEY, useCodeBlock } from "@/components/tiptap-ui/use-code-block"
 import { Badge } from "@/components/tiptap-ui-primitive/badge"
 
 export interface CodeBlockButtonProps

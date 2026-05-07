@@ -12,11 +12,11 @@ import { useTiptapEditor } from "@/hooks/use-tiptap-editor"
 import type {
   IndentAction,
   UseIndentConfig,
-} from "@/components/tiptap-ui/indent-button"
+} from "@/components/tiptap-ui/use-indent"
 import {
   INDENT_SHORTCUT_KEYS,
   useIndent,
-} from "@/components/tiptap-ui/indent-button"
+} from "@/components/tiptap-ui/use-indent"
 
 // --- UI Primitives ---
 import type { ButtonProps } from "@/components/tiptap-ui-primitive/button"

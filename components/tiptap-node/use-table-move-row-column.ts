@@ -19,14 +19,14 @@ import { useTiptapEditor } from "@/hooks/use-tiptap-editor"
 
 // --- Lib ---
 import { isExtensionAvailable } from "@/lib/tiptap-utils"
-import type { Orientation } from "@/components/tiptap-node/table-node/lib/tiptap-table-utils"
+import type { Orientation } from "@/components/tiptap-node/tiptap-table-utils"
 import {
   getTable,
   getTableSelectionType,
   selectCellsByCoords,
   cellsOverlapRectangle,
   getIndexCoordinates,
-} from "@/components/tiptap-node/table-node/lib/tiptap-table-utils"
+} from "@/components/tiptap-node/tiptap-table-utils"
 
 // --- Icons ---
 import { ArrowLeftIcon } from "@/components/tiptap-icons/arrow-left-icon"

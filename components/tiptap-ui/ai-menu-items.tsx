@@ -35,14 +35,14 @@ import { Separator } from "@/components/tiptap-ui-primitive/separator"
 import {
   SUPPORTED_LANGUAGES,
   SUPPORTED_TONES,
-} from "@/components/tiptap-ui/ai-menu/ai-menu-items/ai-menu-items-constants"
+} from "@/components/tiptap-ui/ai-menu-items-constants"
 import type {
   EditorMenuAction,
   ExecutableMenuAction,
   MenuActionIdentifier,
   MenuActionRendererProps,
   NestedMenuAction,
-} from "@/components/tiptap-ui/ai-menu/ai-menu-items/ai-menu-items-types"
+} from "@/components/tiptap-ui/ai-menu-items-types"
 
 // -- Icons --
 import { ChevronRightIcon } from "@/components/tiptap-icons/chevron-right-icon"

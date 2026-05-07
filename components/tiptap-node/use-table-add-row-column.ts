@@ -20,13 +20,13 @@ import { useTiptapEditor } from "@/hooks/use-tiptap-editor"
 
 // --- Lib ---
 import { isExtensionAvailable } from "@/lib/tiptap-utils"
-import type { Orientation } from "@/components/tiptap-node/table-node/lib/tiptap-table-utils"
+import type { Orientation } from "@/components/tiptap-node/tiptap-table-utils"
 import {
   getTable,
   getTableSelectionType,
   selectCellsByCoords,
   updateSelectionAfterAction,
-} from "@/components/tiptap-node/table-node/lib/tiptap-table-utils"
+} from "@/components/tiptap-node/tiptap-table-utils"
 
 // --- Icons ---
 import { AddColLeftIcon } from "@/components/tiptap-icons/add-col-left-icon"

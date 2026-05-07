@@ -5,7 +5,7 @@ import {
   useTransitionStyles,
 } from "@floating-ui/react"
 import { useEffect, useMemo } from "react"
-import { clamp } from "@/components/tiptap-node/table-node/lib/tiptap-table-utils"
+import { clamp } from "@/components/tiptap-node/tiptap-table-utils"
 
 type Orientation = "row" | "col" | "cell"
 

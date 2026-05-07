@@ -11,7 +11,7 @@ import { ArrowUpIcon } from "@/components/tiptap-icons/arrow-up-icon"
 import { AiSparklesIcon } from "@/components/tiptap-icons/ai-sparkles-icon"
 
 // UI Components
-import { SUPPORTED_TONES } from "@/components/tiptap-ui/ai-menu"
+import { SUPPORTED_TONES } from "@/components/tiptap-ui/ai-menu-items"
 
 // UI Primitives
 import { Button } from "@/components/tiptap-ui-primitive/button"
@@ -31,11 +31,11 @@ import { TextareaAutosize } from "@/components/tiptap-ui-primitive/textarea-auto
 import {
   useBlurHandler,
   useKeyboardHandlers,
-} from "@/components/tiptap-ui/ai-menu/ai-menu-input/ai-menu-input-hooks"
-import type { AiMenuInputTextareaProps } from "@/components/tiptap-ui/ai-menu/ai-menu-input/ai-menu-input-types"
+} from "@/components/tiptap-ui/ai-menu-input-hooks"
+import type { AiMenuInputTextareaProps } from "@/components/tiptap-ui/ai-menu-input-types"
 
 // Styles
-import "@/components/tiptap-ui/ai-menu/ai-menu-input/ai-menu-input.scss"
+import "@/components/tiptap-ui/ai-menu-input.scss"
 
 export function AiMenuInputPlaceholder({
   onPlaceholderClick,

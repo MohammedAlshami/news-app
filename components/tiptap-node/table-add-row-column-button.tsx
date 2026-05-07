@@ -6,8 +6,8 @@ import { forwardRef, useCallback } from "react"
 import { useTiptapEditor } from "@/hooks/use-tiptap-editor"
 
 // --- Tiptap UI ---
-import type { UseTableAddRowColumnConfig } from "@/components/tiptap-node/table-node/ui/table-add-row-column-button"
-import { useTableAddRowColumn } from "@/components/tiptap-node/table-node/ui/table-add-row-column-button"
+import type { UseTableAddRowColumnConfig } from "@/components/tiptap-node/use-table-add-row-column"
+import { useTableAddRowColumn } from "@/components/tiptap-node/use-table-add-row-column"
 
 // --- UI Primitives ---
 import type { ButtonProps } from "@/components/tiptap-ui-primitive/button"

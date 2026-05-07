@@ -20,6 +20,8 @@ import type { ButtonProps } from "@/components/tiptap-ui-primitive/button"
 import { Button } from "@/components/tiptap-ui-primitive/button"
 import { Badge } from "@/components/tiptap-ui-primitive/badge"
 
+export { DELETE_NODE_SHORTCUT_KEY, useDeleteNode } from "@/components/tiptap-ui/use-delete-node"
+
 export interface DeleteNodeButtonProps
   extends Omit<ButtonProps, "type">, UseDeleteNodeConfig {
   /**

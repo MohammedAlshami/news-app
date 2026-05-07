@@ -10,14 +10,14 @@ import { FloatingPortal, useFloating } from "@floating-ui/react"
 
 // --- Hooks ---
 import { useTiptapEditor } from "@/hooks/use-tiptap-editor"
-import { useResizeOverlay } from "@/components/tiptap-node/table-node/ui/table-selection-overlay/use-resize-overlay"
+import { useResizeOverlay } from "@/components/tiptap-node/use-resize-overlay"
 
 // --- Lib ---
 import {
   domCellAround,
   getTable,
   rectEq,
-} from "@/components/tiptap-node/table-node/lib/tiptap-table-utils"
+} from "@/components/tiptap-node/tiptap-table-utils"
 
 export interface TableSelectionOverlayProps {
   editor?: Editor | null

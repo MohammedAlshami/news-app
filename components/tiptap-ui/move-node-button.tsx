@@ -9,8 +9,8 @@ import { parseShortcutKeys } from "@/lib/tiptap-utils"
 import { useTiptapEditor } from "@/hooks/use-tiptap-editor"
 
 // --- Tiptap UI ---
-import type { UseMoveNodeConfig } from "@/components/tiptap-ui/move-node-button"
-import { useMoveNode } from "@/components/tiptap-ui/move-node-button"
+import type { UseMoveNodeConfig } from "@/components/tiptap-ui/use-move-node"
+import { useMoveNode } from "@/components/tiptap-ui/use-move-node"
 
 // --- UI Primitives ---
 import type { ButtonProps } from "@/components/tiptap-ui-primitive/button"

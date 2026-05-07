@@ -16,11 +16,11 @@ import {
   getSelectionRangeRect,
   createVirtualAnchor,
   createEditorWidthAnchorRect,
-} from "@/components/tiptap-ui/ai-menu/ai-menu-utils"
+} from "@/components/tiptap-ui/ai-menu-utils"
 import type {
   AiMenuState,
   AiMenuStateContextValue,
-} from "@/components/tiptap-ui/ai-menu/ai-menu-types"
+} from "@/components/tiptap-ui/ai-menu-types"
 
 /** Safely remove an element ref and nullify it. */
 function cleanupRef(ref: React.MutableRefObject<HTMLElement | null>) {

@@ -1,10 +1,10 @@
 "use client"
 
 // --- Lib ---
-import type { Orientation } from "@/components/tiptap-node/table-node/lib/tiptap-table-utils"
+import type { Orientation } from "@/components/tiptap-node/tiptap-table-utils"
 
 // --- UI ---
-import { useTableAlignCell } from "@/components/tiptap-node/table-node/ui/table-align-cell-button"
+import { useTableAlignCell } from "@/components/tiptap-node/use-table-align-cell"
 
 // --- Icons ---
 import { AlignmentIcon } from "@/components/tiptap-icons/alignment-icon"

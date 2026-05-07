@@ -6,8 +6,8 @@ import { forwardRef, useCallback } from "react"
 import { useTiptapEditor } from "@/hooks/use-tiptap-editor"
 
 // --- Tiptap UI ---
-import type { UseTableDeleteRowColumnConfig } from "@/components/tiptap-node/table-node/ui/table-delete-row-column-button"
-import { useTableDeleteRowColumn } from "@/components/tiptap-node/table-node/ui/table-delete-row-column-button"
+import type { UseTableDeleteRowColumnConfig } from "@/components/tiptap-node/use-table-delete-row-column"
+import { useTableDeleteRowColumn } from "@/components/tiptap-node/use-table-delete-row-column"
 
 // --- UI Primitives ---
 import type { ButtonProps } from "@/components/tiptap-ui-primitive/button"

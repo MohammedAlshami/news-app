@@ -12,7 +12,7 @@ import {
   useMemo,
   useState,
 } from "react"
-import "@/components/tiptap-ui-primitive/avatar/avatar.scss"
+import "@/components/tiptap-ui-primitive/avatar.scss"
 
 type ImageLoadingStatus = "idle" | "loading" | "loaded" | "error"
 type Size = "default" | "sm" | "lg" | "xl"

@@ -11,7 +11,7 @@ import { isExtensionAvailable } from "@/lib/tiptap-utils"
 import {
   getTable,
   RESIZE_MIN_WIDTH,
-} from "@/components/tiptap-node/table-node/lib/tiptap-table-utils"
+} from "@/components/tiptap-node/tiptap-table-utils"
 
 // --Icons ---
 import { MoveHorizontalIcon } from "@/components/tiptap-icons/move-horizontal-icon"

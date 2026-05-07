@@ -11,12 +11,12 @@ import type {
   SuggestionItem,
   SuggestionMenuRenderProps,
 } from "@/components/tiptap-ui-utils/suggestion-menu"
-import { filterSuggestionItems } from "@/components/tiptap-ui-utils/suggestion-menu"
+import { filterSuggestionItems } from "@/components/tiptap-ui-utils/suggestion-menu-utils"
 import { SuggestionMenu } from "@/components/tiptap-ui-utils/suggestion-menu"
 
 // --- Hooks ---
-import type { SlashMenuConfig } from "@/components/tiptap-ui/slash-dropdown-menu/use-slash-dropdown-menu"
-import { useSlashDropdownMenu } from "@/components/tiptap-ui/slash-dropdown-menu/use-slash-dropdown-menu"
+import type { SlashMenuConfig } from "@/components/tiptap-ui/use-slash-dropdown-menu"
+import { useSlashDropdownMenu } from "@/components/tiptap-ui/use-slash-dropdown-menu"
 
 // --- UI Primitives ---
 import { Button } from "@/components/tiptap-ui-primitive/button"
@@ -28,7 +28,7 @@ import {
   CardItemGroup,
 } from "@/components/tiptap-ui-primitive/card"
 
-import "@/components/tiptap-ui/slash-dropdown-menu/slash-dropdown-menu.scss"
+import "@/components/tiptap-ui/slash-dropdown-menu.scss"
 
 type SlashDropdownMenuProps = Omit<
   SuggestionMenuProps,

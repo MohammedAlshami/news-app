@@ -6,11 +6,11 @@ import { forwardRef } from "react"
 import { useTiptapEditor } from "@/hooks/use-tiptap-editor"
 
 // --- Tiptap UI ---
-import type { UseTableTriggerButtonConfig } from "@/components/tiptap-node/table-node/ui/table-trigger-button"
-import { useTableTriggerButton } from "@/components/tiptap-node/table-node/ui/table-trigger-button"
+import type { UseTableTriggerButtonConfig } from "@/components/tiptap-node/use-table-trigger"
+import { useTableTriggerButton } from "@/components/tiptap-node/use-table-trigger"
 
 // --- Components ---
-import { TableGridSelector } from "@/components/tiptap-node/table-node/ui/table-trigger-button/table-grid-selector"
+import { TableGridSelector } from "@/components/tiptap-node/table-grid-selector"
 
 // --- UI Primitives ---
 import type { ButtonProps } from "@/components/tiptap-ui-primitive/button"

@@ -8,10 +8,10 @@ import { FloatingPortal } from "@floating-ui/react"
 
 // --- Hooks ---
 import { useTiptapEditor } from "@/hooks/use-tiptap-editor"
-import { useTableHandleState } from "@/components/tiptap-node/table-node/hooks/use-table-handle-state"
+import { useTableHandleState } from "@/components/tiptap-node/use-table-handle-state"
 
 // --- Lib ---
-import type { Orientation } from "@/components/tiptap-node/table-node/lib/tiptap-table-utils"
+import type { Orientation } from "@/components/tiptap-node/tiptap-table-utils"
 import {
   EMPTY_CELL_HEIGHT,
   EMPTY_CELL_WIDTH,
@@ -20,14 +20,14 @@ import {
   marginRound,
   selectLastCell,
   runPreservingCursor,
-} from "@/components/tiptap-node/table-node/lib/tiptap-table-utils"
+} from "@/components/tiptap-node/tiptap-table-utils"
 import { cn } from "@/lib/tiptap-utils"
 
 // --- Icons ---
 import { PlusSmallIcon } from "@/components/tiptap-icons/plus-small-icon"
 
 // --- Internal ---
-import { useTableExtendRowColumnButtonsPositioning } from "@/components/tiptap-node/table-node/ui/table-extend-row-column-button/use-table-extend-row-column"
+import { useTableExtendRowColumnButtonsPositioning } from "@/components/tiptap-node/use-table-extend-row-column"
 import "./table-extend-row-column-button.scss"
 
 interface TableExtendRowColumnButtonProps {

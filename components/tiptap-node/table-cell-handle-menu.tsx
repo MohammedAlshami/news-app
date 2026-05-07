@@ -11,9 +11,9 @@ import { cn, SR_ONLY } from "@/lib/tiptap-utils"
 
 // --- UI ---
 import { ColorMenu } from "@/components/tiptap-ui/color-menu"
-import { TableAlignMenu } from "@/components/tiptap-node/table-node/ui/table-alignment-menu"
-import { useTableClearRowColumnContent } from "@/components/tiptap-node/table-node/ui/table-clear-row-column-content-button"
-import { useTableMergeSplitCell } from "@/components/tiptap-node/table-node/ui/table-merge-split-cell-button"
+import { TableAlignMenu } from "@/components/tiptap-node/table-alignment-menu"
+import { useTableClearRowColumnContent } from "@/components/tiptap-node/use-table-clear-row-column-content"
+import { useTableMergeSplitCell } from "@/components/tiptap-node/use-table-merge-split-cell"
 
 // --- UI Primitives ---
 import { Button } from "@/components/tiptap-ui-primitive/button"

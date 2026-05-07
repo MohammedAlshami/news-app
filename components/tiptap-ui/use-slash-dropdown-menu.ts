@@ -33,8 +33,8 @@ import {
 
 // --- Tiptap UI ---
 import type { SuggestionItem } from "@/components/tiptap-ui-utils/suggestion-menu"
-import { addEmojiTrigger } from "@/components/tiptap-ui/emoji-trigger-button"
-import { addMentionTrigger } from "@/components/tiptap-ui/mention-trigger-button"
+import { addEmojiTrigger } from "@/components/tiptap-ui/use-emoji-trigger"
+import { addMentionTrigger } from "@/components/tiptap-ui/use-mention-trigger"
 
 export interface SlashMenuConfig {
   enabledItems?: SlashMenuItemType[]

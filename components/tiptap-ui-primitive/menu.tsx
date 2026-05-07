@@ -34,7 +34,7 @@ import {
 } from "@/components/tiptap-ui-primitive/menu"
 
 // -- Styles --
-import "@/components/tiptap-ui-primitive/menu/menu.scss"
+import "@/components/tiptap-ui-primitive/menu.scss"
 
 export function MenuProvider({ ...props }: Ariakit.MenuProviderProps) {
   return <Ariakit.MenuProvider {...props} />

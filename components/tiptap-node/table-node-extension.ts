@@ -20,7 +20,7 @@ import { TextSelection } from "@tiptap/pm/state"
 import {
   EMPTY_CELL_WIDTH,
   RESIZE_MIN_WIDTH,
-} from "@/components/tiptap-node/table-node/lib/tiptap-table-utils"
+} from "@/components/tiptap-node/tiptap-table-utils"
 
 export const TableNode = Table.extend<TableOptions>({
   addProseMirrorPlugins() {

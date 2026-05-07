@@ -13,12 +13,12 @@ import {
 
 // --- Hooks ---
 import { useTiptapEditor } from "@/hooks/use-tiptap-editor"
-import { useTableHandlePositioning } from "@/components/tiptap-node/table-node/ui/table-handle/use-table-handle-positioning"
-import { useTableHandleState } from "@/components/tiptap-node/table-node/hooks/use-table-handle-state"
-import { type Orientation } from "@/components/tiptap-node/table-node/lib/tiptap-table-utils"
+import { useTableHandlePositioning } from "@/components/tiptap-node/use-table-handle-positioning"
+import { useTableHandleState } from "@/components/tiptap-node/use-table-handle-state"
+import { type Orientation } from "@/components/tiptap-node/tiptap-table-utils"
 
 // --- Components ---
-import { TableHandleMenu } from "@/components/tiptap-node/table-node/ui/table-handle-menu"
+import { TableHandleMenu } from "@/components/tiptap-node/table-handle-menu"
 
 export interface TableHandleButtonProps {
   editor: Editor

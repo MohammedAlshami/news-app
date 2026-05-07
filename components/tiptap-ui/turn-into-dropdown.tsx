@@ -4,11 +4,11 @@ import { forwardRef } from "react"
 import type { Editor } from "@tiptap/react"
 
 // --- Tiptap UI ---
-import type { UseTurnIntoDropdownConfig } from "@/components/tiptap-ui/turn-into-dropdown"
+import type { UseTurnIntoDropdownConfig } from "@/components/tiptap-ui/use-turn-into-dropdown"
 import {
   useTurnIntoDropdown,
   getFilteredBlockTypeOptions,
-} from "@/components/tiptap-ui/turn-into-dropdown"
+} from "@/components/tiptap-ui/use-turn-into-dropdown"
 
 // --- Hooks ---
 import { useTiptapEditor } from "@/hooks/use-tiptap-editor"

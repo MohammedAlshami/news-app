@@ -3,8 +3,8 @@
 import { forwardRef, useCallback } from "react"
 
 // --- Hooks ---
-import { useTableFitToWidth } from "@/components/tiptap-node/table-node/ui/table-fit-to-width-button/use-table-fit-to-width"
-import type { UseTableFitToWidthConfig } from "@/components/tiptap-node/table-node/ui/table-fit-to-width-button/use-table-fit-to-width"
+import { useTableFitToWidth } from "@/components/tiptap-node/use-table-fit-to-width"
+import type { UseTableFitToWidthConfig } from "@/components/tiptap-node/use-table-fit-to-width"
 import { useTiptapEditor } from "@/hooks/use-tiptap-editor"
 
 // --- Primitives ---

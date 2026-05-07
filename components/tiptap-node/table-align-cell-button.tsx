@@ -6,8 +6,8 @@ import { forwardRef, useCallback } from "react"
 import { useTiptapEditor } from "@/hooks/use-tiptap-editor"
 
 // --- Tiptap UI ---
-import type { UseTableAlignCellConfig } from "@/components/tiptap-node/table-node/ui/table-align-cell-button"
-import { useTableAlignCell } from "@/components/tiptap-node/table-node/ui/table-align-cell-button"
+import type { UseTableAlignCellConfig } from "@/components/tiptap-node/use-table-align-cell"
+import { useTableAlignCell } from "@/components/tiptap-node/use-table-align-cell"
 
 // --- UI Primitives ---
 import type { ButtonProps } from "@/components/tiptap-ui-primitive/button"

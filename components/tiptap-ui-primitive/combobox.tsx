@@ -2,13 +2,13 @@
 
 import * as Ariakit from "@ariakit/react"
 import { cn } from "@/lib/tiptap-utils"
-import "@/components/tiptap-ui-primitive/combobox/combobox.scss"
+import "@/components/tiptap-ui-primitive/combobox.scss"
 import {
   InputGroup,
   InputGroupAddon,
   InputGroupButton,
   InputGroupInput,
-} from "../input-group"
+} from "@/components/tiptap-ui-primitive/input-group"
 
 function ComboboxProvider({ ...props }: Ariakit.ComboboxProviderProps) {
   return (
