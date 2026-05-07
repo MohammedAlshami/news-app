@@ -11,6 +11,9 @@ const CF_CONTEXT_SYM = Symbol.for("__cloudflare-context__")
 
 /** Same ALS-backed slot OpenNext sets (see `@opennextjs/cloudflare` worker init). */
 function getD1FromBindings(): CloudflareEnv["DB"] | undefined {
+  if (process.env.NODE_ENV === "development") {
+    return undefined
+  }
   const slot = (
     globalThis as typeof globalThis & {
       [CF_CONTEXT_SYM]?: { env?: CloudflareEnv }

@@ -13,6 +13,7 @@ function rowToSiteCategory(row: typeof categories.$inferSelect): SiteCategory {
     id: row.id,
     name: row.name,
     description: row.description ?? "",
+    slug: row.slug,
   }
 }
 
@@ -35,13 +36,31 @@ export async function getCategoryById(
   return row ? rowToSiteCategory(row) : undefined
 }
 
+export async function getCategoryBySlug(
+  slug: string,
+): Promise<SiteCategory | undefined> {
+  const [row] = await getDb()
+    .select()
+    .from(categories)
+    .where(eq(categories.slug, slug))
+    .limit(1)
+  return row ? rowToSiteCategory(row) : undefined
+}
+
+export async function getCategoryByPageId(
+  pageId: string,
+): Promise<SiteCategory | undefined> {
+  if (pageId === ALL_CATEGORIES_ID) return undefined
+  return (await getCategoryBySlug(pageId)) ?? (await getCategoryById(pageId))
+}
+
 export async function getCategoryLabelByPageId(
   pageId: string,
 ): Promise<string | undefined> {
   if (pageId === ALL_CATEGORIES_ID) {
     return ar.all
   }
-  const c = await getCategoryById(pageId)
+  const c = await getCategoryByPageId(pageId)
   return c?.name
 }
 
@@ -60,9 +79,9 @@ export async function getCategoryNavItems(): Promise<CategoryNavItem[]> {
       href: getCategoryPagePath(ALL_CATEGORIES_ID),
     },
     ...fromData.map((c) => ({
-      id: c.id,
+      id: c.slug,
       label: c.name,
-      href: getCategoryPagePath(c.id),
+      href: getCategoryPagePath(c.slug),
     })),
   ]
 }
@@ -71,6 +90,6 @@ export async function isValidCategoryPageId(value: string): Promise<boolean> {
   if (value === ALL_CATEGORIES_ID) {
     return true
   }
-  const c = await getCategoryById(value)
+  const c = await getCategoryByPageId(value)
   return c !== undefined
 }

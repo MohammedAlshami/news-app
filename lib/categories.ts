@@ -5,6 +5,7 @@ export type { CategoryNavItem } from "./db-categories.server"
 export {
   getCategories,
   getCategoryById,
+  getCategoryByPageId,
   getCategoryLabelByPageId,
   getCategoryNavItems,
   isValidCategoryPageId,

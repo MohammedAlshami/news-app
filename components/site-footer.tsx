@@ -116,7 +116,7 @@ export async function SiteFooter() {
               <FooterLink label={ar.home} href="/" />
               <FooterLink label={ar.footerAboutWho} href="#" />
               <FooterLink label={ar.footerLinkEvents} href={allHref} />
-              <FooterLink label={ar.footerLinkPrograms} href="#" />
+              <FooterLink label={ar.footerLinkCurrency} href="/tools/currency-converter" />
             </ul>
           </div>
 

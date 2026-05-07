@@ -19,6 +19,28 @@ export const ar = {
   loginSubmit: "دخول",
   loginError: "البريد أو كلمة المرور غير صحيحة.",
 
+  currencyConverterMetaTitle: "محول العملات | أخبار",
+  currencyConverterMetaDescription:
+    "حوّل أي عملة إلى الريال اليمني أو من الريال اليمني إلى أي عملة أخرى باستخدام أسعار محدثة.",
+  currencyConverterKicker: "أدوات مالية",
+  currencyConverterTitle: "محول العملات إلى الريال اليمني",
+  currencyConverterSub:
+    "أدخل أي عملة وقم بالحساب فوراً في الاتجاهين مع أسعار محدثة يومياً.",
+  currencyConverterFrom: "من",
+  currencyConverterTo: "إلى",
+  currencyConverterAmount: "المبلغ",
+  currencyConverterResult: "النتيجة",
+  currencyConverterRate: "سعر الصرف",
+  currencyConverterSwap: "عكس الاتجاه",
+  currencyConverterRefresh: "تحديث السعر",
+  currencyConverterHint:
+    "تعتمد النتائج على آخر سعر متاح من مصدر عام. قد تختلف الأسعار النهائية حسب السوق أو الرسوم.",
+  currencyConverterLoading: "جارٍ جلب السعر…",
+  currencyConverterError: "تعذر جلب السعر حالياً.",
+  currencyConverterExamples: "أمثلة سريعة",
+  currencyConverterYERToAny: "الريال اليمني إلى أي عملة",
+  currencyConverterAnyToYER: "أي عملة إلى الريال اليمني",
+
   adminMetaTitle: "لوحة التحكم | أخبار",
   adminPageTitle: "لوحة التحكم",
   adminKicker: "واجهة الإدارة",
@@ -307,6 +329,7 @@ export const ar = {
     "من خلال تعاوننا المستمر وحلول تصميم مبتكرة، نحوّل الرؤى إلى واقع يجمع بين الوظيفة والتعبير.",
   footerLinkEvents: "الأحداث",
   footerLinkPrograms: "البرامج",
+  footerLinkCurrency: "محول العملات",
   footerSeeOnMap: "عرض على الخريطة",
   footerAddressLine1: "٩٤٠ إيميلي هاتسون",
   footerAddressLine2: "طريق جولدنديل، واسيلا، ألاسكا",

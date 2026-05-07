@@ -9,6 +9,9 @@ function readCloudflareContext(): CloudflareContext {
 }
 
 export function getRuntimeEnv(name: string): string | undefined {
+  if (process.env.NODE_ENV === "development") {
+    return process.env[name]
+  }
   const cloudflareEnv = readCloudflareContext()?.env
   const value = cloudflareEnv?.[name]
   if (typeof value === "string" && value.length > 0) {

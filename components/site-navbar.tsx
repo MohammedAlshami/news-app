@@ -10,15 +10,18 @@ import { cn } from "@/lib/utils"
 
 const navLinkClass = "text-[15px] font-bold text-gray-800 transition-colors hover:text-black"
 
-/** أثناء التمرير داخل أعلى الصفحة (البطل) لا يُفعّل الإخفاء عند النزول حتى يتجاوز المستخدم هذا المقدار. */
-const AUTO_HIDE_AFTER_SCROLL_PX = 440
-/** دائماً يظهر الشريط عند التمرير قرب أعلى المستند */
-const ALWAYS_VISIBLE_NEAR_TOP_PX = 12
-/** يقلّل الاهتزاز من عجلة التتبّع الدقيقة */
-const SCROLL_DIRECTION_MIN_DELTA = 10
+export type SiteNavbarLink = {
+  id: string
+  label: string
+  href: string
+}
 
-/** Scroll-direction header: يختفي عند النزول، يظهر عند الصعود (auto-hide / smart navbar). */
-export function SiteNavbar() {
+type SiteNavbarProps = {
+  primaryLinks: SiteNavbarLink[]
+}
+
+/** Scroll-direction header: hides on scroll down and shows on scroll up. */
+export function SiteNavbar({ primaryLinks }: SiteNavbarProps) {
   const allNewsHref = getCategoryPagePath(ALL_CATEGORIES_ID)
   const [hidden, setHidden] = useState(false)
   const lastY = useRef(0)
@@ -33,25 +36,21 @@ export function SiteNavbar() {
 
       lastY.current = y
 
-      if (y <= ALWAYS_VISIBLE_NEAR_TOP_PX) {
+      if (y <= 12) {
         setHidden(false)
         return
       }
 
-      if (y < AUTO_HIDE_AFTER_SCROLL_PX) {
+      if (y < 440) {
         setHidden(false)
         return
       }
 
-      if (Math.abs(delta) < SCROLL_DIRECTION_MIN_DELTA) {
+      if (Math.abs(delta) < 10) {
         return
       }
 
-      if (delta > 0) {
-        setHidden(true)
-      } else {
-        setHidden(false)
-      }
+      setHidden(delta > 0)
     }
 
     window.addEventListener("scroll", onScroll, { passive: true })
@@ -86,18 +85,11 @@ export function SiteNavbar() {
                 <Link href={allNewsHref} className={navLinkClass}>
                   {ar.navPrimaryNews}
                 </Link>
-                <Link href="#" className={navLinkClass}>
-                  {ar.navPrimaryShows}
-                </Link>
-                <Link href="#" className={navLinkClass}>
-                  {ar.navPrimaryForum}
-                </Link>
-                <Link href="#" className={navLinkClass}>
-                  {ar.navPrimaryLive}
-                </Link>
-                <Link href="#" className={navLinkClass}>
-                  {ar.navPrimaryLocal}
-                </Link>
+                {primaryLinks.map((item) => (
+                  <Link key={item.href} href={item.href} className={navLinkClass}>
+                    {item.label}
+                  </Link>
+                ))}
               </div>
             </div>
 
