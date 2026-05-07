@@ -8,7 +8,7 @@ import type {
   TableOfContentDataItem,
 } from "@tiptap/extension-table-of-contents"
 
-import { useToc } from "@/components/tiptap-node/toc-node/context/toc-context"
+import { useToc } from "@/components/tiptap-node/toc-context"
 
 import "./toc-node.scss"
 

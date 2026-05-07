@@ -86,10 +86,7 @@ import { MobileToolbar } from "@/components/tiptap-templates/notion-like/notion-
 import { NotionToolbarFloating } from "@/components/tiptap-templates/notion-like/notion-like-editor-toolbar-floating"
 import { SetupErrorMessage } from "@/components/tiptap-templates/notion-like/setup-error-message"
 import { TocSidebar } from "@/components/tiptap-node/toc-node"
-import {
-  TocProvider,
-  useToc,
-} from "@/components/tiptap-node/toc-node/context/toc-context"
+import { TocProvider, useToc } from "@/components/tiptap-node/toc-context"
 import { ListNormalizationExtension } from "@/components/tiptap-extension/list-normalization-extension"
 import { Indent } from "@/components/tiptap-extension/indent-extension"
 

@@ -6,7 +6,7 @@ import { cn } from "@/lib/tiptap-utils"
 import {
   getScrollableAncestor,
   useToc,
-} from "@/components/tiptap-node/toc-node/context/toc-context"
+} from "@/components/tiptap-node/toc-context"
 import type {
   TableOfContentData,
   TableOfContentDataItem,
