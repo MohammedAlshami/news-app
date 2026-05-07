@@ -1,7 +1,7 @@
 import { ReactNodeViewRenderer } from "@tiptap/react"
 import type { ImageOptions } from "@tiptap/extension-image"
 import { Image as TiptapImage } from "@tiptap/extension-image"
-import { ImageNodeView } from "@/components/tiptap-node/image-node/image-node-view"
+import { ImageNodeView } from "@/components/tiptap-node/image-node-view"
 import type { Node } from "@tiptap/pm/model"
 import { NodeSelection, TextSelection } from "@tiptap/pm/state"
 
