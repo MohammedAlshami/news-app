@@ -3,7 +3,6 @@ import { notFound } from "next/navigation"
 
 import { CreateArticleForm } from "@/components/create-article-form"
 import { getAdminArticleById } from "@/lib/db-articles.server"
-import { parseArticleBodyToTiptapDoc } from "@/lib/parse-article-body"
 import { getCategories } from "@/lib/categories"
 
 export const dynamic = "force-dynamic"
@@ -31,7 +30,6 @@ export default async function AdminEditArticlePage({ params }: PageProps) {
     notFound()
   }
   const categories = await getCategories()
-  const initialDocument = parseArticleBodyToTiptapDoc(row.body)
   const initialCategoryIds = row.categoryId ? [row.categoryId] : []
 
   return (
@@ -42,7 +40,6 @@ export default async function AdminEditArticlePage({ params }: PageProps) {
         initialCoverImageUrl={row.coverImageUrl}
         initialTitle={row.title}
         initialExcerpt={row.excerpt}
-        initialDocument={initialDocument}
         initialCategoryIds={initialCategoryIds}
         initialIsPublished={row.isPublished}
         categories={categories}

@@ -352,13 +352,18 @@ export function selectionWithinConvertibleTypes(
 }
 
 /**
- * Demo upload (e.g. `/simple` playground). Returns a placeholder image URL.
+ * Handles image upload with progress tracking and abort capability
+ * @param file The file to upload
+ * @param onProgress Optional callback for tracking upload progress
+ * @param abortSignal Optional AbortSignal for cancelling the upload
+ * @returns Promise resolving to the URL of the uploaded image
  */
-export const handleImageUploadDemo = async (
+export const handleImageUpload = async (
   file: File,
   onProgress?: (event: { progress: number }) => void,
   abortSignal?: AbortSignal
 ): Promise<string> => {
+  // Validate file
   if (!file) {
     throw new Error("No file provided")
   }
@@ -369,6 +374,8 @@ export const handleImageUploadDemo = async (
     )
   }
 
+  // For demo/testing: Simulate upload progress. In production, replace the following code
+  // with your own upload implementation.
   for (let progress = 0; progress <= 100; progress += 10) {
     if (abortSignal?.aborted) {
       throw new Error("Upload cancelled")
@@ -379,9 +386,6 @@ export const handleImageUploadDemo = async (
 
   return "/images/tiptap-ui-placeholder-image.jpg"
 }
-
-/** @deprecated Use `handleImageUploadDemo` or the admin editor upload handler. */
-export const handleImageUpload = handleImageUploadDemo
 
 type ProtocolOptions = {
   /**

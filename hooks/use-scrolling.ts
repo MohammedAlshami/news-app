@@ -1,5 +1,5 @@
 import type { RefObject } from "react"
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useState } from "react"
 
 type ScrollTarget = RefObject<HTMLElement> | Window | null | undefined
 type EventTargetWithScroll = Window | HTMLElement | Document
@@ -15,7 +15,6 @@ export function useScrolling(
 ): boolean {
   const { debounce = 150, fallbackToDocument = true } = options
   const [isScrolling, setIsScrolling] = useState(false)
-  const scrollingRef = useRef(false)
 
   useEffect(() => {
     // Resolve element or window
@@ -48,24 +47,15 @@ export function useScrolling(
     const supportsScrollEnd = element === window && "onscrollend" in window
 
     const handleScroll: EventListener = () => {
-      if (!scrollingRef.current) {
-        scrollingRef.current = true
-        setIsScrolling(true)
-      }
+      if (!isScrolling) setIsScrolling(true)
 
       if (!supportsScrollEnd) {
         clearTimeout(timeout)
-        timeout = setTimeout(() => {
-          scrollingRef.current = false
-          setIsScrolling(false)
-        }, debounce)
+        timeout = setTimeout(() => setIsScrolling(false), debounce)
       }
     }
 
-    const handleScrollEnd: EventListener = () => {
-      scrollingRef.current = false
-      setIsScrolling(false)
-    }
+    const handleScrollEnd: EventListener = () => setIsScrolling(false)
 
     on(eventTarget, "scroll", handleScroll)
     if (supportsScrollEnd) {
@@ -79,7 +69,7 @@ export function useScrolling(
       }
       clearTimeout(timeout)
     }
-  }, [target, debounce, fallbackToDocument])
+  }, [target, debounce, fallbackToDocument, isScrolling])
 
   return isScrolling
 }
