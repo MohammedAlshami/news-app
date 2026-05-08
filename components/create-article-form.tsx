@@ -245,12 +245,10 @@ export function CreateArticleForm({
               <SimpleEditor
                 embedded
                 articleId={articleId}
-                toolbarActions={
+                  toolbarActions={
                   <Button
                     type="button"
-                    variant="outline"
-                    size="sm"
-                    className="rounded-full border-border/70 px-3 shadow-sm"
+                    variant="ghost"
                     aria-label="Editor action"
                     title="Editor action"
                   >
