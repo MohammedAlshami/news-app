@@ -23,6 +23,7 @@ export { HIGHLIGHT_COLORS } from "@/components/tiptap-ui/use-color-highlight"
 export {
   HIGHLIGHT_SHORTCUT_KEY,
   useColorHighlight,
+  canColorHighlight,
 } from "@/components/tiptap-ui/use-color-highlight"
 import { Badge } from "@/components/tiptap-ui-primitive/badge"
 

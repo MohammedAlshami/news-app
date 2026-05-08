@@ -21,7 +21,11 @@ import { Button } from "@/components/tiptap-ui-primitive/button"
 import { Badge } from "@/components/tiptap-ui-primitive/badge"
 
 export { TEXT_COLORS } from "@/components/tiptap-ui/use-color-text"
-export { COLOR_TEXT_SHORTCUT_KEY, useColorText } from "@/components/tiptap-ui/use-color-text"
+export {
+  COLOR_TEXT_SHORTCUT_KEY,
+  useColorText,
+  canColorText,
+} from "@/components/tiptap-ui/use-color-text"
 
 // --- Styles ---
 import "@/components/tiptap-ui/color-text-button.scss"
