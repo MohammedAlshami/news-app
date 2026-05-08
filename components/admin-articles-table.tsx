@@ -143,7 +143,7 @@ export function AdminArticlesTable({ articles, categories, labels }: Props) {
               <TableHead className="h-12 w-[5.5rem] px-2 text-center font-medium">
                 {labels.colPublished}
               </TableHead>
-              <TableHead className="h-12 min-w-[5rem] px-2 text-center font-medium">
+              <TableHead className="sticky left-0 z-20 h-12 min-w-[5rem] bg-card px-2 text-center font-medium shadow-[2px_0_0_0_theme(colors.border)]">
                 {labels.colActions}
               </TableHead>
             </TableRow>
