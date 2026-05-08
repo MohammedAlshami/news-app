@@ -29,6 +29,9 @@ import { LinkPopover, LinkButton } from "@/components/tiptap-ui/link-popover"
 import { MarkButton } from "@/components/tiptap-ui/mark-button"
 import { TextAlignButton } from "@/components/tiptap-ui/text-align-button"
 import { UndoRedoButton } from "@/components/tiptap-ui/undo-redo-button"
+import { SlashDropdownMenu } from "@/components/tiptap-ui/slash-dropdown-menu"
+import { DragContextMenu } from "@/components/tiptap-ui/drag-context-menu"
+import { NotionToolbarFloating } from "@/components/tiptap-templates/notion-like/notion-like-editor-toolbar-floating"
 
 // --- Hooks ---
 import { useIsBreakpoint } from "@/hooks/use-is-breakpoint"
@@ -198,6 +201,9 @@ export function SimpleEditor({
           role="presentation"
           className="simple-editor-content"
         />
+        <SlashDropdownMenu />
+        <DragContextMenu />
+        <NotionToolbarFloating />
       </EditorContext.Provider>
     </div>
   )
