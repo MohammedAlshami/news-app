@@ -11,7 +11,7 @@ import { ArrowUpIcon } from "@/components/tiptap-icons/arrow-up-icon"
 import { AiSparklesIcon } from "@/components/tiptap-icons/ai-sparkles-icon"
 
 // UI Components
-import { SUPPORTED_TONES } from "@/components/tiptap-ui/ai-menu-items"
+import { SUPPORTED_TONES } from "@/components/tiptap-ui/ai-menu-items-constants"
 
 // UI Primitives
 import { Button } from "@/components/tiptap-ui-primitive/button"
