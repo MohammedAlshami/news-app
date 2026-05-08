@@ -199,7 +199,27 @@ export function SimpleEditor({
           role="presentation"
           className="simple-editor-content"
         />
-        <SlashDropdownMenu />
+        <SlashDropdownMenu
+          config={{
+            enabledItems: [
+              "continue_writing",
+              "ai_ask_button",
+              "text",
+              "heading_1",
+              "heading_2",
+              "heading_3",
+              "bullet_list",
+              "ordered_list",
+              "quote",
+              "mention",
+              "emoji",
+              "table",
+              "divider",
+              "toc",
+              "image",
+            ],
+          }}
+        />
         <DragContextMenu />
         <NotionToolbarFloating />
       </EditorContext.Provider>
