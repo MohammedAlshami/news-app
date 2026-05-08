@@ -184,7 +184,7 @@ export function SimpleEditor({
           className={toolbarClassName}
         >
           {toolbarActions ? (
-            <div className="flex w-full items-center justify-start gap-2 border-b border-border/60 pb-2">
+            <div className="flex w-full items-center justify-start gap-2">
               {toolbarActions}
             </div>
           ) : null}
