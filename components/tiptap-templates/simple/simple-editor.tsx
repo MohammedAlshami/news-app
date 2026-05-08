@@ -3,6 +3,7 @@
 import { useMemo, useRef } from "react"
 import { EditorContent, EditorContext, useEditor } from "@tiptap/react"
 import type { ReactNode } from "react"
+import type { SuggestionItem } from "@/components/tiptap-ui-utils/suggestion-menu"
 
 import { Spacer } from "@/components/tiptap-ui-primitive/spacer"
 import {
@@ -32,6 +33,7 @@ import { UndoRedoButton } from "@/components/tiptap-ui/undo-redo-button"
 import { SlashDropdownMenu } from "@/components/tiptap-ui/slash-dropdown-menu"
 import { DragContextMenu } from "@/components/tiptap-ui/drag-context-menu"
 import { NotionToolbarFloating } from "@/components/tiptap-templates/notion-like/notion-like-editor-toolbar-floating"
+import { AiSparklesIcon } from "@/components/tiptap-icons/ai-sparkles-icon"
 
 // --- Hooks ---
 import { useIsBreakpoint } from "@/hooks/use-is-breakpoint"
@@ -125,6 +127,8 @@ type SimpleEditorProps = {
   toolbarActions?: ReactNode
   /** Extra className applied to the toolbar container. */
   toolbarClassName?: string
+  /** Opens the local AI prompt UI from the slash menu. */
+  onAiRequest?: () => void
 }
 
 export function SimpleEditor({
@@ -135,6 +139,7 @@ export function SimpleEditor({
   articleId,
   toolbarActions,
   toolbarClassName,
+  onAiRequest,
 }: SimpleEditorProps = {}) {
   const isMobile = useIsBreakpoint()
   const toolbarRef = useRef<HTMLDivElement>(null)
@@ -173,6 +178,63 @@ export function SimpleEditor({
     [extensions, doc],
   )
 
+  const slashMenuConfig = useMemo(
+    () => ({
+      enabledItems: [
+        "text",
+        "heading_1",
+        "heading_2",
+        "heading_3",
+        "bullet_list",
+        "ordered_list",
+        "quote",
+        "mention",
+        "emoji",
+        "table",
+        "divider",
+        "toc",
+        "image",
+      ] as const,
+      customItems: onAiRequest
+        ? [
+            {
+              title: "اكتب باستخدام الذكاء الاصطناعي",
+              subtext: "ابدأ فقرة جديدة أو واصل الكتابة",
+              keywords: ["ai", "write", "generate"],
+              badge: AiSparklesIcon,
+              group: "الذكاء الاصطناعي",
+              onSelect: () => onAiRequest(),
+            } satisfies SuggestionItem,
+            {
+              title: "اسأل الذكاء الاصطناعي",
+              subtext: "اطرح سؤالاً أو حسّن النص المحدد",
+              keywords: ["ai", "ask", "improve"],
+              badge: AiSparklesIcon,
+              group: "الذكاء الاصطناعي",
+              onSelect: () => onAiRequest(),
+            } satisfies SuggestionItem,
+          ]
+        : [],
+      itemGroups: {
+        text: "تنسيق",
+        heading_1: "تنسيق",
+        heading_2: "تنسيق",
+        heading_3: "تنسيق",
+        bullet_list: "تنسيق",
+        ordered_list: "تنسيق",
+        quote: "تنسيق",
+        mention: "إدراج",
+        emoji: "إدراج",
+        table: "إدراج",
+        divider: "إدراج",
+        toc: "إدراج",
+        image: "رفع",
+      },
+      showGroups: true,
+    }),
+    [onAiRequest],
+  )
+
   return (
     <div
       className={cn(
@@ -199,27 +261,7 @@ export function SimpleEditor({
           role="presentation"
           className="simple-editor-content"
         />
-        <SlashDropdownMenu
-          config={{
-            enabledItems: [
-              "continue_writing",
-              "ai_ask_button",
-              "text",
-              "heading_1",
-              "heading_2",
-              "heading_3",
-              "bullet_list",
-              "ordered_list",
-              "quote",
-              "mention",
-              "emoji",
-              "table",
-              "divider",
-              "toc",
-              "image",
-            ],
-          }}
-        />
+        <SlashDropdownMenu config={slashMenuConfig} />
         <DragContextMenu />
         <NotionToolbarFloating />
       </EditorContext.Provider>
