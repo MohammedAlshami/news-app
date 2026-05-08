@@ -31,7 +31,7 @@ import {
 import {
   useMenuPlacement,
   useMenuItemClick,
-} from "@/components/tiptap-ui-primitive/menu"
+} from "@/components/tiptap-ui-primitive/menu-hooks"
 
 // -- Styles --
 import "@/components/tiptap-ui-primitive/menu.scss"
