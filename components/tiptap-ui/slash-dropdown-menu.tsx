@@ -43,7 +43,7 @@ export const SlashDropdownMenu = (props: SlashDropdownMenuProps) => {
 
   return (
     <SuggestionMenu
-      char="/"
+      char="\\"
       pluginKey="slashDropdownMenu"
       decorationClass="tiptap-slash-decoration"
       decorationContent="Filter..."

@@ -39,7 +39,7 @@ export interface UseSlashCommandTriggerConfig {
   nodePos?: number | null
   /**
    * The trigger text to insert
-   * @default "/"
+   * @default "\\"
    */
   trigger?: string
   /**
@@ -81,7 +81,7 @@ export function canInsertSlashCommand(
  */
 export function insertSlashCommand(
   editor: Editor | null,
-  trigger: string = "/",
+  trigger: string = "\\",
   node?: Node | null,
   nodePos?: number | null
 ): boolean {
@@ -224,7 +224,7 @@ export function useSlashCommandTrigger(config?: UseSlashCommandTriggerConfig) {
     editor: providedEditor,
     node,
     nodePos,
-    trigger = "/",
+    trigger = "\\",
     hideWhenUnavailable = false,
     onTriggered,
   } = config || {}
