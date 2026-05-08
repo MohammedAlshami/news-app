@@ -9,11 +9,11 @@ import { parseShortcutKeys } from "@/lib/tiptap-utils"
 import { useTiptapEditor } from "@/hooks/use-tiptap-editor"
 
 // --- Tiptap UI ---
-import type { UseColorHighlightConfig } from "@/components/tiptap-ui/use-color-highlight"
+import type { UseColorHighlightConfig } from "@/components/tiptap-ui/color-highlight-button"
 import {
   COLOR_HIGHLIGHT_SHORTCUT_KEY,
   useColorHighlight,
-} from "@/components/tiptap-ui/use-color-highlight"
+} from "@/components/tiptap-ui/color-highlight-button"
 
 // --- UI Primitives ---
 import type { ButtonProps } from "@/components/tiptap-ui-primitive/button"
@@ -21,7 +21,7 @@ import { Button } from "@/components/tiptap-ui-primitive/button"
 
 export { HIGHLIGHT_COLORS } from "@/components/tiptap-ui/use-color-highlight"
 export {
-  COLOR_HIGHLIGHT_SHORTCUT_KEY as HIGHLIGHT_SHORTCUT_KEY,
+  HIGHLIGHT_SHORTCUT_KEY,
   useColorHighlight,
   canColorHighlight,
 } from "@/components/tiptap-ui/use-color-highlight"
