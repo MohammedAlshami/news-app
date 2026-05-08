@@ -12,7 +12,6 @@ export interface ExecutableMenuAction extends MenuActionBase {
   type: "executable"
   onSelect: (params: {
     editor: Editor | null
-    onDone?: () => void
     options?: TextOptions
   }) => void
 }

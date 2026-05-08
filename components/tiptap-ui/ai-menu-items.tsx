@@ -9,16 +9,12 @@ import { type Language } from "@tiptap-pro/extension-ai"
 import { useTiptapEditor } from "@/hooks/use-tiptap-editor"
 
 // -- Tiptap UI --
-import {
-  useAiMenuState,
-} from "@/components/tiptap-ui/ai-menu"
+import { useAiMenuState } from "@/components/tiptap-ui/ai-menu-hooks"
 import { getContextAndInsertAt } from "@/components/tiptap-ui/ai-menu-utils"
 
 // -- UI Primitives --
 import {
   type Action,
-  filterMenuGroups,
-  filterMenuItems,
   Menu,
   MenuButton,
   MenuButtonArrow,
@@ -26,8 +22,12 @@ import {
   MenuGroup,
   MenuGroupLabel,
   MenuItem,
-  useComboboxValueState,
 } from "@/components/tiptap-ui-primitive/menu"
+import { useComboboxValueState } from "@/components/tiptap-ui-primitive/menu-hooks"
+import {
+  filterMenuGroups,
+  filterMenuItems,
+} from "@/components/tiptap-ui-primitive/menu-utils"
 import { Button } from "@/components/tiptap-ui-primitive/button"
 import { ComboboxList } from "@/components/tiptap-ui-primitive/combobox"
 import { Separator } from "@/components/tiptap-ui-primitive/separator"
@@ -67,182 +67,170 @@ function initializeEditorMenuActions(): Record<
       filterItems: true,
       icon: <MicAiIcon className="tiptap-button-icon" />,
       items: SUPPORTED_TONES,
-      label: "Adjust tone",
+      label: "تغيير النبرة",
       value: "adjustTone",
     },
     aiFixSpellingAndGrammar: {
       type: "executable",
       icon: <CheckAiIcon className="tiptap-button-icon" />,
-      label: "Fix spelling & grammar",
+      label: "تصحيح الإملاء والنحو",
       value: "aiFixSpellingAndGrammar",
       onSelect: ({ editor, options }) => {
         if (!editor) return
-
         const { insertAt, isSelection, context } = getContextAndInsertAt(editor)
+        editor.commands.aiGenerationSetNeedsCommit(isSelection)
         const newOptions: TextOptions = {
           ...options,
           insertAt,
+          insert: !isSelection,
           regenerate: !isSelection,
         }
-
         if (isSelection) {
           newOptions.text = context
         }
-
         editor.chain().aiFixSpellingAndGrammar(newOptions).run()
       },
     },
     aiExtend: {
       type: "executable",
       icon: <TextExtendIcon className="tiptap-button-icon" />,
-      label: "Make longer",
+      label: "توسيع النص",
       value: "aiExtend",
       onSelect: ({ editor, options }) => {
         if (!editor) return
-
         const { insertAt, isSelection, context } = getContextAndInsertAt(editor)
+        editor.commands.aiGenerationSetNeedsCommit(isSelection)
         const newOptions: TextOptions = {
           ...options,
           insertAt,
+          insert: !isSelection,
           regenerate: !isSelection,
         }
-
         if (isSelection) {
           newOptions.text = context
         }
-
         editor.chain().aiExtend(newOptions).run()
       },
     },
     aiShorten: {
       type: "executable",
       icon: <TextReduceIcon className="tiptap-button-icon" />,
-      label: "Make shorter",
+      label: "اختصار النص",
       value: "aiShorten",
       onSelect: ({ editor, options }) => {
         if (!editor) return
-
         const { insertAt, isSelection, context } = getContextAndInsertAt(editor)
+        editor.commands.aiGenerationSetNeedsCommit(isSelection)
         const newOptions: TextOptions = {
           ...options,
           insertAt,
+          insert: !isSelection,
           regenerate: !isSelection,
         }
-
         if (isSelection) {
           newOptions.text = context
         }
-
         editor.chain().aiShorten(newOptions).run()
       },
     },
     simplifyLanguage: {
       type: "executable",
       icon: <Simplify2Icon className="tiptap-button-icon" />,
-      label: "Simplify language",
+      label: "تبسيط اللغة",
       value: "simplifyLanguage",
       onSelect: ({ editor, options }) => {
         if (!editor) return
-
         const { insertAt, isSelection, context } = getContextAndInsertAt(editor)
+        editor.commands.aiGenerationSetNeedsCommit(isSelection)
         const newOptions: TextOptions = {
           ...options,
           insertAt,
+          insert: !isSelection,
           regenerate: !isSelection,
         }
-
         if (isSelection) {
           newOptions.text = context
         }
-
         editor.chain().aiSimplify(newOptions).run()
       },
     },
     improveWriting: {
       type: "executable",
       icon: <SmileAiIcon className="tiptap-button-icon" />,
-      label: "Improve writing",
+      label: "تحسين الصياغة",
       value: "improveWriting",
       onSelect: ({ editor, options }) => {
         if (!editor) return
-
         const { insertAt, isSelection, context } = getContextAndInsertAt(editor)
+        editor.commands.aiGenerationSetNeedsCommit(isSelection)
         const newOptions: TextOptions = {
           ...options,
           insertAt,
+          insert: !isSelection,
           regenerate: !isSelection,
         }
-
         if (isSelection) {
           newOptions.text = context
         }
-
         editor.chain().aiRephrase(newOptions).run()
       },
     },
     emojify: {
       type: "executable",
       icon: <SmileAiIcon className="tiptap-button-icon" />,
-      label: "Emojify",
+      label: "إضافة رموز تعبيرية",
       value: "emojify",
       onSelect: ({ editor, options }) => {
         if (!editor) return
-
         const { insertAt, isSelection, context } = getContextAndInsertAt(editor)
+        editor.commands.aiGenerationSetNeedsCommit(isSelection)
         const newOptions: TextOptions = {
           ...options,
           insertAt,
+          insert: !isSelection,
           regenerate: !isSelection,
         }
-
         if (isSelection) {
           newOptions.text = context
         }
-
         editor.chain().aiEmojify(newOptions).run()
       },
     },
     continueWriting: {
       type: "executable",
       icon: <CompleteSentenceIcon className="tiptap-button-icon" />,
-      label: "Continue writing",
+      label: "متابعة الكتابة",
       value: "continueWriting",
       onSelect: ({ editor, options }) => {
         if (!editor) return
-
         const { insertAt, isSelection, context } = getContextAndInsertAt(editor)
         const newOptions: TextOptions = {
           ...options,
           insertAt,
           regenerate: !isSelection,
         }
-
         if (isSelection) {
           newOptions.text = context
         }
-
         editor.chain().aiComplete(newOptions).run()
       },
     },
     summarize: {
       type: "executable",
       icon: <SummarizeTextIcon className="tiptap-button-icon" />,
-      label: "Add a summary",
+      label: "إضافة ملخص",
       value: "summarize",
       onSelect: ({ editor, options }) => {
         if (!editor) return
-
         const { insertAt, isSelection, context } = getContextAndInsertAt(editor)
         const newOptions: TextOptions = {
           ...options,
           insertAt,
           regenerate: !isSelection,
         }
-
         if (isSelection) {
           newOptions.text = context
         }
-
         editor.chain().aiSummarize(newOptions).run()
       },
     },
@@ -252,7 +240,7 @@ function initializeEditorMenuActions(): Record<
       filterItems: true,
       icon: <LanguagesIcon className="tiptap-button-icon" />,
       items: SUPPORTED_LANGUAGES,
-      label: "Languages",
+      label: "اللغات",
       value: "translateTo",
     },
   }
@@ -270,7 +258,7 @@ function mapInteractionContextToActions(
 
   const grouped: Action[] = [
     {
-      label: "Edit",
+      label: "تعديل",
       items: Object.values([
         menuActions.adjustTone,
         menuActions.aiFixSpellingAndGrammar,
@@ -282,7 +270,7 @@ function mapInteractionContextToActions(
       ]).map(convertToMenuAction),
     },
     {
-      label: "Write",
+      label: "كتابة",
       items: Object.values([
         menuActions.continueWriting,
         menuActions.summarize,
@@ -323,16 +311,17 @@ export function LanguageSelectionSubmenu({
     (selectedLanguageCode: Language) => {
       if (!editor) return
 
-      const { insertAt, isSelection, context } = getContextAndInsertAt(editor)
-
       updateState({ language: selectedLanguageCode })
 
-      const langOptions: TextOptions = {
-        stream: true,
-        format: "rich-text",
-        insertAt,
-        regenerate: !isSelection,
-      }
+      const { insertAt, isSelection, context } = getContextAndInsertAt(editor)
+      editor.commands.aiGenerationSetNeedsCommit(isSelection)
+        const langOptions: TextOptions = {
+          stream: true,
+          format: "rich-text",
+          insertAt,
+          insert: !isSelection,
+          regenerate: !isSelection,
+        }
 
       if (state.tone) {
         langOptions.tone = state.tone
@@ -350,7 +339,7 @@ export function LanguageSelectionSubmenu({
   const languageMenuItems = (
     <>
       {availableLanguages.length > 0 && (
-        <MenuGroupLabel>Languages</MenuGroupLabel>
+        <MenuGroupLabel>اللغات</MenuGroupLabel>
       )}
       {availableLanguages.map((language) => (
         <MenuItem
@@ -384,7 +373,7 @@ export function LanguageSelectionSubmenu({
               render={
                 <Button variant="ghost">
                   <LanguagesIcon className="tiptap-button-icon" />
-                  <span className="tiptap-button-text">Languages</span>
+                  <span className="tiptap-button-text">اللغات</span>
                   <MenuButtonArrow render={<ChevronRightIcon />} />
                 </Button>
               }
@@ -417,16 +406,17 @@ export function ToneSelectionSubmenu({ editor }: { editor: Editor | null }) {
     (selectedTone: string) => {
       if (!editor) return
 
-      const { insertAt, isSelection, context } = getContextAndInsertAt(editor)
-
       if (!state.tone || state.tone !== selectedTone) {
         updateState({ tone: selectedTone })
       }
 
+      const { insertAt, isSelection, context } = getContextAndInsertAt(editor)
+      editor.commands.aiGenerationSetNeedsCommit(isSelection)
       const toneOptions: TextOptions = {
         stream: true,
         format: "rich-text",
         insertAt,
+        insert: !isSelection,
         regenerate: !isSelection,
       }
 
@@ -438,7 +428,7 @@ export function ToneSelectionSubmenu({ editor }: { editor: Editor | null }) {
         toneOptions.text = context
       }
 
-      editor.chain().aiAdjustTone(selectedTone, toneOptions).run()
+      editor.chain().aiAdjustTone(selectedTone as never, toneOptions).run()
     },
     [editor, state.language, state.tone, updateState]
   )
@@ -469,7 +459,7 @@ export function ToneSelectionSubmenu({ editor }: { editor: Editor | null }) {
               render={
                 <Button variant="ghost">
                   <MicAiIcon className="tiptap-button-icon" />
-                  <span className="tiptap-button-text">Adjust Tone</span>
+                  <span className="tiptap-button-text">تغيير النبرة</span>
                   <MenuButtonArrow render={<ChevronRightIcon />} />
                 </Button>
               }
@@ -513,6 +503,7 @@ export function MenuActionRenderer({
       stream: true,
       format: "rich-text",
       language: state.language,
+      insert: !editor.state.selection.empty,
     }
 
     if (state.tone) {

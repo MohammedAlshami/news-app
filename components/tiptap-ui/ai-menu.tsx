@@ -23,8 +23,8 @@ import { AiMenuActions } from "@/components/tiptap-ui/ai-menu-actions"
 import {
   Menu,
   MenuContent,
-  useFloatingMenuStore,
 } from "@/components/tiptap-ui-primitive/menu"
+import { useFloatingMenuStore } from "@/components/tiptap-ui-primitive/menu-hooks"
 import { Button } from "@/components/tiptap-ui-primitive/button"
 import {
   ComboboxList,
@@ -39,13 +39,22 @@ import {
   createEditorWidthAnchorRect,
 } from "@/components/tiptap-ui/ai-menu-utils"
 
-export { SUPPORTED_LANGUAGES, SUPPORTED_TONES } from "@/components/tiptap-ui/ai-menu-items"
+export {
+  SUPPORTED_LANGUAGES,
+  SUPPORTED_TONES,
+} from "@/components/tiptap-ui/ai-menu-items-constants"
 import {
   useAiContentTracker,
   useAiMenuState,
   useAiMenuStateProvider,
   useTextSelectionTracker,
 } from "@/components/tiptap-ui/ai-menu-hooks"
+export {
+  useAiContentTracker,
+  useAiMenuState,
+  useAiMenuStateProvider,
+  useTextSelectionTracker,
+}
 
 // -- Icons --
 import { StopCircle2Icon } from "@/components/tiptap-icons/stop-circle-2-icon"
@@ -76,8 +85,13 @@ export function AiMenuContent({
   const { editor } = useTiptapEditor(providedEditor)
   const { state, updateState, setFallbackAnchor, reset } = useAiMenuState()
   const { show, store } = useFloatingMenuStore()
-  const { aiGenerationIsLoading, aiGenerationActive, aiGenerationHasMessage } =
-    useUiEditorState(editor)
+  const {
+    aiGenerationIsLoading,
+    aiGenerationActive,
+    aiGenerationHasMessage,
+    aiGenerationIsSelection,
+    aiGenerationNeedsCommit,
+  } = useUiEditorState(editor)
   const tiptapAiPromptInputRef = useRef<HTMLDivElement | null>(null)
 
   const closeAiMenu = useCallback(() => {
@@ -90,12 +104,6 @@ export function AiMenuContent({
   const handlePromptSubmit = useCallback(
     (userPrompt: string) => {
       if (!editor || !userPrompt.trim()) return
-
-      const { context } = getContextAndInsertAt(editor)
-      // if context, add it to the user prompt
-      const promptWithContext = context
-        ? `${context}\n\n${userPrompt}`
-        : userPrompt
 
       // Ensure fallback anchor is set before submitting
       if (!state.fallbackAnchor.element || !state.fallbackAnchor.rect) {
@@ -120,11 +128,24 @@ export function AiMenuContent({
         }
       }
 
+      const { context } = getContextAndInsertAt(editor)
+      const promptWithContext = context
+        ? `${context}\n\n${userPrompt}`
+        : userPrompt
+
+      editor.commands.aiGenerationSetIsSelection(
+        !editor.state.selection.empty
+      )
+      editor.commands.aiGenerationSetNeedsCommit(
+        !editor.state.selection.empty
+      )
+
       editor
         .chain()
+        .focus()
         .aiTextPrompt({
           text: promptWithContext,
-          insert: true,
+          insert: editor.state.selection.empty,
           stream: true,
           tone: state.tone,
           format: "rich-text",
@@ -155,36 +176,40 @@ export function AiMenuContent({
     [setFallbackAnchor]
   )
 
-  const handleOnReject = useCallback(() => {
-    if (!editor) return
-    editor.commands.aiReject()
-    closeAiMenu()
-  }, [closeAiMenu, editor])
-
-  const handleOnAccept = useCallback(() => {
-    if (!editor) return
-    editor.commands.aiAccept()
-    closeAiMenu()
-  }, [closeAiMenu, editor])
-
   const handleInputOnClose = useCallback(() => {
     if (!editor) return
+    if (aiGenerationNeedsCommit) {
+      return
+    }
     if (aiGenerationIsLoading) {
       editor.commands.aiReject({ type: "reset" })
     } else {
       editor.commands.aiAccept()
     }
     closeAiMenu()
-  }, [aiGenerationIsLoading, closeAiMenu, editor])
+  }, [
+    aiGenerationIsLoading,
+    aiGenerationNeedsCommit,
+    closeAiMenu,
+    editor,
+  ])
 
   const handleClickOutside = useCallback(() => {
+    if (aiGenerationNeedsCommit) {
+      return
+    }
     if (!aiGenerationIsLoading) {
       closeAiMenu()
 
       if (!editor) return
       editor.commands.aiAccept()
     }
-  }, [aiGenerationIsLoading, closeAiMenu, editor])
+  }, [
+    aiGenerationIsLoading,
+    aiGenerationNeedsCommit,
+    closeAiMenu,
+    editor,
+  ])
 
   useAiContentTracker({
     editor,
@@ -204,16 +229,93 @@ export function AiMenuContent({
   })
 
   useEffect(() => {
+    if (!editor || !aiGenerationActive || state.isOpen) return
+
+    const selectedElement = getSelectedDOMElement(editor)
+    if (selectedElement) {
+      const rect = selectedElement.getBoundingClientRect()
+      setFallbackAnchor(selectedElement, rect)
+      show(selectedElement)
+      updateState({
+        isOpen: true,
+        shouldShowInput: true,
+        inputIsFocused: true,
+      })
+      return
+    }
+
+    const selectionRect = getSelectionRangeRect(editor)
+    if (!selectionRect) return
+
+    const anchorRect = createEditorWidthAnchorRect(
+      editor.view.dom,
+      selectionRect
+    )
+    const anchor = createVirtualAnchor(anchorRect, editor.view.dom)
+    setFallbackAnchor(anchor, anchorRect)
+    show(anchor)
+    updateState({
+      isOpen: true,
+      shouldShowInput: true,
+      inputIsFocused: true,
+    })
+  }, [editor, aiGenerationActive, show, setFallbackAnchor, state.isOpen, updateState])
+
+  useEffect(() => {
     if (aiGenerationIsLoading) {
       updateState({ shouldShowInput: false })
     }
   }, [aiGenerationIsLoading, updateState])
 
   useEffect(() => {
-    if (!aiGenerationActive && state.isOpen) {
+    if (
+      !editor ||
+      aiGenerationIsLoading ||
+      !aiGenerationNeedsCommit ||
+      state.isOpen
+    ) {
+      return
+    }
+
+    const selectedElement = getSelectedDOMElement(editor)
+    if (selectedElement) {
+      const rect = selectedElement.getBoundingClientRect()
+      setFallbackAnchor(selectedElement, rect)
+      show(selectedElement)
+    } else {
+      const selectionRect = getSelectionRangeRect(editor)
+      if (selectionRect) {
+        const anchorRect = createEditorWidthAnchorRect(
+          editor.view.dom,
+          selectionRect
+        )
+        const anchor = createVirtualAnchor(anchorRect, editor.view.dom)
+        setFallbackAnchor(anchor, anchorRect)
+        show(anchor)
+      }
+    }
+
+    updateState({
+      isOpen: true,
+      shouldShowInput: false,
+      inputIsFocused: false,
+    })
+  }, [
+    aiGenerationIsLoading,
+    aiGenerationIsSelection,
+    editor,
+    setFallbackAnchor,
+    show,
+    state.isOpen,
+    aiGenerationNeedsCommit,
+    updateState,
+  ])
+
+  useEffect(() => {
+    if (!aiGenerationActive && state.isOpen && !aiGenerationNeedsCommit) {
       closeAiMenu()
     }
-  }, [aiGenerationActive, state.isOpen, closeAiMenu])
+  }, [aiGenerationActive, aiGenerationNeedsCommit, state.isOpen, closeAiMenu])
 
   const smoothFocusAndScroll = (element: HTMLElement | null) => {
     element?.focus()
@@ -232,12 +334,16 @@ export function AiMenuContent({
     selectionHasText(editor) ||
     (aiGenerationHasMessage && state.shouldShowInput && state.inputIsFocused)
 
-  if (!editor || !state.isOpen || !aiGenerationActive) {
+  if (!editor || (!state.isOpen && !aiGenerationNeedsCommit)) {
     return null
   }
 
   return (
-    <Menu open={state.isOpen} placement="bottom-start" store={store}>
+    <Menu
+      open={state.isOpen || aiGenerationNeedsCommit}
+      placement="bottom-start"
+      store={store}
+    >
       <MenuContent
         onClickOutside={handleClickOutside}
         className="tiptap-ai-menu"
@@ -263,12 +369,13 @@ export function AiMenuContent({
             />
           )}
 
-          {aiGenerationHasMessage && !aiGenerationIsLoading && (
+          {(aiGenerationHasMessage || aiGenerationNeedsCommit) &&
+            !aiGenerationIsLoading && (
             <AiMenuActions
               editor={editor}
               options={{ tone: state.tone, format: "rich-text" }}
-              onAccept={handleOnAccept}
-              onReject={handleOnReject}
+              onAccept={() => closeAiMenu()}
+              onReject={() => closeAiMenu()}
             />
           )}
         </Card>

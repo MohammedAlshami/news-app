@@ -3,7 +3,7 @@
 import { useMemo, useRef } from "react"
 import { EditorContent, EditorContext, useEditor } from "@tiptap/react"
 import type { ReactNode } from "react"
-import type { SuggestionItem } from "@/components/tiptap-ui-utils/suggestion-menu"
+import { Ai } from "@tiptap-pro/extension-ai"
 
 import { Spacer } from "@/components/tiptap-ui-primitive/spacer"
 import {
@@ -32,8 +32,9 @@ import { TextAlignButton } from "@/components/tiptap-ui/text-align-button"
 import { UndoRedoButton } from "@/components/tiptap-ui/undo-redo-button"
 import { SlashDropdownMenu } from "@/components/tiptap-ui/slash-dropdown-menu"
 import { DragContextMenu } from "@/components/tiptap-ui/drag-context-menu"
+import { AiMenu } from "@/components/tiptap-ui/ai-menu"
+import { AiPromptDock } from "@/components/tiptap-ui/ai-prompt-dock"
 import { NotionToolbarFloating } from "@/components/tiptap-templates/notion-like/notion-like-editor-toolbar-floating"
-import { AiSparklesIcon } from "@/components/tiptap-icons/ai-sparkles-icon"
 
 // --- Hooks ---
 import { useIsBreakpoint } from "@/hooks/use-is-breakpoint"
@@ -41,6 +42,12 @@ import { useIsBreakpoint } from "@/hooks/use-is-breakpoint"
 // --- Lib ---
 import { getArticleTiptapExtensions } from "@/lib/tiptap-article-extensions"
 import { cn } from "@/lib/utils"
+import { TIPTAP_AI_APP_ID, TIPTAP_AI_TOKEN } from "@/lib/tiptap-collab-utils"
+import {
+  createEditorOpenRouterCompletionResolver,
+  createEditorOpenRouterStreamResolver,
+} from "@/lib/editor-inline-openrouter"
+import type { SlashMenuConfig } from "@/components/tiptap-ui/use-slash-dropdown-menu"
 
 // --- Styles ---
 import "@/components/tiptap-templates/simple/simple-editor.scss"
@@ -127,8 +134,6 @@ type SimpleEditorProps = {
   toolbarActions?: ReactNode
   /** Extra className applied to the toolbar container. */
   toolbarClassName?: string
-  /** Opens the local AI prompt UI from the slash menu. */
-  onAiRequest?: () => void
 }
 
 export function SimpleEditor({
@@ -139,18 +144,47 @@ export function SimpleEditor({
   articleId,
   toolbarActions,
   toolbarClassName,
-  onAiRequest,
 }: SimpleEditorProps = {}) {
   const isMobile = useIsBreakpoint()
   const toolbarRef = useRef<HTMLDivElement>(null)
-  const doc = initialDocument ?? simpleEditorEmptyDocument
+  const doc = (initialDocument ?? simpleEditorEmptyDocument) as Record<string, unknown>
 
   const extensions = useMemo(
     () =>
-      getArticleTiptapExtensions({
-        linkOpenOnClick: false,
-        articleId,
+      [
+        ...getArticleTiptapExtensions({
+          linkOpenOnClick: false,
+          articleId,
+        }),
+        Ai.configure({
+          appId: TIPTAP_AI_APP_ID,
+          token: TIPTAP_AI_TOKEN || undefined,
+          autocompletion: false,
+          showDecorations: true,
+          hideDecorationsOnStreamEnd: false,
+          aiStreamResolver: createEditorOpenRouterStreamResolver(),
+          aiCompletionResolver: createEditorOpenRouterCompletionResolver(),
+        onLoading: (context) => {
+          context.editor.commands.aiGenerationSetIsLoading(true)
+          context.editor.commands.aiGenerationHasMessage(false)
+          context.editor.commands.aiGenerationSetNeedsCommit(false)
+        },
+        onChunk: (context) => {
+          context.editor.commands.aiGenerationSetIsLoading(true)
+          context.editor.commands.aiGenerationHasMessage(true)
+        },
+        onSuccess: (context) => {
+          const hasMessage =
+            !!context.response ||
+            !!context.editor.storage.uiState.aiGenerationIsSelection
+          context.editor.commands.aiGenerationSetIsLoading(false)
+          context.editor.commands.aiGenerationHasMessage(hasMessage)
+          context.editor.commands.aiGenerationSetNeedsCommit(
+            !!context.editor.storage.uiState.aiGenerationIsSelection
+          )
+        },
       }),
+      ],
     [articleId],
   )
 
@@ -179,8 +213,11 @@ export function SimpleEditor({
   )
 
   const slashMenuConfig = useMemo(
-    () => ({
+    () =>
+      ({
       enabledItems: [
+        "continue_writing",
+        "ai_ask_button",
         "text",
         "heading_1",
         "heading_2",
@@ -194,28 +231,10 @@ export function SimpleEditor({
         "divider",
         "toc",
         "image",
-      ] as const,
-      customItems: onAiRequest
-        ? [
-            {
-              title: "اكتب باستخدام الذكاء الاصطناعي",
-              subtext: "ابدأ فقرة جديدة أو واصل الكتابة",
-              keywords: ["ai", "write", "generate"],
-              badge: AiSparklesIcon,
-              group: "الذكاء الاصطناعي",
-              onSelect: () => onAiRequest(),
-            } satisfies SuggestionItem,
-            {
-              title: "اسأل الذكاء الاصطناعي",
-              subtext: "اطرح سؤالاً أو حسّن النص المحدد",
-              keywords: ["ai", "ask", "improve"],
-              badge: AiSparklesIcon,
-              group: "الذكاء الاصطناعي",
-              onSelect: () => onAiRequest(),
-            } satisfies SuggestionItem,
-          ]
-        : [],
+      ],
       itemGroups: {
+        continue_writing: "الذكاء الاصطناعي",
+        ai_ask_button: "الذكاء الاصطناعي",
         text: "تنسيق",
         heading_1: "تنسيق",
         heading_2: "تنسيق",
@@ -231,8 +250,8 @@ export function SimpleEditor({
         image: "رفع",
       },
       showGroups: true,
-    }),
-    [onAiRequest],
+      } as SlashMenuConfig),
+    [],
   )
 
   return (
@@ -261,6 +280,8 @@ export function SimpleEditor({
           role="presentation"
           className="simple-editor-content"
         />
+        <AiMenu />
+        <AiPromptDock editor={editor} />
         <SlashDropdownMenu config={slashMenuConfig} />
         <DragContextMenu />
         <NotionToolbarFloating />

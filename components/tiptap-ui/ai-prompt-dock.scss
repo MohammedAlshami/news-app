@@ -1,0 +1,16 @@
+.tiptap-ai-prompt-dock {
+  position: fixed;
+  left: 50%;
+  bottom: 28px;
+  z-index: 60;
+  width: min(600px, calc(100vw - 32px));
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.tiptap-ai-prompt-dock .tiptap-ai-prompt-input {
+  pointer-events: auto;
+  box-shadow:
+    0 20px 45px rgba(15, 23, 42, 0.08),
+    0 2px 8px rgba(15, 23, 42, 0.04);
+}

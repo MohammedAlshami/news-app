@@ -190,11 +190,7 @@ const getItemImplementations = () => {
     continue_writing: {
       check: (editor: Editor) => {
         const { hasContent } = hasContentAbove(editor)
-        const extensionsReady = isExtensionAvailable(editor, [
-          "ai",
-          "aiAdvanced",
-        ])
-        return extensionsReady && hasContent
+        return hasContent
       },
       action: ({ editor }: { editor: Editor }) => {
         const editorChain = editor.chain().focus()
@@ -206,8 +202,7 @@ const getItemImplementations = () => {
         }
 
         editorChain.run()
-
-        editor.chain().focus().aiGenerationShow().run()
+        editor.commands.aiGenerationShow()
 
         requestAnimationFrame(() => {
           const { hasContent, content } = hasContentAbove(editor)
@@ -232,10 +227,12 @@ const getItemImplementations = () => {
       },
     },
     ai_ask_button: {
-      check: (editor: Editor) =>
-        isExtensionAvailable(editor, ["ai", "aiAdvanced"]),
+      check: (editor: Editor) => editor.isEditable,
       action: ({ editor }: { editor: Editor }) => {
         const editorChain = editor.chain().focus()
+        const hasSelection = !editor.state.selection.empty
+        editor.commands.aiGenerationSetIsSelection(hasSelection)
+        editor.commands.aiGenerationSetNeedsCommit(hasSelection)
 
         const nodeSelectionPosition = findSelectionPosition({ editor })
 
@@ -244,8 +241,7 @@ const getItemImplementations = () => {
         }
 
         editorChain.run()
-
-        editor.chain().focus().aiGenerationShow().run()
+        editor.commands.aiGenerationShow()
       },
     },
 
