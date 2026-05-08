@@ -8,6 +8,7 @@ import { AdminCategorySelect } from "@/components/admin-category-select"
 import { ArticleCoverField } from "@/components/article-cover-field"
 import { SimpleEditor } from "@/components/tiptap-templates/simple/simple-editor"
 import { Button } from "@/components/ui/button"
+import { Sparkles } from "lucide-react"
 import {
   Sheet,
   SheetContent,
@@ -196,20 +197,33 @@ export function CreateArticleForm({
                     Draft the story with the local editor.
                   </p>
                 </div>
-                <Sheet open={infoOpen} onOpenChange={setInfoOpen}>
-                  <SheetTrigger asChild>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="rounded-full border-border/70 px-3 shadow-sm"
-                      aria-label="Article info"
-                      title="Article info"
-                    >
-                      <Info className="size-4" />
-                      <span className="sr-only">Article info</span>
-                    </Button>
-                  </SheetTrigger>
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="rounded-full border-border/70 px-3 shadow-sm"
+                    aria-label="Editor action"
+                    title="Editor action"
+                  >
+                    <Sparkles className="size-4" />
+                    <span className="sr-only">Editor action</span>
+                  </Button>
+
+                  <Sheet open={infoOpen} onOpenChange={setInfoOpen}>
+                    <SheetTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="rounded-full border-border/70 px-3 shadow-sm"
+                        aria-label="Article info"
+                        title="Article info"
+                      >
+                        <Info className="size-4" />
+                        <span className="sr-only">Article info</span>
+                      </Button>
+                    </SheetTrigger>
                   <SheetContent side="right" className="w-[22rem] sm:w-[24rem]">
                     <div className="flex h-full min-h-0 flex-col px-5 py-6">
                       <SheetHeader className="px-0 pt-0">
@@ -238,6 +252,7 @@ export function CreateArticleForm({
                     </div>
                   </SheetContent>
                 </Sheet>
+                </div>
               </div>
             </div>
 
