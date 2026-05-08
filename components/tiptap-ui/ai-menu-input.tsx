@@ -17,7 +17,10 @@ import { SUPPORTED_TONES } from "@/components/tiptap-ui/ai-menu-items"
 import { Button } from "@/components/tiptap-ui-primitive/button"
 import { Spacer } from "@/components/tiptap-ui-primitive/spacer"
 import { Toolbar, ToolbarGroup } from "@/components/tiptap-ui-primitive/toolbar"
-import { Combobox } from "@/components/tiptap-ui-primitive/combobox"
+import {
+  Combobox,
+  ComboboxProvider,
+} from "@/components/tiptap-ui-primitive/combobox"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -210,44 +213,46 @@ export function AiMenuInputTextarea({
   )
 
   return (
-    <div
-      className="tiptap-ai-prompt-input"
-      data-focused={isFocused}
-      data-active-state={showPlaceholder ? "off" : "on"}
-      {...props}
-    >
-      {showPlaceholder ? (
-        <AiMenuInputPlaceholder onPlaceholderClick={handleOnPlaceholderClick} />
-      ) : (
-        <>
-          <Combobox
-            autoSelect="always"
-            autoFocus
-            render={
-              <TextareaAutosize
-                onChange={(e) => setPromptValue(e.target.value)}
-                value={promptValue}
-                onKeyDown={handleKeyDown}
-                onFocus={handleFocus}
-                onBlur={handleTextareaBlur}
-                className="tiptap-ai-prompt-input-content"
-                placeholder={placeholder}
-                autoFocus
-                style={{
-                  display: showPlaceholder ? "none" : "flex",
-                }}
-              />
-            }
-          />
+    <ComboboxProvider value={promptValue} setValue={setPromptValue}>
+      <div
+        className="tiptap-ai-prompt-input"
+        data-focused={isFocused}
+        data-active-state={showPlaceholder ? "off" : "on"}
+        {...props}
+      >
+        {showPlaceholder ? (
+          <AiMenuInputPlaceholder onPlaceholderClick={handleOnPlaceholderClick} />
+        ) : (
+          <>
+            <Combobox
+              autoSelect="always"
+              autoFocus
+              render={
+                <TextareaAutosize
+                  onChange={(e) => setPromptValue(e.target.value)}
+                  value={promptValue}
+                  onKeyDown={handleKeyDown}
+                  onFocus={handleFocus}
+                  onBlur={handleTextareaBlur}
+                  className="tiptap-ai-prompt-input-content"
+                  placeholder={placeholder}
+                  autoFocus
+                  style={{
+                    display: showPlaceholder ? "none" : "flex",
+                  }}
+                />
+              }
+            />
 
-          <AiPromptInputToolbar
-            showPlaceholder={showPlaceholder}
-            onInputSubmit={handleSubmit}
-            onToneChange={onToneChange}
-            isEmpty={!promptValue?.trim()}
-          />
-        </>
-      )}
-    </div>
+            <AiPromptInputToolbar
+              showPlaceholder={showPlaceholder}
+              onInputSubmit={handleSubmit}
+              onToneChange={onToneChange}
+              isEmpty={!promptValue?.trim()}
+            />
+          </>
+        )}
+      </div>
+    </ComboboxProvider>
   )
 }
