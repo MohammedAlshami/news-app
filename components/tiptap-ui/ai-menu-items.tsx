@@ -10,9 +10,9 @@ import { useTiptapEditor } from "@/hooks/use-tiptap-editor"
 
 // -- Tiptap UI --
 import {
-  getContextAndInsertAt,
   useAiMenuState,
 } from "@/components/tiptap-ui/ai-menu"
+import { getContextAndInsertAt } from "@/components/tiptap-ui/ai-menu-utils"
 
 // -- UI Primitives --
 import {
