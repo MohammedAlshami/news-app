@@ -98,6 +98,7 @@ const MainToolbarContent = ({
 
       <ToolbarGroup>
         <ImageUploadButton text="Add" />
+        {toolbarActions}
       </ToolbarGroup>
 
       <Spacer />
@@ -183,11 +184,6 @@ export function SimpleEditor({
           ref={toolbarRef}
           className={toolbarClassName}
         >
-          {toolbarActions ? (
-            <div className="flex w-full items-center justify-start gap-2">
-              {toolbarActions}
-            </div>
-          ) : null}
           <div className="flex w-full items-center pt-2">
             <MainToolbarContent
               onLinkClick={() => {}}
