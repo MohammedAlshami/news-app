@@ -6,7 +6,7 @@ import { useState } from "react"
 import { AdminCategoryModals } from "@/components/admin-category-modals"
 import { AdminCategorySelect } from "@/components/admin-category-select"
 import { ArticleCoverField } from "@/components/article-cover-field"
-import { NotionEditor } from "@/components/tiptap-templates/notion-like/notion-like-editor"
+import { SimpleEditor } from "@/components/tiptap-templates/simple/simple-editor"
 import { Button } from "@/components/ui/button"
 import {
   Sheet,
@@ -190,10 +190,10 @@ export function CreateArticleForm({
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <p className="text-xs font-medium uppercase tracking-[0.24em] text-muted-foreground">
-                    Notion-like editor
+                    Article editor
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    Draft the story in the installed Tiptap template.
+                    Draft the story with the local editor.
                   </p>
                 </div>
                 <Sheet open={infoOpen} onOpenChange={setInfoOpen}>
@@ -242,7 +242,7 @@ export function CreateArticleForm({
             </div>
 
             <div className="p-3 sm:p-4">
-              <NotionEditor room={articleId} placeholder="Start writing..." />
+              <SimpleEditor embedded articleId={articleId} />
             </div>
           </div>
         </div>

@@ -84,7 +84,6 @@ import "@/components/tiptap-templates/notion-like/notion-like-editor.scss"
 import { NotionEditorHeader } from "@/components/tiptap-templates/notion-like/notion-like-editor-header"
 import { MobileToolbar } from "@/components/tiptap-templates/notion-like/notion-like-editor-mobile-toolbar"
 import { NotionToolbarFloating } from "@/components/tiptap-templates/notion-like/notion-like-editor-toolbar-floating"
-import { SetupErrorMessage } from "@/components/tiptap-templates/notion-like/setup-error-message"
 import { TocSidebar } from "@/components/tiptap-node/toc-sidebar"
 import { TocProvider, useToc } from "@/components/tiptap-node/toc-context"
 import { ListNormalizationExtension } from "@/components/tiptap-extension/list-normalization-extension"
@@ -362,20 +361,10 @@ export function NotionEditor({
  * Internal component that handles the editor loading state
  */
 export function NotionEditorContent({ placeholder }: { placeholder?: string }) {
-  const { provider, ydoc, setupError: collabSetupError } = useCollab()
-  const { aiToken, setupError: aiSetupError } = useAi()
+  const { provider, ydoc } = useCollab()
+  const { aiToken } = useAi()
 
-  // Show setup error if either collab or AI setup failed
-  if (collabSetupError || aiSetupError) {
-    return (
-      <SetupErrorMessage
-        aiSetupError={aiSetupError}
-        collabSetupError={collabSetupError}
-      />
-    )
-  }
-
-  if (!provider || !aiToken) {
+  if (!provider) {
     return <LoadingSpinner />
   }
 
@@ -384,7 +373,7 @@ export function NotionEditorContent({ placeholder }: { placeholder?: string }) {
       provider={provider}
       ydoc={ydoc}
       placeholder={placeholder}
-      aiToken={aiToken}
+      aiToken={aiToken ?? null}
     />
   )
 }
