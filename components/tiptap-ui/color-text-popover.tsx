@@ -57,7 +57,9 @@ export {
   useRecentColors,
   getColorByValue,
 } from "@/components/tiptap-ui/use-color-text-popover"
-export { useColorTextPopover } from "@/components/tiptap-ui/use-color-text-popover"
+export {
+  useColorTextPopover,
+} from "@/components/tiptap-ui/use-color-text-popover"
 
 // ─── Shared types ────────────────────────────────────────────────────────────
 
