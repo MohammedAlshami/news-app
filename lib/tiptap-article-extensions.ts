@@ -8,6 +8,7 @@ import { StarterKit } from "@tiptap/starter-kit"
 import type { AnyExtension } from "@tiptap/core"
 
 import { uploadArticleInlineImageAction } from "@/app/admin/articles/actions"
+import { UiState } from "@/components/tiptap-extension/ui-state-extension"
 import { ImageUploadNode } from "@/components/tiptap-node/image-upload-node/image-upload-node-extension"
 import { HorizontalRule } from "@/components/tiptap-node/horizontal-rule-node/horizontal-rule-node-extension"
 import { handleImageUpload, MAX_FILE_SIZE } from "@/lib/tiptap-utils"
@@ -75,6 +76,7 @@ export function getArticleTiptapExtensions(
     Image,
     Typography,
     Selection,
+    UiState,
     ImageUploadNode.configure({
       accept: "image/*",
       maxSize: MAX_FILE_SIZE,
