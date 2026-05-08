@@ -185,76 +185,62 @@ export function CreateArticleForm({
 
       <div className="flex min-h-[calc(100svh-15rem)] w-full min-w-0">
         <div className="relative min-h-[70vh] min-w-0 flex-1 overflow-visible">
-          <div className="rounded-[28px] border border-border/70 bg-background/95 shadow-lg backdrop-blur">
-            <div className="border-b border-border/60 px-5 py-4">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-xs font-medium uppercase tracking-[0.24em] text-muted-foreground">
-                    Article editor
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    Draft the story with the local editor.
-                  </p>
+          <div className="bg-background/95">
+            <Sheet open={infoOpen} onOpenChange={setInfoOpen}>
+              <SheetContent side="right" className="w-[22rem] sm:w-[24rem]">
+                <div className="flex h-full min-h-0 flex-col px-5 py-6">
+                  <SheetHeader className="px-0 pt-0">
+                    <SheetTitle>Article info</SheetTitle>
+                    <SheetDescription>Title, excerpt, categories, and publish state.</SheetDescription>
+                  </SheetHeader>
+                  <div className="min-h-0 flex-1 overflow-y-auto pr-1">
+                    <ArticleInfoSheet
+                      categories={categories}
+                      articleId={articleId}
+                      initialCoverImageUrl={initialCoverImageUrl}
+                      title={title}
+                      setTitle={setTitle}
+                      excerpt={excerpt}
+                      setExcerpt={setExcerpt}
+                      isPublished={isPublished}
+                      setIsPublished={setIsPublished}
+                      categoryIds={categoryIds}
+                      setCategoryIds={setCategoryIds}
+                      addCategoryOpen={addCategoryOpen}
+                      setAddCategoryOpen={setAddCategoryOpen}
+                      editCategoryOpen={editCategoryOpen}
+                      setEditCategoryOpen={setEditCategoryOpen}
+                    />
+                  </div>
                 </div>
-                <Sheet open={infoOpen} onOpenChange={setInfoOpen}>
-                  <SheetContent side="right" className="w-[22rem] sm:w-[24rem]">
-                    <div className="flex h-full min-h-0 flex-col px-5 py-6">
-                      <SheetHeader className="px-0 pt-0">
-                        <SheetTitle>Article info</SheetTitle>
-                        <SheetDescription>Title, excerpt, categories, and publish state.</SheetDescription>
-                      </SheetHeader>
-                      <div className="min-h-0 flex-1 overflow-y-auto pr-1">
-                        <ArticleInfoSheet
-                          categories={categories}
-                          articleId={articleId}
-                          initialCoverImageUrl={initialCoverImageUrl}
-                          title={title}
-                          setTitle={setTitle}
-                          excerpt={excerpt}
-                          setExcerpt={setExcerpt}
-                          isPublished={isPublished}
-                          setIsPublished={setIsPublished}
-                          categoryIds={categoryIds}
-                          setCategoryIds={setCategoryIds}
-                          addCategoryOpen={addCategoryOpen}
-                          setAddCategoryOpen={setAddCategoryOpen}
-                          editCategoryOpen={editCategoryOpen}
-                          setEditCategoryOpen={setEditCategoryOpen}
-                        />
-                      </div>
-                    </div>
-                  </SheetContent>
-                </Sheet>
-              </div>
-            </div>
+              </SheetContent>
+            </Sheet>
 
-            <div className="p-3 sm:p-4">
-              <SimpleEditor
-                embedded
-                articleId={articleId}
-                toolbarActions={
-                  <>
-                    <TiptapButton
-                      type="button"
-                      variant="ghost"
-                      tooltip="Editor action"
-                      aria-label="Editor action"
-                    >
-                      <Sparkles className="tiptap-button-icon" strokeWidth={1.75} />
-                    </TiptapButton>
-                    <TiptapButton
-                      type="button"
-                      variant="ghost"
-                      tooltip="Article info"
-                      aria-label="Article info"
-                      onClick={() => setInfoOpen(true)}
-                    >
-                      <Info className="tiptap-button-icon" strokeWidth={1.75} />
-                    </TiptapButton>
-                  </>
-                }
-              />
-            </div>
+            <SimpleEditor
+              embedded
+              articleId={articleId}
+              toolbarActions={
+                <>
+                  <TiptapButton
+                    type="button"
+                    variant="ghost"
+                    tooltip="Editor action"
+                    aria-label="Editor action"
+                  >
+                    <Sparkles className="tiptap-button-icon" strokeWidth={1.75} />
+                  </TiptapButton>
+                  <TiptapButton
+                    type="button"
+                    variant="ghost"
+                    tooltip="Article info"
+                    aria-label="Article info"
+                    onClick={() => setInfoOpen(true)}
+                  >
+                    <Info className="tiptap-button-icon" strokeWidth={1.75} />
+                  </TiptapButton>
+                </>
+              }
+            />
           </div>
         </div>
       </div>
