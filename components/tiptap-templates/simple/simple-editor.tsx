@@ -53,9 +53,11 @@ export const simpleEditorEmptyDocument = tiptapEmptyDocument
 const MainToolbarContent = ({
   onLinkClick,
   isMobile,
+  toolbarActions,
 }: {
   onLinkClick: () => void
   isMobile: boolean
+  toolbarActions?: ReactNode
 }) => {
   return (
     <>
@@ -188,6 +190,7 @@ export function SimpleEditor({
             <MainToolbarContent
               onLinkClick={() => {}}
               isMobile={isMobile}
+              toolbarActions={toolbarActions}
             />
           </div>
         </Toolbar>
