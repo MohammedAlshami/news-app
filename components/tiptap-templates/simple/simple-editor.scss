@@ -71,6 +71,7 @@ body,
   overflow-x: hidden;
   overflow-y: visible;
   box-sizing: border-box;
+  background-color: rgba(239, 68, 68, 0.15);
 }
 
 .simple-editor-wrapper--embedded .simple-editor-content {
@@ -80,6 +81,7 @@ body,
   margin-inline: 0;
   min-width: 0;
   overflow-x: hidden;
+  background-color: rgba(220, 38, 38, 0.18);
 }
 
 .simple-editor-content {
