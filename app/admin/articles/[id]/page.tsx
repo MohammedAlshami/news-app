@@ -33,7 +33,7 @@ export default async function AdminEditArticlePage({ params }: PageProps) {
   const initialCategoryIds = row.categoryId ? [row.categoryId] : []
 
   return (
-    <div className="flex-1 p-4 md:p-6 lg:p-8">
+    <div className="flex h-full min-h-0 flex-col p-4 md:p-6 lg:p-8">
       <CreateArticleForm
         key={row.id}
         articleId={row.id}

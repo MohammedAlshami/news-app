@@ -173,7 +173,7 @@ export function CreateArticleForm({
   const [infoOpen, setInfoOpen] = useState(false)
 
   return (
-    <div className="min-h-[calc(100svh-9rem)] space-y-6">
+    <div className="flex min-h-0 flex-1 flex-col gap-6">
       {categories.length === 0 ? (
         <p
           className="rounded-lg border border-amber-500/35 bg-amber-500/10 px-3 py-2 text-sm text-amber-950 dark:text-amber-100"
@@ -183,9 +183,9 @@ export function CreateArticleForm({
         </p>
       ) : null}
 
-      <div className="flex min-h-[calc(100svh-15rem)] w-full min-w-0">
-        <div className="relative min-h-[70vh] min-w-0 flex-1 overflow-visible">
-          <div className="bg-background/95">
+      <div className="flex min-h-0 flex-1 w-full min-w-0">
+        <div className="relative min-h-0 min-w-0 flex-1 overflow-visible">
+          <div className="flex h-full min-h-0 flex-col bg-background/95">
             <Sheet open={infoOpen} onOpenChange={setInfoOpen}>
               <SheetContent side="right" className="w-[22rem] sm:w-[24rem]">
                 <div className="flex h-full min-h-0 flex-col px-5 py-6">
@@ -216,31 +216,33 @@ export function CreateArticleForm({
               </SheetContent>
             </Sheet>
 
-            <SimpleEditor
-              embedded
-              articleId={articleId}
-              toolbarActions={
-                <>
-                  <TiptapButton
-                    type="button"
-                    variant="ghost"
-                    tooltip="Editor action"
-                    aria-label="Editor action"
-                  >
-                    <Sparkles className="tiptap-button-icon" strokeWidth={1.75} />
-                  </TiptapButton>
-                  <TiptapButton
-                    type="button"
-                    variant="ghost"
-                    tooltip="Article info"
-                    aria-label="Article info"
-                    onClick={() => setInfoOpen(true)}
-                  >
-                    <Info className="tiptap-button-icon" strokeWidth={1.75} />
-                  </TiptapButton>
-                </>
-              }
-            />
+            <div className="flex min-h-0 flex-1">
+              <SimpleEditor
+                embedded
+                articleId={articleId}
+                toolbarActions={
+                  <>
+                    <TiptapButton
+                      type="button"
+                      variant="ghost"
+                      tooltip="Editor action"
+                      aria-label="Editor action"
+                    >
+                      <Sparkles className="tiptap-button-icon" strokeWidth={1.75} />
+                    </TiptapButton>
+                    <TiptapButton
+                      type="button"
+                      variant="ghost"
+                      tooltip="Article info"
+                      aria-label="Article info"
+                      onClick={() => setInfoOpen(true)}
+                    >
+                      <Info className="tiptap-button-icon" strokeWidth={1.75} />
+                    </TiptapButton>
+                  </>
+                }
+              />
+            </div>
           </div>
         </div>
       </div>
