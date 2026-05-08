@@ -1,6 +1,6 @@
 "use client"
 
-import { Info, ImagePlus } from "lucide-react"
+import { Info, Sparkles } from "lucide-react"
 import { useState } from "react"
 
 import { AdminCategoryModals } from "@/components/admin-category-modals"
@@ -15,7 +15,6 @@ import {
   SheetDescription,
   SheetHeader,
   SheetTitle,
-  SheetTrigger,
 } from "@/components/ui/sheet"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -198,19 +197,6 @@ export function CreateArticleForm({
                   </p>
                 </div>
                 <Sheet open={infoOpen} onOpenChange={setInfoOpen}>
-                    <SheetTrigger asChild>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="rounded-full border-border/70 px-3 shadow-sm"
-                        aria-label="Article info"
-                        title="Article info"
-                      >
-                        <Info className="size-4" />
-                        <span className="sr-only">Article info</span>
-                      </Button>
-                    </SheetTrigger>
                   <SheetContent side="right" className="w-[22rem] sm:w-[24rem]">
                     <div className="flex h-full min-h-0 flex-col px-5 py-6">
                       <SheetHeader className="px-0 pt-0">
@@ -247,14 +233,25 @@ export function CreateArticleForm({
                 embedded
                 articleId={articleId}
                 toolbarActions={
-                  <TiptapButton
-                    type="button"
-                    variant="ghost"
-                    tooltip="Editor action"
-                    aria-label="Editor action"
-                  >
-                    <ImagePlus className="tiptap-button-icon" strokeWidth={1.75} />
-                  </TiptapButton>
+                  <>
+                    <TiptapButton
+                      type="button"
+                      variant="ghost"
+                      tooltip="Editor action"
+                      aria-label="Editor action"
+                    >
+                      <Sparkles className="tiptap-button-icon" strokeWidth={1.75} />
+                    </TiptapButton>
+                    <TiptapButton
+                      type="button"
+                      variant="ghost"
+                      tooltip="Article info"
+                      aria-label="Article info"
+                      onClick={() => setInfoOpen(true)}
+                    >
+                      <Info className="tiptap-button-icon" strokeWidth={1.75} />
+                    </TiptapButton>
+                  </>
                 }
               />
             </div>
