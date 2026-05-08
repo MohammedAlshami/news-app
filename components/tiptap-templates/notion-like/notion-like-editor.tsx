@@ -1,6 +1,6 @@
 "use client"
 
-import { useContext, useEffect } from "react"
+import { useContext } from "react"
 import { EditorContent, EditorContext, useEditor } from "@tiptap/react"
 import type { Doc as YDoc } from "yjs"
 import type { TiptapCollabProvider } from "@tiptap-pro/provider"
@@ -123,31 +123,7 @@ export function LoadingSpinner({ text = "Connecting..." }: { text?: string }) {
  */
 export function EditorContentArea() {
   const { editor } = useContext(EditorContext)!
-  const {
-    aiGenerationIsLoading,
-    aiGenerationIsSelection,
-    aiGenerationHasMessage,
-    isDragging,
-  } = useUiEditorState(editor)
-
-  // Selection based effect to handle AI generation acceptance
-  useEffect(() => {
-    if (!editor) return
-
-    if (
-      !aiGenerationIsLoading &&
-      aiGenerationIsSelection &&
-      aiGenerationHasMessage
-    ) {
-      editor.chain().focus().aiAccept().run()
-      editor.commands.resetUiState()
-    }
-  }, [
-    aiGenerationHasMessage,
-    aiGenerationIsLoading,
-    aiGenerationIsSelection,
-    editor,
-  ])
+  const { isDragging } = useUiEditorState(editor)
 
   useScrollToHash()
 
@@ -292,15 +268,21 @@ export function EditorProvider(props: EditorProviderProps) {
         onLoading: (context) => {
           context.editor.commands.aiGenerationSetIsLoading(true)
           context.editor.commands.aiGenerationHasMessage(false)
+          context.editor.commands.aiGenerationSetNeedsCommit(false)
         },
         onChunk: (context) => {
           context.editor.commands.aiGenerationSetIsLoading(true)
           context.editor.commands.aiGenerationHasMessage(true)
         },
         onSuccess: (context) => {
-          const hasMessage = !!context.response
+          const hasMessage =
+            !!context.response ||
+            !!context.editor.storage.uiState.aiGenerationIsSelection
           context.editor.commands.aiGenerationSetIsLoading(false)
           context.editor.commands.aiGenerationHasMessage(hasMessage)
+          context.editor.commands.aiGenerationSetNeedsCommit(
+            !!context.editor.storage.uiState.aiGenerationIsSelection
+          )
         },
       }),
     ],

@@ -48,7 +48,7 @@ export function AiMenuInputPlaceholder({
       <div className="tiptap-ai-prompt-input-placeholder-content">
         <AiSparklesIcon className="tiptap-ai-prompt-input-placeholder-icon" />
         <span className="tiptap-ai-prompt-input-placeholder-text">
-          Tell AI what else needs to be changed...
+          اكتب ما تريد أن يكتبه الذكاء الاصطناعي...
         </span>
       </div>
       <Button data-style="primary" disabled>
@@ -74,10 +74,10 @@ export function ToneSelector({
           data-active-state={tone ? "on" : "off"}
           role="button"
           tabIndex={-1}
-          aria-label="Tone adjustment options"
+          aria-label="خيارات النبرة"
         >
           <MicAiIcon className="tiptap-button-icon" />
-          <span className="tiptap-button-text">Tone</span>
+          <span className="tiptap-button-text">النبرة</span>
         </Button>
       </DropdownMenuTrigger>
 
@@ -137,12 +137,6 @@ export function AiPromptInputToolbar({
       style={{ display: showPlaceholder ? "none" : "flex" }}
     >
       <ToolbarGroup>
-        <ToneSelector tone={tone} onToneChange={handleToneChange} />
-      </ToolbarGroup>
-
-      <Spacer />
-
-      <ToolbarGroup>
         <Button
           onClick={handleSubmit}
           disabled={isEmpty}
@@ -151,7 +145,11 @@ export function AiPromptInputToolbar({
         >
           <ArrowUpIcon className="tiptap-button-icon" />
         </Button>
+
+        <ToneSelector tone={tone} onToneChange={handleToneChange} />
       </ToolbarGroup>
+
+      <Spacer />
     </Toolbar>
   )
 }
@@ -165,7 +163,7 @@ export function AiMenuInputTextarea({
   onEmptyBlur,
   onPlaceholderClick,
   showPlaceholder = false,
-  placeholder = "Ask AI what you want...",
+  placeholder = "اكتب ما تريد من الذكاء الاصطناعي...",
   ...props
 }: AiMenuInputTextareaProps) {
   const [promptValue, setPromptValue] = useState("")
@@ -228,6 +226,7 @@ export function AiMenuInputTextarea({
             className="tiptap-ai-prompt-input-content"
             placeholder={placeholder}
             autoFocus
+            dir="rtl"
             style={{
               display: showPlaceholder ? "none" : "flex",
             }}

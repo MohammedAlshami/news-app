@@ -309,3 +309,15 @@ export function MenuItem({
 
   return <ComboboxItem {...itemProps} hideOnClick={hideOnClick} />
 }
+
+export type { Action } from "@/components/tiptap-ui-primitive/menu-types"
+export {
+  filterMenuGroups,
+  filterMenuItems,
+} from "@/components/tiptap-ui-primitive/menu-utils"
+export {
+  useComboboxValueState,
+  useFloatingMenuStore,
+  useMenuItemClick,
+  useMenuPlacement,
+} from "@/components/tiptap-ui-primitive/menu-hooks"

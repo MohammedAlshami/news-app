@@ -3,6 +3,8 @@ import { NextResponse } from "next/server"
 const OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions"
 const OPENROUTER_MODEL = process.env.OPENROUTER_MODEL || "openai/gpt-4o-mini"
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY || ""
+const INLINE_EDITOR_SYSTEM_PROMPT =
+  "You are an inline Arabic news editor inside a rich-text editor. Return only the text to insert. Do not use markdown fences, headings, or commentary."
 
 export async function POST(request: Request) {
   if (!OPENROUTER_API_KEY) {
@@ -17,6 +19,7 @@ export async function POST(request: Request) {
   const title = body?.title?.toString?.() ?? ""
   const excerpt = body?.excerpt?.toString?.() ?? ""
   const mode = body?.mode?.toString?.() ?? "write"
+  const editorInline = body?.editorInline === true
 
   if (!prompt.trim()) {
     return NextResponse.json({ error: "Prompt is required." }, { status: 400 })
@@ -25,13 +28,14 @@ export async function POST(request: Request) {
   const messages = [
     {
       role: "system",
-      content:
-        "You are an Arabic news editor. Write concise, polished Arabic copy. Return only the text to insert into the article, with no markdown fences or commentary.",
+      content: editorInline
+        ? INLINE_EDITOR_SYSTEM_PROMPT
+        : "You are an Arabic news editor. Write concise, polished Arabic copy. Return only the text to insert into the article, with no markdown fences or commentary.",
     },
     {
       role: "user",
       content: [
-        `Mode: ${mode}`,
+        editorInline ? "Mode: inline-editor" : `Mode: ${mode}`,
         title ? `Title: ${title}` : "",
         excerpt ? `Excerpt: ${excerpt}` : "",
         `Prompt: ${prompt}`,

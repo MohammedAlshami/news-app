@@ -123,10 +123,16 @@ export function getContextAndInsertAt(editor: Editor) {
   let context: string | undefined = ""
   let insertAt = { from: 0, to: 0 }
   let isSelection = true
-  const generatedWith = editor.storage.ai.generatedWith
+  const aiStorage = editor.storage.ai as
+    | {
+        generatedWith?: { range?: { from: number; to: number } }
+        response?: string
+      }
+    | undefined
+  const generatedWith = aiStorage?.generatedWith
 
   if (generatedWith && generatedWith.range) {
-    context = editor.storage.ai.response
+    context = aiStorage?.response
     insertAt = generatedWith.range
     isSelection = false
   }

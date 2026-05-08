@@ -1,12 +1,11 @@
 "use client"
 
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useSyncExternalStore } from "react"
 import { isNodeSelection, type Editor } from "@tiptap/react"
 import { useHotkeys } from "react-hotkeys-hook"
 
 // --- Lib ---
 import {
-  isExtensionAvailable,
   isNodeTypeSelected,
 } from "@/lib/tiptap-utils"
 
@@ -34,16 +33,11 @@ export interface UseAiAskConfig {
 }
 
 export const AI_ASK_SHORTCUT_KEY = "mod+j"
-export const AI_EXTENSIONS = ["aiGeneration", "ai"]
 export const EXCLUDED_SELECTION_TYPES = ["codeBlock", "image", "imageUpload"]
 
 export const canPerformAiAsk = (editor: Editor | null): boolean => {
   if (!editor || !editor.isEditable) return false
-  // TODO: Wait until AI extensions support for image
-  if (
-    !isExtensionAvailable(editor, AI_EXTENSIONS) ||
-    isNodeTypeSelected(editor, ["image", "horizontalRule", "tocNode"])
-  )
+  if (isNodeTypeSelected(editor, ["image", "horizontalRule", "tocNode"]))
     return false
 
   const { selection } = editor.state
@@ -72,8 +66,6 @@ export function shouldShowButton(props: {
   }
 
   if (!editor.isEditable) return false
-
-  if (!isExtensionAvailable(editor, AI_EXTENSIONS)) return false
 
   if (!editor.isActive("code")) {
     return canPerformAiAsk(editor)
@@ -119,37 +111,43 @@ export function useAiAsk(config: UseAiAskConfig = {}) {
 
   const { editor } = useTiptapEditor(providedEditor)
   const isMobile = useIsBreakpoint()
-  const [isVisible, setIsVisible] = useState<boolean>(true)
   const canAiAsk = canPerformAiAsk(editor)
 
   const handleAiAsk = useCallback((): boolean => {
     if (!editor || !canAiAsk) return false
 
-    const success = editor.chain().focus().aiGenerationShow().run()
-    if (success) {
-      onAiAsked?.()
-    }
-    return success
+    editor.commands.aiGenerationShow()
+    onAiAsked?.()
+    return true
   }, [canAiAsk, editor, onAiAsked])
 
-  useEffect(() => {
-    if (!editor) {
-      setIsVisible(false)
-      return
-    }
+  const isVisible = useSyncExternalStore(
+    useCallback(
+      (onStoreChange) => {
+        if (!editor) {
+          return () => {}
+        }
 
-    const updateVisibility = () => {
-      setIsVisible(shouldShowButton({ editor, hideWhenUnavailable }))
-    }
+        const updateVisibility = () => {
+          onStoreChange()
+        }
 
-    updateVisibility()
+        editor.on("selectionUpdate", updateVisibility)
+        return () => {
+          editor.off("selectionUpdate", updateVisibility)
+        }
+      },
+      [editor]
+    ),
+    useCallback(() => {
+      if (!editor) {
+        return false
+      }
 
-    editor.on("selectionUpdate", updateVisibility)
-
-    return () => {
-      editor.off("selectionUpdate", updateVisibility)
-    }
-  }, [editor, hideWhenUnavailable])
+      return shouldShowButton({ editor, hideWhenUnavailable })
+    }, [editor, hideWhenUnavailable]),
+    () => false
+  )
 
   useHotkeys(
     AI_ASK_SHORTCUT_KEY,

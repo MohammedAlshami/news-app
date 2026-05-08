@@ -57,7 +57,7 @@ export function AiMenuActions({
           disabled={aiGenerationIsLoading}
         >
           <RefreshAiIcon className="tiptap-button-icon" />
-          Try again
+          أعد المحاولة
         </Button>
       </div>
 
@@ -70,7 +70,7 @@ export function AiMenuActions({
               onClick={handleDiscard}
             >
               <XIcon className="tiptap-button-icon" />
-              Discard
+              تجاهل
             </Button>
           </ButtonGroup>
 
@@ -81,7 +81,7 @@ export function AiMenuActions({
               onClick={handleApply}
             >
               <CheckIcon className="tiptap-button-icon" />
-              Apply
+              تطبيق
             </Button>
           </ButtonGroup>
         </ButtonGroup>

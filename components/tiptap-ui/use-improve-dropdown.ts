@@ -35,7 +35,7 @@ export interface UseImproveDropdownConfig {
    */
   editor?: Editor | null
   /**
-   * Optional text options for AI commands
+   * Optional text options for AI commands.
    * @default { stream: true, format: "rich-text" }
    */
   textOptions?: TextOptions
@@ -80,7 +80,7 @@ export function canUseAi(editor: Editor | null): boolean {
     }
   }
 
-  return true
+  return !selection.empty
 }
 
 /**
@@ -146,7 +146,6 @@ export function shouldShowImproveDropdown(params: {
  *   } = useImproveDropdown({
  *     editor: myEditor,
  *     hideWhenUnavailable: true,
- *     textOptions: { stream: false, format: 'plain-text' },
  *   })
  *
  *   // component implementation
@@ -164,11 +163,11 @@ export function useImproveDropdown(config?: UseImproveDropdownConfig) {
   const [isOpen, setIsOpen] = useState(false)
   const [isVisible, setIsVisible] = useState(true)
   const isDisabled = !canUseAi(editor)
-
   const defaultOptions = useMemo(
     () => ({
       stream: true,
       format: "rich-text" as const,
+      insert: false,
       ...textOptions,
     }),
     [textOptions]
@@ -187,6 +186,8 @@ export function useImproveDropdown(config?: UseImproveDropdownConfig) {
     (command: AICommand) => {
       if (!editor) return
 
+      editor.commands.aiGenerationSetIsSelection(true)
+      editor.commands.aiGenerationSetNeedsCommit(true)
       editor.chain().focus().aiGenerationShow().run()
 
       setTimeout(() => {
@@ -221,6 +222,8 @@ export function useImproveDropdown(config?: UseImproveDropdownConfig) {
   const adjustTone = useCallback(
     (tone: Tone) => {
       if (!editor) return
+      editor.commands.aiGenerationSetIsSelection(true)
+      editor.commands.aiGenerationSetNeedsCommit(true)
       editor.chain().focus().aiGenerationShow().run()
 
       setTimeout(() => {
@@ -233,6 +236,8 @@ export function useImproveDropdown(config?: UseImproveDropdownConfig) {
   const translate = useCallback(
     (language: Language) => {
       if (!editor) return
+      editor.commands.aiGenerationSetIsSelection(true)
+      editor.commands.aiGenerationSetNeedsCommit(true)
       editor.chain().focus().aiGenerationShow().run()
 
       setTimeout(() => {
