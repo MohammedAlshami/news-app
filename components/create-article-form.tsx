@@ -6,6 +6,7 @@ import { useState } from "react"
 import { AdminCategoryModals } from "@/components/admin-category-modals"
 import { AdminCategorySelect } from "@/components/admin-category-select"
 import { ArticleCoverField } from "@/components/article-cover-field"
+import { AiMenuInputTextarea } from "@/components/tiptap-ui/ai-menu-input"
 import { SimpleEditor } from "@/components/tiptap-templates/simple/simple-editor"
 import { Button } from "@/components/ui/button"
 import { Button as TiptapButton } from "@/components/tiptap-ui-primitive/button"
@@ -22,6 +23,7 @@ import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
 import type { SiteCategory } from "@/lib/site-types"
 import { ar } from "@/lib/ui-ar"
+import type { Editor } from "@tiptap/core"
 
 type Props = {
   categories: SiteCategory[]
@@ -171,6 +173,54 @@ export function CreateArticleForm({
   const [editCategoryOpen, setEditCategoryOpen] = useState(false)
   const [isPublished, setIsPublished] = useState(initialIsPublished)
   const [infoOpen, setInfoOpen] = useState(false)
+  const [aiOpen, setAiOpen] = useState(false)
+  const [aiLoading, setAiLoading] = useState(false)
+  const [aiOutput, setAiOutput] = useState("")
+  const [editor, setEditor] = useState<Editor | null>(null)
+
+  async function handleAiSubmit(prompt: string) {
+    if (!editor || !prompt.trim()) return
+    setAiOpen(true)
+    setAiLoading(true)
+    setAiOutput("")
+
+    const response = await fetch("/api/ai", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        prompt,
+        articleId,
+        title,
+        excerpt,
+        mode: "write",
+      }),
+    })
+
+    if (!response.ok || !response.body) {
+      setAiLoading(false)
+      setAiOutput("Failed to generate text.")
+      return
+    }
+
+    const reader = response.body.getReader()
+    const decoder = new TextDecoder()
+    let fullText = ""
+
+    while (true) {
+      const { value, done } = await reader.read()
+      if (done) break
+      const chunk = decoder.decode(value, { stream: true })
+      fullText += chunk
+      setAiOutput(fullText)
+    }
+
+    setAiLoading(false)
+    if (fullText.trim()) {
+      editor.chain().focus().insertContent(fullText).run()
+    }
+  }
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-6">
@@ -216,17 +266,46 @@ export function CreateArticleForm({
               </SheetContent>
             </Sheet>
 
+            <Sheet open={aiOpen} onOpenChange={setAiOpen}>
+              <SheetContent side="right" className="w-[22rem] sm:w-[28rem]">
+                <div className="flex h-full min-h-0 flex-col px-5 py-6">
+                  <SheetHeader className="px-0 pt-0">
+                    <SheetTitle>الكتابة بالذكاء الاصطناعي</SheetTitle>
+                    <SheetDescription>اكتب طلبك، ثم أدخل النص الناتج في المقال.</SheetDescription>
+                  </SheetHeader>
+                  <div className="min-h-0 flex-1 overflow-y-auto pr-1">
+                    <AiMenuInputTextarea
+                      onInputSubmit={handleAiSubmit}
+                      onPlaceholderClick={() => setAiOpen(true)}
+                      placeholder="اكتب ما تريد أن يكتبه الذكاء الاصطناعي..."
+                    />
+                    <div className="mt-4 rounded-2xl border border-border bg-muted/30 p-3 text-sm">
+                      {aiLoading ? "جارٍ التوليد..." : aiOutput || "سيظهر النص هنا أثناء التوليد."}
+                    </div>
+                    <div className="mt-4 flex gap-2">
+                      <Button type="button" variant="outline" onClick={() => setAiOpen(false)}>
+                        إغلاق
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </SheetContent>
+            </Sheet>
+
             <div className="flex min-h-0 flex-1">
               <SimpleEditor
                 embedded
                 articleId={articleId}
+                onEditorReady={setEditor}
+                onAiRequest={() => setAiOpen(true)}
                 toolbarActions={
                   <>
                     <TiptapButton
                       type="button"
                       variant="ghost"
-                      tooltip="Editor action"
-                      aria-label="Editor action"
+                      tooltip="اكتب باستخدام الذكاء الاصطناعي"
+                      aria-label="اكتب باستخدام الذكاء الاصطناعي"
+                      onClick={() => setAiOpen(true)}
                     >
                       <Sparkles className="tiptap-button-icon" strokeWidth={1.75} />
                     </TiptapButton>
