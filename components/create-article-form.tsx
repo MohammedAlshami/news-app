@@ -1,6 +1,6 @@
 "use client"
 
-import { Info, Sparkles } from "lucide-react"
+import { Info, ImagePlus } from "lucide-react"
 import { useState } from "react"
 
 import { AdminCategoryModals } from "@/components/admin-category-modals"
@@ -246,14 +246,14 @@ export function CreateArticleForm({
               <SimpleEditor
                 embedded
                 articleId={articleId}
-                  toolbarActions={
+                toolbarActions={
                   <TiptapButton
                     type="button"
                     variant="ghost"
                     tooltip="Editor action"
                     aria-label="Editor action"
                   >
-                    <Sparkles className="tiptap-button-icon" />
+                    <ImagePlus className="tiptap-button-icon" strokeWidth={1.75} />
                   </TiptapButton>
                 }
               />
