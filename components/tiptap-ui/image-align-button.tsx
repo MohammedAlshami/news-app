@@ -12,11 +12,11 @@ import { useTiptapEditor } from "@/hooks/use-tiptap-editor"
 import type {
   ImageAlign,
   UseImageAlignConfig,
-} from "@/components/tiptap-ui/image-align-button"
+} from "@/components/tiptap-ui/use-image-align"
 import {
   IMAGE_ALIGN_SHORTCUT_KEYS,
   useImageAlign,
-} from "@/components/tiptap-ui/image-align-button"
+} from "@/components/tiptap-ui/use-image-align"
 
 // --- UI Primitives ---
 import type { ButtonProps } from "@/components/tiptap-ui-primitive/button"
