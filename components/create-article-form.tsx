@@ -8,6 +8,7 @@ import { AdminCategorySelect } from "@/components/admin-category-select"
 import { ArticleCoverField } from "@/components/article-cover-field"
 import { SimpleEditor } from "@/components/tiptap-templates/simple/simple-editor"
 import { Button } from "@/components/ui/button"
+import { Button as TiptapButton } from "@/components/tiptap-ui-primitive/button"
 import {
   Sheet,
   SheetContent,
@@ -246,15 +247,14 @@ export function CreateArticleForm({
                 embedded
                 articleId={articleId}
                   toolbarActions={
-                  <Button
+                  <TiptapButton
                     type="button"
                     variant="ghost"
+                    tooltip="Editor action"
                     aria-label="Editor action"
-                    title="Editor action"
                   >
-                    <Sparkles className="size-4" />
-                    <span className="sr-only">Editor action</span>
-                  </Button>
+                    <Sparkles className="tiptap-button-icon" />
+                  </TiptapButton>
                 }
               />
             </div>
