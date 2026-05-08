@@ -27,7 +27,7 @@ import {
   MenuContext,
   useSearchableContext,
   useMenuContext,
-} from "@/components/tiptap-ui-primitive/menu"
+} from "@/components/tiptap-ui-primitive/menu-context"
 import {
   useMenuPlacement,
   useMenuItemClick,
