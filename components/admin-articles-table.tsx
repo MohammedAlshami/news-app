@@ -202,7 +202,7 @@ export function AdminArticlesTable({ articles, categories, labels }: Props) {
                     aria-label={`${labels.publishToggle}: ${a.title || a.id}`}
                   />
                 </TableCell>
-                <TableCell className="sticky right-0 z-10 h-16 min-w-[5rem] bg-card px-2 text-center shadow-[2px_0_0_0_theme(colors.border)]">
+                <TableCell className="sticky left-0 z-10 h-16 min-w-[5rem] bg-card px-2 text-center shadow-[2px_0_0_0_theme(colors.border)]">
                   <DropdownMenu dir="rtl">
                     <DropdownMenuTrigger asChild>
                       <Button variant="outline" size="icon" className="h-8 w-8">
