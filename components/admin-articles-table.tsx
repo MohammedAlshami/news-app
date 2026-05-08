@@ -128,7 +128,7 @@ export function AdminArticlesTable({ articles, categories, labels }: Props) {
         <Table dir="rtl">
           <TableHeader>
             <TableRow className="border-b hover:bg-transparent">
-              <TableHead className="h-12 min-w-[14rem] px-4 text-start font-medium">
+              <TableHead className="sticky right-0 z-20 h-12 min-w-[14rem] bg-card px-4 text-start font-medium shadow-[2px_0_0_0_theme(colors.border)]">
                 {labels.colTitle}
               </TableHead>
               <TableHead className="h-12 w-[7rem] px-4 text-start font-medium">
@@ -151,7 +151,7 @@ export function AdminArticlesTable({ articles, categories, labels }: Props) {
           <TableBody>
             {articles.map((a) => (
               <TableRow key={a.id} className="hover:bg-muted/50">
-                <TableCell className="h-16 max-w-[22rem] px-4 text-start font-medium">
+                <TableCell className="sticky right-0 z-10 h-16 max-w-[22rem] bg-card px-4 text-start font-medium shadow-[2px_0_0_0_theme(colors.border)]">
                   <div className="flex min-w-0 flex-col items-start gap-0.5">
                     <span className="block max-w-full truncate" title={a.title}>
                       {a.title || "—"}
