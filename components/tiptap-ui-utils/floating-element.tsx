@@ -32,7 +32,7 @@ import {
 import {
   isElementWithinEditor,
   isElementWithinExternalPortal,
-} from "@/components/tiptap-ui-utils/floating-element"
+} from "@/components/tiptap-ui-utils/floating-element-utils"
 import { isValidPosition } from "@/lib/tiptap-utils"
 
 export interface FloatingElementProps extends HTMLAttributes<HTMLDivElement> {
