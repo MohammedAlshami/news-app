@@ -17,7 +17,6 @@ import { SUPPORTED_TONES } from "@/components/tiptap-ui/ai-menu-items"
 import { Button } from "@/components/tiptap-ui-primitive/button"
 import { Spacer } from "@/components/tiptap-ui-primitive/spacer"
 import { Toolbar, ToolbarGroup } from "@/components/tiptap-ui-primitive/toolbar"
-import { useComboboxValueState } from "@/components/tiptap-ui-primitive/menu"
 import { Combobox } from "@/components/tiptap-ui-primitive/combobox"
 import {
   DropdownMenu,
@@ -33,6 +32,7 @@ import {
   useKeyboardHandlers,
 } from "@/components/tiptap-ui/ai-menu-input-hooks"
 import type { AiMenuInputTextareaProps } from "@/components/tiptap-ui/ai-menu-input-types"
+import { useComboboxValueState } from "@/components/tiptap-ui-primitive/menu-hooks"
 
 // Styles
 import "@/components/tiptap-ui/ai-menu-input.scss"
