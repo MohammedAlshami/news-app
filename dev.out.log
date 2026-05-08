@@ -1,12 +1,69 @@
 
 > next-app@0.0.1 dev
-> next dev --turbopack
+> next dev --webpack
 
-▲ Next.js 16.1.7 (Turbopack)
-- Local:         http://localhost:3001
-- Network:       http://169.254.152.201:3001
+▲ Next.js 16.2.4 (webpack)
+- Local:         http://localhost:3000
+- Network:       http://169.254.152.201:3000
 - Environments: .env.local
+✓ Ready in 571ms
 
-✓ Starting...
-  Suggestion: If you intended to restart next dev, terminate the other process, and then try again.
-[?25h
+○ Compiling /tools/currency-converter ...
+ GET /api/exchange-rate?from=USD&to=YER&amount=1&market=sanaa 200 in 4.9s (next.js: 3.7s, application-code: 1252ms)
+ GET /tools/currency-converter 200 in 5.4s (next.js: 3.6s, application-code: 1739ms)
+ GET /api/exchange-rate?from=USD&to=YER&amount=1&market=sanaa 200 in 370ms (next.js: 5ms, application-code: 365ms)
+ GET /api/exchange-rate?from=USD&to=YER&amount=1&market=sanaa 200 in 361ms (next.js: 1967µs, application-code: 359ms)
+ GET /tools/currency-converter 200 in 87ms (next.js: 18ms, application-code: 70ms)
+ GET / 200 in 2.4s (next.js: 1729ms, application-code: 700ms)
+ GET /tools/currency-converter 200 in 239ms (next.js: 85ms, application-code: 154ms)
+○ Compiling /admin ...
+ GET /admin 200 in 3.6s (next.js: 3.6s, application-code: 70ms)
+○ Compiling /admin/articles ...
+ GET /admin/articles 200 in 5.4s (next.js: 3.8s, application-code: 1682ms)
+○ Compiling /admin/articles/[id] ...
+ GET /admin/articles/3f64b7cb-c62e-4ad9-9a6b-61bbacafcda4 500 in 20.2s (next.js: 20.0s, application-code: 154ms)
+ GET /admin/articles/3f64b7cb-c62e-4ad9-9a6b-61bbacafcda4 500 in 16ms (next.js: 6ms, application-code: 10ms)
+ GET /admin/articles/3f64b7cb-c62e-4ad9-9a6b-61bbacafcda4 500 in 16ms (next.js: 6ms, application-code: 10ms)
+ GET /admin/articles/3f64b7cb-c62e-4ad9-9a6b-61bbacafcda4 500 in 16ms (next.js: 8ms, application-code: 8ms)
+ GET / 200 in 3.5s (next.js: 1686ms, application-code: 1776ms)
+ OPTIONS / 400 in 1744ms
+ OPTIONS / 400 in 3ms
+ GET /admin/articles/3f64b7cb-c62e-4ad9-9a6b-61bbacafcda4 200 in 4.5s (next.js: 3.8s, application-code: 736ms)
+ GET /nice%20ports%2C/Tri%6Eity.txt%2ebak 404 in 1462ms (next.js: 1358ms, application-code: 104ms)
+ GET /admin/articles/3f64b7cb-c62e-4ad9-9a6b-61bbacafcda4 200 in 365ms (next.js: 197ms, application-code: 168ms)
+ GET /admin/articles/3f64b7cb-c62e-4ad9-9a6b-61bbacafcda4 307 in 679ms (next.js: 8ms, application-code: 671ms)
+ GET /login 200 in 1831ms (next.js: 1554ms, application-code: 277ms)
+ GET /admin/articles/3f64b7cb-c62e-4ad9-9a6b-61bbacafcda4 200 in 362ms (next.js: 180ms, application-code: 182ms)
+ GET /admin/articles/3f64b7cb-c62e-4ad9-9a6b-61bbacafcda4 307 in 293ms (next.js: 8ms, application-code: 285ms)
+ GET /login 200 in 185ms (next.js: 10ms, application-code: 175ms)
+ GET /admin/articles/3f64b7cb-c62e-4ad9-9a6b-61bbacafcda4 200 in 166ms (next.js: 64ms, application-code: 102ms)
+ GET /admin/articles/3f64b7cb-c62e-4ad9-9a6b-61bbacafcda4 307 in 301ms (next.js: 10ms, application-code: 291ms)
+ GET /login 200 in 484ms (next.js: 8ms, application-code: 477ms)
+ GET /admin/articles/3f64b7cb-c62e-4ad9-9a6b-61bbacafcda4 500 in 2.6s (next.js: 2.6s, application-code: 27ms)
+○ Compiling /_error ...
+ GET /admin/articles/3f64b7cb-c62e-4ad9-9a6b-61bbacafcda4 500 in 1326ms (next.js: 1294ms, application-code: 32ms)
+ GET /admin/articles/3f64b7cb-c62e-4ad9-9a6b-61bbacafcda4 500 in 20ms (next.js: 4ms, application-code: 15ms)
+ GET /admin/articles/3f64b7cb-c62e-4ad9-9a6b-61bbacafcda4 200 in 434ms (next.js: 297ms, application-code: 137ms)
+ GET /admin/articles/3f64b7cb-c62e-4ad9-9a6b-61bbacafcda4 200 in 330ms (next.js: 138ms, application-code: 191ms)
+ GET /admin/articles/3f64b7cb-c62e-4ad9-9a6b-61bbacafcda4 307 in 691ms (next.js: 13ms, application-code: 679ms)
+ GET /login 200 in 1903ms (next.js: 1627ms, application-code: 276ms)
+ GET /admin/articles/3f64b7cb-c62e-4ad9-9a6b-61bbacafcda4 200 in 276ms (next.js: 140ms, application-code: 136ms)
+ GET /admin/articles/3f64b7cb-c62e-4ad9-9a6b-61bbacafcda4 200 in 181ms (next.js: 94ms, application-code: 87ms)
+ GET /admin/articles/3f64b7cb-c62e-4ad9-9a6b-61bbacafcda4 307 in 702ms (next.js: 12ms, application-code: 689ms)
+ GET /login 200 in 2.1s (next.js: 1850ms, application-code: 253ms)
+ GET /admin/articles/3f64b7cb-c62e-4ad9-9a6b-61bbacafcda4 200 in 300ms (next.js: 149ms, application-code: 150ms)
+ GET /admin/articles/3f64b7cb-c62e-4ad9-9a6b-61bbacafcda4 307 in 279ms (next.js: 10ms, application-code: 269ms)
+ GET /login 200 in 211ms (next.js: 24ms, application-code: 186ms)
+ GET /admin/articles/3f64b7cb-c62e-4ad9-9a6b-61bbacafcda4 200 in 197ms (next.js: 94ms, application-code: 103ms)
+ GET /admin/articles/3f64b7cb-c62e-4ad9-9a6b-61bbacafcda4 307 in 456ms (next.js: 10ms, application-code: 446ms)
+ GET /login 200 in 189ms (next.js: 16ms, application-code: 173ms)
+ GET /admin/articles/3f64b7cb-c62e-4ad9-9a6b-61bbacafcda4 200 in 199ms (next.js: 90ms, application-code: 109ms)
+ GET /admin/articles/3f64b7cb-c62e-4ad9-9a6b-61bbacafcda4 200 in 192ms (next.js: 90ms, application-code: 102ms)
+ GET /admin/articles/3f64b7cb-c62e-4ad9-9a6b-61bbacafcda4 307 in 657ms (next.js: 10ms, application-code: 647ms)
+ GET /login 200 in 2.1s (next.js: 18ms, application-code: 2.1s)
+ GET /admin/articles/3f64b7cb-c62e-4ad9-9a6b-61bbacafcda4 200 in 193ms (next.js: 92ms, application-code: 101ms)
+ GET /admin/articles/3f64b7cb-c62e-4ad9-9a6b-61bbacafcda4 307 in 525ms (next.js: 10ms, application-code: 515ms)
+ GET /login 200 in 180ms (next.js: 18ms, application-code: 162ms)
+ GET /admin/articles/3f64b7cb-c62e-4ad9-9a6b-61bbacafcda4 200 in 200ms (next.js: 90ms, application-code: 110ms)
+ GET /admin/articles/3f64b7cb-c62e-4ad9-9a6b-61bbacafcda4 307 in 287ms (next.js: 9ms, application-code: 278ms)
+ GET /login 200 in 179ms (next.js: 17ms, application-code: 162ms)
