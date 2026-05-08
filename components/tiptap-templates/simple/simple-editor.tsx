@@ -45,7 +45,6 @@ import "@/components/tiptap-templates/simple/simple-editor.scss"
 
 import type { Editor } from "@tiptap/core"
 import { tiptapEmptyDocument } from "@/lib/tiptap-empty-doc"
-import content from "@/components/tiptap-templates/simple/data/content.json"
 
 /** Empty Tiptap doc; use for “new article” instead of the demo. */
 export const simpleEditorEmptyDocument = tiptapEmptyDocument
@@ -139,7 +138,7 @@ export function SimpleEditor({
 }: SimpleEditorProps = {}) {
   const isMobile = useIsBreakpoint()
   const toolbarRef = useRef<HTMLDivElement>(null)
-  const doc = initialDocument ?? (content as Record<string, unknown>)
+  const doc = initialDocument ?? simpleEditorEmptyDocument
 
   const extensions = useMemo(
     () =>
