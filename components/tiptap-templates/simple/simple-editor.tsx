@@ -1,11 +1,12 @@
 "use client"
 
-import { useMemo, useRef } from "react"
+import { useMemo, useRef, useState } from "react"
 import { EditorContent, EditorContext, useEditor } from "@tiptap/react"
 import type { ReactNode } from "react"
 import type { SuggestionItem } from "@/components/tiptap-ui-utils/suggestion-menu"
 
 import { Spacer } from "@/components/tiptap-ui-primitive/spacer"
+import { Button } from "@/components/tiptap-ui-primitive/button"
 import {
   Toolbar,
   ToolbarGroup,
@@ -143,7 +144,9 @@ export function SimpleEditor({
 }: SimpleEditorProps = {}) {
   const isMobile = useIsBreakpoint()
   const toolbarRef = useRef<HTMLDivElement>(null)
+  const quickMenuRef = useRef<HTMLDivElement>(null)
   const doc = initialDocument ?? simpleEditorEmptyDocument
+  const [quickMenuOpen, setQuickMenuOpen] = useState(false)
 
   const extensions = useMemo(
     () =>
@@ -158,6 +161,19 @@ export function SimpleEditor({
     {
       immediatelyRender: false,
       editorProps: {
+        handleKeyDown: (_view, event) => {
+          if (event.metaKey || event.ctrlKey || event.altKey) {
+            return false
+          }
+
+          if (event.key === "\\" || event.key === "/") {
+            event.preventDefault()
+            setQuickMenuOpen(true)
+            return true
+          }
+
+          return false
+        },
         attributes: {
           autocomplete: "off",
           autocorrect: "off",
@@ -261,9 +277,48 @@ export function SimpleEditor({
           role="presentation"
           className="simple-editor-content"
         />
-        <SlashDropdownMenu config={slashMenuConfig} />
-        <DragContextMenu />
-        <NotionToolbarFloating />
+        {quickMenuOpen && (
+          <div
+            ref={quickMenuRef}
+            className="absolute left-6 top-24 z-30 w-80 rounded-2xl border border-gray-200 bg-white p-2 shadow-xl"
+          >
+            <Button
+              variant="ghost"
+              className="w-full justify-start gap-3 rounded-xl px-3 py-3 text-right"
+              onClick={() => {
+                setQuickMenuOpen(false)
+                onAiRequest?.()
+              }}
+            >
+              <AiSparklesIcon className="tiptap-button-icon" />
+              <span className="flex flex-col items-start">
+                <span>اكتب باستخدام الذكاء الاصطناعي</span>
+                <span className="text-sm text-muted-foreground">
+                  ابدأ فقرة جديدة أو واصل الكتابة
+                </span>
+              </span>
+            </Button>
+            <Button
+              variant="ghost"
+              className="w-full justify-start gap-3 rounded-xl px-3 py-3 text-right"
+              onClick={() => {
+                setQuickMenuOpen(false)
+                onAiRequest?.()
+              }}
+            >
+              <AiSparklesIcon className="tiptap-button-icon" />
+              <span className="flex flex-col items-start">
+                <span>اسأل الذكاء الاصطناعي</span>
+                <span className="text-sm text-muted-foreground">
+                  حسّن النص المحدد أو اسأل سؤالًا
+                </span>
+              </span>
+            </Button>
+          </div>
+        )}
+        <SlashDropdownMenu editor={editor} config={slashMenuConfig} />
+        <DragContextMenu editor={editor} />
+        <NotionToolbarFloating editor={editor} />
       </EditorContext.Provider>
     </div>
   )
