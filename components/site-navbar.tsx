@@ -90,18 +90,21 @@ export function SiteNavbar({ primaryLinks }: SiteNavbarProps) {
                     {item.label}
                   </Link>
                 ))}
+                <Link href="/advertise" className={navLinkClass}>
+                  {ar.footerAdvertise}
+                </Link>
               </div>
             </div>
 
             <div className="flex items-center gap-6 text-[15px] font-bold text-gray-800">
-              <button
-                type="button"
+              <Link
+                href="/search"
                 className="flex items-center gap-2 transition-opacity hover:opacity-70"
                 aria-label={ar.navSearchAria}
               >
                 <Search className="h-5 w-5 stroke-[2.5]" aria-hidden />
                 <span className="hidden sm:inline">{ar.navSearch}</span>
-              </button>
+              </Link>
               <Link
                 href="/admin"
                 className="flex items-center gap-2 transition-opacity hover:opacity-70"

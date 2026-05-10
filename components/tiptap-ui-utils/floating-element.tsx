@@ -143,6 +143,9 @@ export const FloatingElement = forwardRef<HTMLDivElement, FloatingElementProps>(
       handleOpenChange(open)
     }
 
+    const editorDom = editor?.view?.dom ?? null
+    const editorRoot = editor?.view?.root ?? null
+
     // Use referenceElement if provided, otherwise create dynamic rect function
     const reference = useMemo(() => {
       if (referenceElement) {
@@ -217,11 +220,13 @@ export const FloatingElement = forwardRef<HTMLDivElement, FloatingElementProps>(
         return false
       }
 
-      editor.view.dom.addEventListener("keydown", handleKeyDown)
+      if (!editorDom) return
+
+      editorDom.addEventListener("keydown", handleKeyDown)
       return () => {
-        editor.view.dom.removeEventListener("keydown", handleKeyDown)
+        editorDom.removeEventListener("keydown", handleKeyDown)
       }
-    }, [editor, open, closeOnEscape, handleOpenChange])
+    }, [editor, editorDom, open, closeOnEscape, handleOpenChange])
 
     useEffect(() => {
       if (!editor) return
@@ -257,11 +262,13 @@ export const FloatingElement = forwardRef<HTMLDivElement, FloatingElementProps>(
         }
       }
 
-      editor.view.dom.addEventListener("blur", handleBlur)
+      if (!editorDom) return
+
+      editorDom.addEventListener("blur", handleBlur)
       return () => {
-        editor.view.dom.removeEventListener("blur", handleBlur)
+        editorDom.removeEventListener("blur", handleBlur)
       }
-    }, [editor, handleOpenChange, open])
+    }, [editor, editorDom, handleOpenChange, open])
 
     useEffect(() => {
       if (!editor) return
@@ -272,14 +279,16 @@ export const FloatingElement = forwardRef<HTMLDivElement, FloatingElementProps>(
         }
       }
 
-      editor.view.dom.addEventListener("dragstart", handleDrag)
-      editor.view.dom.addEventListener("dragover", handleDrag)
+      if (!editorDom) return
+
+      editorDom.addEventListener("dragstart", handleDrag)
+      editorDom.addEventListener("dragover", handleDrag)
 
       return () => {
-        editor.view.dom.removeEventListener("dragstart", handleDrag)
-        editor.view.dom.removeEventListener("dragover", handleDrag)
+        editorDom.removeEventListener("dragstart", handleDrag)
+        editorDom.removeEventListener("dragover", handleDrag)
       }
-    }, [editor, open, handleOpenChange])
+    }, [editor, editorDom, open, handleOpenChange])
 
     useEffect(() => {
       if (!editor) return
@@ -315,14 +324,16 @@ export const FloatingElement = forwardRef<HTMLDivElement, FloatingElementProps>(
         }
       }
 
-      editor.view.dom.addEventListener("mousedown", handleMouseDown)
-      editor.view.root.addEventListener("mouseup", handleMouseUp)
+      if (!editorDom || !editorRoot) return
+
+      editorDom.addEventListener("mousedown", handleMouseDown)
+      editorRoot.addEventListener("mouseup", handleMouseUp)
 
       return () => {
-        editor.view.dom.removeEventListener("mousedown", handleMouseDown)
-        editor.view.root.removeEventListener("mouseup", handleMouseUp)
+        editorDom.removeEventListener("mousedown", handleMouseDown)
+        editorRoot.removeEventListener("mouseup", handleMouseUp)
       }
-    }, [editor, updateSelectionState])
+    }, [editor, editorDom, editorRoot, updateSelectionState])
 
     useEffect(() => {
       if (!editor) return
