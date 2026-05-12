@@ -50,7 +50,7 @@ export function useFloatingToolbarVisibility(params: {
 
   // --- Re-click same selected node should immediately allow floating
   useEffect(() => {
-    if (!editor) return
+    if (!editor?.view?.dom) return
     const dom = editor.view.dom
 
     const onPointerDown = (e: PointerEvent) => {
@@ -118,6 +118,6 @@ export const selectNodeAndHideFloating = (editor: Editor, pos: number) => {
  * @param editor
  */
 export const markHideFloatingOnNext = (editor: Editor) => {
-  if (!editor) return
+  if (!editor?.view) return
   editor.view.dispatch(editor.state.tr.setMeta(HIDE_FLOATING_META, true))
 }

@@ -110,6 +110,12 @@ export function findSelectionPosition(params: {
  */
 export function getSelectedDOMElement(editor: Editor): HTMLElement | null {
   const { state, view } = editor
+  
+  // Check if view is available before accessing it
+  if (!view || !view.dom) {
+    return null
+  }
+  
   const { selection } = state
 
   if (selection instanceof NodeSelection) {
