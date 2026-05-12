@@ -131,20 +131,39 @@ export const FloatingElement = forwardRef<HTMLDivElement, FloatingElementProps>(
 
     const handleFloatingOpenChange = (open: boolean) => {
       if (!open && editor && resetTextSelectionOnClose) {
-        // When the floating element closes, reset the selection.
-        // This lets the user place the cursor again and ensures the drag handle reappears,
-        // as it's intentionally hidden during valid text selections.
-        const tr = editor.state.tr.setSelection(
-          Selection.near(editor.state.doc.resolve(0))
-        )
-        editor.view.dispatch(tr)
+        try {
+          if (editor.view) {
+            // When the floating element closes, reset the selection.
+            // This lets the user place the cursor again and ensures the drag handle reappears,
+            // as it's intentionally hidden during valid text selections.
+            const tr = editor.state.tr.setSelection(
+              Selection.near(editor.state.doc.resolve(0))
+            )
+            editor.view.dispatch(tr)
+          }
+        } catch {
+          // View not available, ignore
+        }
       }
 
       handleOpenChange(open)
     }
 
-    const editorDom = editor?.view?.dom ?? null
-    const editorRoot = editor?.view?.root ?? null
+    const editorDom = useMemo((): HTMLElement | null => {
+      try {
+        return editor?.view?.dom ?? null
+      } catch {
+        return null
+      }
+    }, [editor])
+
+    const editorRoot = useMemo((): Document | ShadowRoot | null => {
+      try {
+        return editor?.view?.root ?? null
+      } catch {
+        return null
+      }
+    }, [editor])
 
     // Use referenceElement if provided, otherwise create dynamic rect function
     const reference = useMemo(() => {
@@ -298,23 +317,29 @@ export const FloatingElement = forwardRef<HTMLDivElement, FloatingElementProps>(
 
         preventShowRef.current = true
 
-        const { state, view } = editor
-        const posCoords = view.posAtCoords({
-          left: event.clientX,
-          top: event.clientY,
-        })
+        try {
+          if (!editor.view) return
+          
+          const { state, view } = editor
+          const posCoords = view.posAtCoords({
+            left: event.clientX,
+            top: event.clientY,
+          })
 
-        if (!posCoords || !isValidPosition(posCoords.pos)) return
+          if (!posCoords || !isValidPosition(posCoords.pos)) return
 
-        const $pos = state.doc.resolve(posCoords.pos)
-        const nodeBefore = $pos.nodeBefore
+          const $pos = state.doc.resolve(posCoords.pos)
+          const nodeBefore = $pos.nodeBefore
 
-        if (!nodeBefore || nodeBefore.isBlock) return
+          if (!nodeBefore || nodeBefore.isBlock) return
 
-        const tr = state.tr.setSelection(
-          Selection.near(state.doc.resolve(posCoords.pos))
-        )
-        view.dispatch(tr)
+          const tr = state.tr.setSelection(
+            Selection.near(state.doc.resolve(posCoords.pos))
+          )
+          view.dispatch(tr)
+        } catch {
+          // View not available, ignore
+        }
       }
 
       const handleMouseUp = () => {
@@ -357,7 +382,7 @@ export const FloatingElement = forwardRef<HTMLDivElement, FloatingElementProps>(
     )
     const mergedRef = useMergeRefs([ref, forwardedRef, floatingElementRef])
 
-    if (!editor || !isMounted || !open) return null
+    if (!editor || !editor.view || !isMounted || !open) return null
 
     return (
       <div

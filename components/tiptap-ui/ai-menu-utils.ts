@@ -44,7 +44,7 @@ export function getSelectionRangeRect(editor: Editor): DOMRect | null {
   const { state } = editor
   const { selection } = state
 
-  if (selection.empty) return null
+  if (selection.empty || !editor?.view || !editor?.view?.dom) return null
 
   const domSelection = window.getSelection()
   const editorDom = editor.view.dom as HTMLElement
@@ -62,15 +62,20 @@ export function getSelectionRangeRect(editor: Editor): DOMRect | null {
   }
 
   // Fallback: use ProseMirror coordinates
-  const fromCoords = editor.view.coordsAtPos(selection.from)
-  const toCoords = editor.view.coordsAtPos(selection.to)
+  try {
+    const fromCoords = editor.view.coordsAtPos(selection.from)
+    const toCoords = editor.view.coordsAtPos(selection.to)
 
-  return new DOMRect(
-    Math.min(fromCoords.left, toCoords.left),
-    Math.min(fromCoords.top, toCoords.top),
-    Math.abs(toCoords.right - fromCoords.left),
-    Math.abs(toCoords.bottom - fromCoords.top)
-  )
+    return new DOMRect(
+      Math.min(fromCoords.left, toCoords.left),
+      Math.min(fromCoords.top, toCoords.top),
+      Math.abs(toCoords.right - fromCoords.left),
+      Math.abs(toCoords.bottom - fromCoords.top)
+    )
+  } catch (error) {
+    // If coordsAtPos fails, return null
+    return null
+  }
 }
 
 /**
@@ -144,8 +149,7 @@ export function getContextAndInsertAt(editor: Editor) {
 
     const selectionContent = selection.content()
 
-    const htmlContent =
-      editor.view.serializeForClipboard(selectionContent).dom.innerHTML
+    const htmlContent = editor?.view?.serializeForClipboard?.(selectionContent)?.dom?.innerHTML || ""
     const textContent = selectionContent.content.textBetween(
       0,
       selectionContent.content.size,
@@ -206,6 +210,8 @@ export function getTopMostParentInsideEditor(
 }
 
 export function findAiMarkedDOMElement(editor: Editor): HTMLElement | null {
+  if (!editor?.view?.dom) return null
+  
   const view = editor.view
   const aiMarkedElements = view.dom.querySelectorAll(
     ".tiptap-ai-insertion"

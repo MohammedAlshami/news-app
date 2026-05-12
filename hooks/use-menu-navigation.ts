@@ -154,7 +154,8 @@ export function useMenuNavigation<T>({
 
     let targetElement: HTMLElement | null = null
 
-    if (editor) {
+    // Check if view is available before accessing it
+    if (editor?.view && editor.view.dom) {
       targetElement = editor.view.dom
     } else if (containerRef?.current) {
       targetElement = containerRef.current
