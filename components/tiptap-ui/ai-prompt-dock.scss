@@ -6,6 +6,16 @@
   width: min(600px, calc(100vw - 32px));
   transform: translateX(-50%);
   pointer-events: none;
+
+  @media (max-width: 768px) {
+    width: calc(100vw - 24px);
+    bottom: 16px;
+  }
+
+  @media (max-width: 480px) {
+    width: calc(100vw - 16px);
+    bottom: 12px;
+  }
 }
 
 .tiptap-ai-prompt-dock .tiptap-ai-prompt-input {

@@ -148,8 +148,6 @@ export function AiPromptInputToolbar({
 
         <ToneSelector tone={tone} onToneChange={handleToneChange} />
       </ToolbarGroup>
-
-      <Spacer />
     </Toolbar>
   )
 }

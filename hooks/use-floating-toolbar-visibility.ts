@@ -51,9 +51,24 @@ export function useFloatingToolbarVisibility(params: {
   // --- Re-click same selected node should immediately allow floating
   useEffect(() => {
     if (!editor?.view?.dom) return
+    
+    // Add a safety check to ensure the editor is still mounted
+    const checkEditorMounted = () => {
+      try {
+        return editor?.view?.dom && document.contains(editor.view.dom)
+      } catch {
+        return false
+      }
+    }
+    
+    if (!checkEditorMounted()) return
+    
     const dom = editor.view.dom
 
     const onPointerDown = (e: PointerEvent) => {
+      // Check if editor is still mounted before accessing it
+      if (!checkEditorMounted()) return
+      
       const sel = editor.state.selection
       if (!(sel instanceof NodeSelection)) return
       const nodeDom = editor.view.nodeDOM(sel.from) as HTMLElement | null
@@ -67,10 +82,18 @@ export function useFloatingToolbarVisibility(params: {
     }
 
     dom.addEventListener("pointerdown", onPointerDown, { capture: true })
-    return () =>
-      dom.removeEventListener("pointerdown", onPointerDown, {
-        capture: true,
-      })
+    return () => {
+      // Safely remove event listener even if editor is unmounted
+      try {
+        if (dom && checkEditorMounted()) {
+          dom.removeEventListener("pointerdown", onPointerDown, {
+            capture: true,
+          })
+        }
+      } catch {
+        // Editor already unmounted, ignore
+      }
+    }
   }, [editor, extraHideWhen, isSelectionValid])
 
   // --- Selection-driven visibility
