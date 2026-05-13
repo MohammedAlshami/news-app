@@ -13,6 +13,7 @@ import { ar } from "@/lib/ui-ar"
 import { cn } from "@/lib/utils"
 import { motion } from "framer-motion"
 import {
+  Database,
   Home,
   Images,
   Megaphone,
@@ -48,6 +49,12 @@ const dashboardRoutes: Route[] = [
     title: ar.adminNavArticles,
     icon: <Newspaper className="size-4" />,
     link: "/admin/articles",
+  },
+  {
+    id: "admin-scraped-articles",
+    title: "المقالات المستخرجة",
+    icon: <Database className="size-4" />,
+    link: "/admin/scraped_articles",
   },
   {
     id: "admin-advertise",

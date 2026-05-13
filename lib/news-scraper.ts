@@ -4,6 +4,7 @@ export type ScrapedNewsItem = {
   title: string
   url: string
   excerpt: string
+  content?: string
   imageUrl?: string
   publishedAt?: string
   rawJson: unknown
@@ -43,6 +44,164 @@ function decodeBasicEntities(text: string): string {
 
 function cleanText(value: string): string {
   return decodeBasicEntities(stripTags(value)).trim()
+}
+
+function htmlToTiptapJson(html: string): string {
+  // Parse HTML content into Tiptap JSON structure with proper block-level elements
+  const content: Array<{
+    type: string
+    content?: Array<{ type: string; text?: string; marks?: Array<{ type: string }> }>
+    attrs?: Record<string, unknown>
+  }> = []
+
+  // Remove script and style tags
+  let cleanHtml = html.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "")
+  cleanHtml = cleanHtml.replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, "")
+  
+  // Extract all block-level elements (p, h1-h6, ul, ol, blockquote, etc.)
+  // We'll process them in order
+  const blockRegex = /<(p|h[1-6]|ul|ol|blockquote|div)[^>]*>([\s\S]*?)<\/\1>/gi
+  let match: RegExpExecArray | null
+  const blocks: Array<{ tag: string; content: string }> = []
+  
+  while ((match = blockRegex.exec(cleanHtml)) !== null) {
+    blocks.push({ tag: match[1].toLowerCase(), content: match[2] })
+  }
+  
+  // If no blocks found, treat entire content as paragraphs split by <br>
+  if (blocks.length === 0) {
+    const lines = cleanHtml.split(/<br\s*\/?>/gi)
+    for (const line of lines) {
+      const text = cleanText(line)
+      if (text) {
+        content.push({
+          type: "paragraph",
+          content: [{ type: "text", text }],
+        })
+      }
+    }
+  } else {
+    // Process each block
+    for (const block of blocks) {
+      const { tag, content: blockContent } = block
+      
+      // Handle headings
+      if (tag.startsWith("h")) {
+        const level = parseInt(tag[1], 10)
+        const text = cleanText(blockContent)
+        if (text) {
+          content.push({
+            type: "heading",
+            attrs: { level: Math.min(Math.max(level, 1), 6) },
+            content: [{ type: "text", text }],
+          })
+        }
+        continue
+      }
+      
+      // Handle lists
+      if (tag === "ul" || tag === "ol") {
+        const listItems: Array<{ type: string; content: Array<{ type: string; content: Array<{ type: string; text: string }> }> }> = []
+        const liRegex = /<li[^>]*>([\s\S]*?)<\/li>/gi
+        let liMatch: RegExpExecArray | null
+        
+        while ((liMatch = liRegex.exec(blockContent)) !== null) {
+          const text = cleanText(liMatch[1])
+          if (text) {
+            listItems.push({
+              type: "listItem",
+              content: [
+                {
+                  type: "paragraph",
+                  content: [{ type: "text", text }],
+                },
+              ],
+            })
+          }
+        }
+        
+        if (listItems.length > 0) {
+          content.push({
+            type: tag === "ul" ? "bulletList" : "orderedList",
+            content: listItems,
+          })
+        }
+        continue
+      }
+      
+      // Handle blockquotes
+      if (tag === "blockquote") {
+        const text = cleanText(blockContent)
+        if (text) {
+          content.push({
+            type: "blockquote",
+            content: [
+              {
+                type: "paragraph",
+                content: [{ type: "text", text }],
+              },
+            ],
+          })
+        }
+        continue
+      }
+      
+      // Handle paragraphs and divs
+      if (tag === "p" || tag === "div") {
+        // Check for inline formatting (bold, italic, links)
+        const textNodes = parseInlineFormatting(blockContent)
+        if (textNodes.length > 0) {
+          content.push({
+            type: "paragraph",
+            content: textNodes,
+          })
+        }
+      }
+    }
+  }
+
+  return JSON.stringify({
+    type: "doc",
+    content: content.length > 0 ? content : [{ type: "paragraph", content: [{ type: "text", text: "" }] }],
+  })
+}
+
+function parseInlineFormatting(html: string): Array<{ type: string; text: string; marks?: Array<{ type: string }> }> {
+  // Parse inline formatting like bold, italic, links
+  const nodes: Array<{ type: string; text: string; marks?: Array<{ type: string }> }> = []
+  
+  // Simple approach: extract text and check for formatting tags
+  // This is a simplified parser - for production, consider using a proper HTML parser
+  
+  // Remove all tags and get plain text first
+  const plainText = cleanText(html)
+  if (!plainText) return []
+  
+  // Check if there are any formatting tags
+  const hasBold = /<(?:strong|b)\b[^>]*>/i.test(html)
+  const hasItalic = /<(?:em|i)\b[^>]*>/i.test(html)
+  const hasLink = /<a\b[^>]*>/i.test(html)
+  
+  // If no formatting, return plain text
+  if (!hasBold && !hasItalic && !hasLink) {
+    return [{ type: "text", text: plainText }]
+  }
+  
+  // For now, if there's formatting, we'll apply it to the whole text
+  // A more sophisticated parser would track positions
+  const marks: Array<{ type: string; attrs?: Record<string, unknown> }> = []
+  
+  if (hasBold) marks.push({ type: "bold" })
+  if (hasItalic) marks.push({ type: "italic" })
+  
+  if (hasLink) {
+    const linkMatch = html.match(/<a\b[^>]*href="([^"]+)"[^>]*>/i)
+    if (linkMatch) {
+      marks.push({ type: "link", attrs: { href: linkMatch[1] } })
+    }
+  }
+  
+  return [{ type: "text", text: plainText, marks: marks.length > 0 ? marks : undefined }]
 }
 
 function normalizeUrl(input: string, base: string): string {
@@ -123,6 +282,90 @@ function parseIndependent(html: string): ScrapedNewsItem[] {
       rawJson: { url, slug },
     }
   })
+}
+
+async function fetchRtArticleContent(url: string): Promise<string> {
+  try {
+    const html = await fetch(url, {
+      headers: {
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "accept-language": "ar,en;q=0.9",
+      }
+    }).then((r) => r.text())
+    
+    // Try multiple selectors for RT Arabic content
+    let content = ""
+    
+    // Try article__text class
+    let match = html.match(/<div\b[^>]*class="[^"]*\barticle__text\b[^"]*"[^>]*>([\s\S]*?)<\/div>/i)
+    if (match) content = match[1]
+    
+    // Try article__summary if article__text not found
+    if (!content) {
+      match = html.match(/<div\b[^>]*class="[^"]*\barticle__summary\b[^"]*"[^>]*>([\s\S]*?)<\/div>/i)
+      if (match) content = match[1]
+    }
+    
+    // Try article-content class
+    if (!content) {
+      match = html.match(/<div\b[^>]*class="[^"]*\barticle-content\b[^"]*"[^>]*>([\s\S]*?)<\/div>/i)
+      if (match) content = match[1]
+    }
+    
+    if (!content) return ""
+    
+    // Clean up but preserve paragraph structure
+    content = content.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "")
+    content = content.replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, "")
+    
+    // Convert to Tiptap JSON
+    return htmlToTiptapJson(content)
+  } catch {
+    return ""
+  }
+}
+
+async function fetchIndependentArticleContent(url: string): Promise<string> {
+  try {
+    const html = await fetch(url, {
+      headers: {
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "accept-language": "ar,en;q=0.9",
+      }
+    }).then((r) => r.text())
+    
+    // Try multiple selectors for Independent Arabia content
+    let content = ""
+    
+    // Try field--name-body class
+    let match = html.match(/<div\b[^>]*class="[^"]*\bfield--name-body\b[^"]*"[^>]*>([\s\S]*?)<\/div>/i)
+    if (match) content = match[1]
+    
+    // Try article-body class
+    if (!content) {
+      match = html.match(/<div\b[^>]*class="[^"]*\barticle-body\b[^"]*"[^>]*>([\s\S]*?)<\/div>/i)
+      if (match) content = match[1]
+    }
+    
+    // Try field-item class
+    if (!content) {
+      match = html.match(/<div\b[^>]*class="[^"]*\bfield-item\b[^"]*"[^>]*>([\s\S]*?)<\/div>/i)
+      if (match) content = match[1]
+    }
+    
+    if (!content) return ""
+    
+    // Clean up but preserve paragraph structure
+    content = content.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "")
+    content = content.replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, "")
+    
+    // Convert to Tiptap JSON
+    return htmlToTiptapJson(content)
+  } catch {
+    return ""
+  }
 }
 
 const SOURCES: Record<ScraperSourceKey, SourceConfig> = {
@@ -238,12 +481,23 @@ export class NewsScraper {
       return text
     })
     const items = cfg.parse(html)
+    
+    // Fetch content for each article (limit to first 5 to avoid too many requests)
+    const itemsWithContent = await Promise.all(
+      items.slice(0, 5).map(async (item) => {
+        const content = this.source === "rt" 
+          ? await fetchRtArticleContent(item.url)
+          : await fetchIndependentArticleContent(item.url)
+        return { ...item, content }
+      })
+    )
+    
     return {
       sourceKey: this.source,
       source: this.source.toUpperCase(),
       category: category || this.defaultCategory,
       query: query || undefined,
-      items,
+      items: itemsWithContent,
       sourcePage: url,
     }
   }

@@ -9,6 +9,7 @@ export const scrapedNews = sqliteTable("scraped_news", {
   query: text("query"),
   title: text("title").notNull(),
   excerpt: text("excerpt").notNull().default(""),
+  content: text("content"),
   url: text("url").notNull(),
   imageUrl: text("image_url"),
   publishedAt: text("published_at"),
