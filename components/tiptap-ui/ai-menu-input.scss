@@ -67,6 +67,11 @@
   &::placeholder {
     color: var(--tiptap-ai-prompt-input-content-placeholder);
   }
+
+  @media (max-width: 480px) {
+    font-size: 0.8125rem;
+    max-height: 7rem;
+  }
 }
 
 [data-active-state="off"] {
@@ -94,12 +99,22 @@
   align-items: center;
   justify-content: flex-start;
   gap: 0.5rem;
+  flex-wrap: wrap;
+
+  @media (max-width: 480px) {
+    gap: 0.25rem;
+  }
 }
 
 .tiptap-ai-prompt-input-placeholder {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 0.5rem;
+
+  @media (max-width: 480px) {
+    gap: 0.25rem;
+  }
 }
 
 .tiptap-ai-prompt-input-placeholder-content {
@@ -107,6 +122,13 @@
   align-items: center;
   gap: 8px;
   padding: 8px;
+  flex: 1;
+  min-width: 0;
+
+  @media (max-width: 480px) {
+    gap: 6px;
+    padding: 6px;
+  }
 }
 
 .tiptap-ai-prompt-input-placeholder-icon {
@@ -118,4 +140,11 @@
   font-size: 14px;
   font-weight: 500;
   line-height: normal;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  @media (max-width: 480px) {
+    font-size: 13px;
+  }
 }

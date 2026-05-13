@@ -19,7 +19,10 @@
     "db:push": "drizzle-kit push --config drizzle.config.ts",
     "db:studio": "drizzle-kit studio",
     "export:articles-by-category": "tsx scripts/export-articles-by-category.ts",
-    "db:seed-from-bbc-export": "tsx scripts/seed-d1-articles-from-bbc-export.ts"
+    "db:seed-from-bbc-export": "tsx scripts/seed-d1-articles-from-bbc-export.ts",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:debug": "playwright test --debug"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1038.0",
@@ -79,6 +82,7 @@
     "@base-ui/react": "^1.4.1",
     "@cloudflare/workers-types": "^4.20260426.1",
     "@eslint/eslintrc": "^3",
+    "@playwright/test": "^1.60.0",
     "@tailwindcss/postcss": "^4.2.1",
     "@tiptap/starter-kit": "^3.22.4",
     "@types/is-hotkey": "^0.1.10",
@@ -92,7 +96,7 @@
     "eslint": "^9.39.4",
     "eslint-config-next": "^16.2.3",
     "patch-package": "^8.0.1",
-    "playwright": "^1.59.1",
+    "playwright": "^1.60.0",
     "postcss": "^8",
     "prettier": "^3.8.1",
     "prettier-plugin-tailwindcss": "^0.7.2",
