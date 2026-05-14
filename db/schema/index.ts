@@ -5,12 +5,18 @@ export {
 } from "./advertise-inquiries"
 export { articles, type Article, type NewArticle } from "./articles"
 export { categories, type Category, type NewCategory } from "./categories"
+export {
+  generatedArticles,
+  type GeneratedArticle,
+  type NewGeneratedArticle,
+} from "./generated-articles"
 export { priceRates, type NewPriceRate, type PriceRate } from "./price-rates"
 export {
   scrapedNews,
   type NewScrapedNews,
   type ScrapedNews,
 } from "./scraped-news"
+export { topics, type NewTopic, type Topic } from "./topics"
 export { users, type NewUser, type User } from "./users"
 export {
   siteAds,

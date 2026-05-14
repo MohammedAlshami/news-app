@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server"
 
-import { createNewsScraper, getSupportedCategories, type ScraperSourceKey } from "@/lib/news-scraper"
 import { saveScrapeResult } from "@/lib/db-scraped-news.server"
+import { runTopicGrouping } from "@/lib/db-topics.server"
+import { createNewsScraper, getSupportedCategories, type ScraperSourceKey } from "@/lib/news-scraper"
 
 export const dynamic = "force-dynamic"
 
@@ -28,12 +29,15 @@ async function runSource(sourceKey: ScraperSourceKey): Promise<CronSummary[]> {
 }
 
 export async function GET() {
+  // 1. Scrape all sources in parallel
   const [rt, independent] = await Promise.all([runSource("rt"), runSource("independent")])
+
+  // 2. Group the freshly scraped articles into topics via AI
+  const topicSummary = await runTopicGrouping()
+
   return NextResponse.json({
     ok: true,
-    sources: {
-      rt,
-      independent,
-    },
+    sources: { rt, independent },
+    topics: topicSummary,
   })
 }

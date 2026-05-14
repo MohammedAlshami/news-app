@@ -13,12 +13,15 @@ import { ar } from "@/lib/ui-ar"
 import { cn } from "@/lib/utils"
 import { motion } from "framer-motion"
 import {
+  BookOpen,
   Database,
   Home,
   Images,
   Megaphone,
   Newspaper,
   PanelLeft,
+  Sparkles,
+  Tag,
 } from "lucide-react"
 import Link from "next/link"
 import { Logo } from "@/components/sidebar-03/logo"
@@ -55,6 +58,18 @@ const dashboardRoutes: Route[] = [
     title: "المقالات المستخرجة",
     icon: <Database className="size-4" />,
     link: "/admin/scraped_articles",
+  },
+  {
+    id: "admin-topics",
+    title: "المواضيع",
+    icon: <Tag className="size-4" />,
+    link: "/admin/topics",
+  },
+  {
+    id: "admin-generated-articles",
+    title: "المقالات المولّدة",
+    icon: <Sparkles className="size-4" />,
+    link: "/admin/generated_articles",
   },
   {
     id: "admin-advertise",
