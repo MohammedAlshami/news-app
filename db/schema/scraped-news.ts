@@ -1,6 +1,8 @@
 import { sql } from "drizzle-orm"
 import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core"
 
+import { topics } from "./topics"
+
 export const scrapedNews = sqliteTable("scraped_news", {
   id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
   source: text("source").notNull(),
@@ -17,6 +19,7 @@ export const scrapedNews = sqliteTable("scraped_news", {
     .notNull()
     .default(sql`(unixepoch() * 1000)`),
   rawJson: text("raw_json").notNull(),
+  topicId: text("topic_id").references(() => topics.id, { onDelete: "set null" }),
 })
 
 export type ScrapedNews = typeof scrapedNews.$inferSelect
