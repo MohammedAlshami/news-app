@@ -34,10 +34,27 @@ export async function insertScrapedNewsRows(input: {
 }) {
   if (input.items.length === 0) return 0
   const db = getDb()
-  
-  // D1 HTTP API has strict limits on SQL variables
-  // Insert one row at a time to avoid "too many SQL variables" error
-  for (const item of input.items) {
+
+  // Deduplicate within the batch itself first
+  const uniqueItems = input.items.filter(
+    (item, idx, arr) => arr.findIndex((i) => i.url === item.url) === idx,
+  )
+
+  // Fetch all existing URLs for this source in one query to avoid N round-trips
+  const existingRows = await db
+    .select({ url: scrapedNews.url })
+    .from(scrapedNews)
+    .where(eq(scrapedNews.sourceKey, input.sourceKey))
+
+  const existingUrls = new Set(existingRows.map((r) => r.url))
+
+  // Filter out anything already in the DB
+  const newItems = uniqueItems.filter((item) => !existingUrls.has(item.url))
+
+  if (newItems.length === 0) return 0
+
+  // Insert one row at a time to stay within D1 SQL variable limits
+  for (const item of newItems) {
     await db.insert(scrapedNews).values({
       source: input.source,
       sourceKey: input.sourceKey,
@@ -52,8 +69,8 @@ export async function insertScrapedNewsRows(input: {
       rawJson: JSON.stringify(item.rawJson),
     })
   }
-  
-  return input.items.length
+
+  return newItems.length
 }
 
 export async function getRecentScrapedNews(limit = 20): Promise<ScrapeJobRow[]> {
@@ -77,6 +94,7 @@ export type ScrapeRunSummary = {
   source: string
   category: string
   inserted: number
+  skipped: number
   sourcePage: string
   query?: string
 }
@@ -94,6 +112,7 @@ export async function saveScrapeResult(result: ScrapeResult): Promise<ScrapeRunS
     source: result.source,
     category: result.category,
     inserted,
+    skipped: result.items.length - inserted,
     sourcePage: result.sourcePage,
     query: result.query,
   }

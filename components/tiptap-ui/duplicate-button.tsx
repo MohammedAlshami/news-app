@@ -9,11 +9,11 @@ import { parseShortcutKeys } from "@/lib/tiptap-utils"
 import { useTiptapEditor } from "@/hooks/use-tiptap-editor"
 
 // --- Tiptap UI ---
-import type { UseDuplicateConfig } from "@/components/tiptap-ui/duplicate-button"
+import type { UseDuplicateConfig } from "@/components/tiptap-ui/use-duplicate"
 import {
   DUPLICATE_SHORTCUT_KEY,
   useDuplicate,
-} from "@/components/tiptap-ui/duplicate-button"
+} from "@/components/tiptap-ui/use-duplicate"
 
 // --- UI Primitives ---
 import type { ButtonProps } from "@/components/tiptap-ui-primitive/button"

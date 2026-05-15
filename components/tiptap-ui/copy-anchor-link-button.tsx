@@ -9,11 +9,11 @@ import { parseShortcutKeys } from "@/lib/tiptap-utils"
 import { useTiptapEditor } from "@/hooks/use-tiptap-editor"
 
 // --- Tiptap UI ---
-import type { UseCopyAnchorLinkConfig } from "@/components/tiptap-ui/copy-anchor-link-button"
+import type { UseCopyAnchorLinkConfig } from "@/components/tiptap-ui/use-copy-anchor-link"
 import {
   COPY_ANCHOR_LINK_SHORTCUT_KEY,
   useCopyAnchorLink,
-} from "@/components/tiptap-ui/copy-anchor-link-button"
+} from "@/components/tiptap-ui/use-copy-anchor-link"
 
 // --- UI Primitives ---
 import type { ButtonProps } from "@/components/tiptap-ui-primitive/button"

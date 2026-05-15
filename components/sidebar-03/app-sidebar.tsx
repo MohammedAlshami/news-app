@@ -20,6 +20,7 @@ import {
   Megaphone,
   Newspaper,
   PanelLeft,
+  Radio,
   Sparkles,
   Tag,
 } from "lucide-react"
@@ -70,6 +71,12 @@ const dashboardRoutes: Route[] = [
     title: "المقالات المولّدة",
     icon: <Sparkles className="size-4" />,
     link: "/admin/generated_articles",
+  },
+  {
+    id: "admin-news-sources",
+    title: "مصادر الأخبار",
+    icon: <Radio className="size-4" />,
+    link: "/admin/news-sources",
   },
   {
     id: "admin-advertise",

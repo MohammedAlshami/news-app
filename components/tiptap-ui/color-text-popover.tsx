@@ -16,12 +16,12 @@ import type {
   ColorItem,
   RecentColor,
   UseColorTextPopoverConfig,
-} from "@/components/tiptap-ui/color-text-popover"
+} from "@/components/tiptap-ui/use-color-text-popover"
 import {
   useColorTextPopover,
   useRecentColors,
   getColorByValue,
-} from "@/components/tiptap-ui/color-text-popover"
+} from "@/components/tiptap-ui/use-color-text-popover"
 import {
   TEXT_COLORS,
   ColorTextButton,

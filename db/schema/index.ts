@@ -10,6 +10,11 @@ export {
   type GeneratedArticle,
   type NewGeneratedArticle,
 } from "./generated-articles"
+export {
+  newsSources,
+  type NewsSource,
+  type NewNewsSource,
+} from "./news-sources"
 export { priceRates, type NewPriceRate, type PriceRate } from "./price-rates"
 export {
   scrapedNews,

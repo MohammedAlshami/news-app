@@ -25,11 +25,11 @@ import {
   HIGHLIGHT_COLORS,
   useColorHighlight,
 } from "@/components/tiptap-ui/color-highlight-button"
-import type { RecentColor } from "@/components/tiptap-ui/color-text-popover"
+import type { RecentColor } from "@/components/tiptap-ui/use-color-text-popover"
 import {
   getColorByValue,
   useRecentColors,
-} from "@/components/tiptap-ui/color-text-popover"
+} from "@/components/tiptap-ui/use-color-text-popover"
 
 // Icons
 import { PaintBucketIcon } from "@/components/tiptap-icons/paint-bucket-icon"

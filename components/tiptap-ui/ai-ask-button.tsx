@@ -9,11 +9,11 @@ import { parseShortcutKeys } from "@/lib/tiptap-utils"
 import { useTiptapEditor } from "@/hooks/use-tiptap-editor"
 
 // --- TIptap UI ---
-import type { UseAiAskConfig } from "@/components/tiptap-ui/ai-ask-button"
+import type { UseAiAskConfig } from "@/components/tiptap-ui/use-ai-ask"
 import {
   AI_ASK_SHORTCUT_KEY,
   useAiAsk,
-} from "@/components/tiptap-ui/ai-ask-button"
+} from "@/components/tiptap-ui/use-ai-ask"
 
 // --- UI Primitives ---
 import type { ButtonProps } from "@/components/tiptap-ui-primitive/button"

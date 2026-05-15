@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useRef } from "react"
+import { useEffect, useMemo, useRef } from "react"
 import { EditorContent, EditorContext, useEditor } from "@tiptap/react"
 import type { ReactNode } from "react"
 import { Ai } from "@tiptap-pro/extension-ai"
@@ -38,6 +38,7 @@ import { NotionToolbarFloating } from "@/components/tiptap-templates/notion-like
 
 // --- Hooks ---
 import { useIsBreakpoint } from "@/hooks/use-is-breakpoint"
+import { useUiEditorState } from "@/hooks/use-ui-editor-state"
 
 // --- Lib ---
 import { getArticleTiptapExtensions } from "@/lib/tiptap-article-extensions"
@@ -116,6 +117,95 @@ const MainToolbarContent = ({
   )
 }
 
+/**
+ * EditorContent component that handles auto-accept for AI generation
+ */
+function EditorContentArea({
+  editor,
+  articleId,
+}: {
+  editor: Editor | null
+  articleId?: string
+}) {
+  const {
+    aiGenerationIsLoading,
+    aiGenerationIsSelection,
+    aiGenerationHasMessage,
+  } = useUiEditorState(editor)
+
+  // Auto-accept AI generation when it completes (for non-selection edits)
+  useEffect(() => {
+    if (!editor) return
+
+    if (
+      !aiGenerationIsLoading &&
+      aiGenerationIsSelection &&
+      aiGenerationHasMessage
+    ) {
+      editor.chain().focus().aiAccept().run()
+      editor.commands.resetUiState()
+    }
+  }, [
+    aiGenerationHasMessage,
+    aiGenerationIsLoading,
+    aiGenerationIsSelection,
+    editor,
+  ])
+
+  return (
+    <>
+      <EditorContent
+        editor={editor}
+        role="presentation"
+        className="simple-editor-content"
+      />
+      <AiMenu />
+      <AiPromptDock editor={editor} articleId={articleId} />
+      <SlashDropdownMenu config={slashMenuConfig} />
+      <DragContextMenu />
+      <NotionToolbarFloating />
+    </>
+  )
+}
+
+const slashMenuConfig = {
+  enabledItems: [
+    "continue_writing",
+    "ai_ask_button",
+    "text",
+    "heading_1",
+    "heading_2",
+    "heading_3",
+    "bullet_list",
+    "ordered_list",
+    "quote",
+    "mention",
+    "emoji",
+    "table",
+    "divider",
+    "toc",
+    "image",
+  ],
+  itemGroups: {
+    continue_writing: "الذكاء الاصطناعي",
+    ai_ask_button: "الذكاء الاصطناعي",
+    text: "تنسيق",
+    heading_1: "تنسيق",
+    heading_2: "تنسيق",
+    heading_3: "تنسيق",
+    bullet_list: "تنسيق",
+    ordered_list: "تنسيق",
+    quote: "تنسيق",
+    mention: "إدراج",
+    emoji: "إدراج",
+    table: "إدراج",
+    divider: "إدراج",
+    toc: "إدراج",
+    image: "رفع",
+  },
+  showGroups: true,
+} as SlashMenuConfig
+
 type SimpleEditorProps = {
   /** Tiptap JSON. Defaults to the built-in demo document from `data/content.json`. */
   initialDocument?: Record<string, unknown>
@@ -164,26 +254,20 @@ export function SimpleEditor({
           hideDecorationsOnStreamEnd: false,
           aiStreamResolver: createEditorOpenRouterStreamResolver(),
           aiCompletionResolver: createEditorOpenRouterCompletionResolver(),
-        onLoading: (context) => {
-          context.editor.commands.aiGenerationSetIsLoading(true)
-          context.editor.commands.aiGenerationHasMessage(false)
-          context.editor.commands.aiGenerationSetNeedsCommit(false)
-        },
-        onChunk: (context) => {
-          context.editor.commands.aiGenerationSetIsLoading(true)
-          context.editor.commands.aiGenerationHasMessage(true)
-        },
-        onSuccess: (context) => {
-          const hasMessage =
-            !!context.response ||
-            !!context.editor.storage.uiState.aiGenerationIsSelection
-          context.editor.commands.aiGenerationSetIsLoading(false)
-          context.editor.commands.aiGenerationHasMessage(hasMessage)
-          context.editor.commands.aiGenerationSetNeedsCommit(
-            !!context.editor.storage.uiState.aiGenerationIsSelection
-          )
-        },
-      }),
+          onLoading: (context) => {
+            context.editor.commands.aiGenerationSetIsLoading(true)
+            context.editor.commands.aiGenerationHasMessage(false)
+          },
+          onChunk: (context) => {
+            context.editor.commands.aiGenerationSetIsLoading(true)
+            context.editor.commands.aiGenerationHasMessage(true)
+          },
+          onSuccess: (context) => {
+            const hasMessage = !!context.response
+            context.editor.commands.aiGenerationSetIsLoading(false)
+            context.editor.commands.aiGenerationHasMessage(hasMessage)
+          },
+        }),
       ],
     [articleId],
   )
@@ -281,7 +365,7 @@ export function SimpleEditor({
           className="simple-editor-content"
         />
         <AiMenu />
-        <AiPromptDock editor={editor} />
+        <AiPromptDock editor={editor} articleId={articleId} />
         <SlashDropdownMenu config={slashMenuConfig} />
         <DragContextMenu />
         <NotionToolbarFloating />

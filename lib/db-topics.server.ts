@@ -46,6 +46,8 @@ export async function runTopicGrouping(windowMs = 24 * 60 * 60 * 1000): Promise<
     .select({
       id: scrapedNews.id,
       title: scrapedNews.title,
+      excerpt: scrapedNews.excerpt,
+      content: scrapedNews.content,
       category: scrapedNews.category,
       publishedAt: scrapedNews.publishedAt,
     })
@@ -63,6 +65,8 @@ export async function runTopicGrouping(windowMs = 24 * 60 * 60 * 1000): Promise<
   const articles: ArticleInput[] = ungrouped.map((r) => ({
     id: r.id,
     title: r.title,
+    excerpt: r.excerpt,
+    content: r.content,
     category: r.category,
     publishedAt: r.publishedAt,
   }))

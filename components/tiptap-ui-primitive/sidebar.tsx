@@ -12,7 +12,7 @@ import React, {
 } from "react"
 import { useMergeRefs } from "@floating-ui/react"
 import "./sidebar.scss"
-import { Button } from "../button"
+import { Button } from "./button"
 import { cn, clamp } from "@/lib/tiptap-utils"
 
 const SIDEBAR_COOKIE_NAME = "sidebar:state"

@@ -16,6 +16,8 @@
 /.next/
 /out/
 
+/notion-like-sample
+
 # production
 /build
 

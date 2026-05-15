@@ -21,7 +21,7 @@ import type {
   MenuProps,
   MenuContentProps,
   MenuItemProps,
-} from "@/components/tiptap-ui-primitive/menu"
+} from "@/components/tiptap-ui-primitive/menu-types"
 import {
   SearchableContext,
   MenuContext,

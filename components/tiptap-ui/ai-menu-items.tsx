@@ -484,7 +484,7 @@ export function MenuActionRenderer({
 }: MenuActionRendererProps) {
   const { state } = useAiMenuState()
 
-  if (!menuItem.value) {
+  if (!editor || !menuItem.value) {
     return null
   }
 

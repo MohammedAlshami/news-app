@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 
 import { AdminPagination } from "@/components/admin-pagination"
 import { AdminGeneratedArticlesTable } from "@/components/admin-generated-articles-table"
+import { AdminGeneratedArticlesClient } from "@/components/admin-generated-articles-client"
 import {
   ADMIN_GENERATED_PAGE_SIZE,
   getAdminGeneratedArticlesPage,
@@ -34,6 +35,7 @@ export default async function AdminGeneratedArticlesPage({ searchParams }: PageP
             مقالات أُنشئت تلقائياً بالذكاء الاصطناعي استناداً إلى المواضيع المستخرجة
           </p>
         </div>
+        <AdminGeneratedArticlesClient />
       </div>
 
       <AdminGeneratedArticlesTable articles={rows} />
