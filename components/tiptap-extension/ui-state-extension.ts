@@ -5,7 +5,6 @@ export interface UiState {
   aiGenerationIsLoading: boolean
   aiGenerationActive: boolean
   aiGenerationHasMessage: boolean
-  aiGenerationNeedsCommit: boolean
   commentInputVisible: boolean
   lockDragHandle: boolean
   isDragging: boolean
@@ -19,7 +18,6 @@ declare module "@tiptap/core" {
       aiGenerationShow: () => ReturnType
       aiGenerationHide: () => ReturnType
       aiGenerationHasMessage: (value: boolean) => ReturnType
-      aiGenerationSetNeedsCommit: (value: boolean) => ReturnType
 
       commentInputShow: () => ReturnType
       commentInputHide: () => ReturnType
@@ -41,7 +39,6 @@ export const defaultUiState: UiState = {
   aiGenerationIsLoading: false,
   aiGenerationActive: false,
   aiGenerationHasMessage: false,
-  aiGenerationNeedsCommit: false,
   commentInputVisible: false,
   lockDragHandle: false,
   isDragging: false,
@@ -75,7 +72,6 @@ export const UiState = Extension.create<UiState>({
       ),
       aiGenerationSetIsLoading: createBooleanSetter("aiGenerationIsLoading"),
       aiGenerationHasMessage: createBooleanSetter("aiGenerationHasMessage"),
-      aiGenerationSetNeedsCommit: createBooleanSetter("aiGenerationNeedsCommit"),
       aiGenerationShow: createToggle("aiGenerationActive", true),
       aiGenerationHide: createToggle("aiGenerationActive", false),
 

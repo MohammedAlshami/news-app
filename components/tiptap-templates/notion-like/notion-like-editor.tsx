@@ -268,21 +268,15 @@ export function EditorProvider(props: EditorProviderProps) {
         onLoading: (context) => {
           context.editor.commands.aiGenerationSetIsLoading(true)
           context.editor.commands.aiGenerationHasMessage(false)
-          context.editor.commands.aiGenerationSetNeedsCommit(false)
         },
         onChunk: (context) => {
           context.editor.commands.aiGenerationSetIsLoading(true)
           context.editor.commands.aiGenerationHasMessage(true)
         },
         onSuccess: (context) => {
-          const hasMessage =
-            !!context.response ||
-            !!context.editor.storage.uiState.aiGenerationIsSelection
+          const hasMessage = !!context.response
           context.editor.commands.aiGenerationSetIsLoading(false)
           context.editor.commands.aiGenerationHasMessage(hasMessage)
-          context.editor.commands.aiGenerationSetNeedsCommit(
-            !!context.editor.storage.uiState.aiGenerationIsSelection
-          )
         },
       }),
     ],

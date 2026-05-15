@@ -78,11 +78,10 @@ function initializeEditorMenuActions(): Record<
       onSelect: ({ editor, options }) => {
         if (!editor) return
         const { insertAt, isSelection, context } = getContextAndInsertAt(editor)
-        editor.commands.aiGenerationSetNeedsCommit(isSelection)
         const newOptions: TextOptions = {
           ...options,
           insertAt,
-          insert: !isSelection,
+          insert: true,
           regenerate: !isSelection,
         }
         if (isSelection) {
@@ -99,11 +98,10 @@ function initializeEditorMenuActions(): Record<
       onSelect: ({ editor, options }) => {
         if (!editor) return
         const { insertAt, isSelection, context } = getContextAndInsertAt(editor)
-        editor.commands.aiGenerationSetNeedsCommit(isSelection)
         const newOptions: TextOptions = {
           ...options,
           insertAt,
-          insert: !isSelection,
+          insert: true,
           regenerate: !isSelection,
         }
         if (isSelection) {
@@ -120,11 +118,10 @@ function initializeEditorMenuActions(): Record<
       onSelect: ({ editor, options }) => {
         if (!editor) return
         const { insertAt, isSelection, context } = getContextAndInsertAt(editor)
-        editor.commands.aiGenerationSetNeedsCommit(isSelection)
         const newOptions: TextOptions = {
           ...options,
           insertAt,
-          insert: !isSelection,
+          insert: true,
           regenerate: !isSelection,
         }
         if (isSelection) {
@@ -141,11 +138,10 @@ function initializeEditorMenuActions(): Record<
       onSelect: ({ editor, options }) => {
         if (!editor) return
         const { insertAt, isSelection, context } = getContextAndInsertAt(editor)
-        editor.commands.aiGenerationSetNeedsCommit(isSelection)
         const newOptions: TextOptions = {
           ...options,
           insertAt,
-          insert: !isSelection,
+          insert: true,
           regenerate: !isSelection,
         }
         if (isSelection) {
@@ -162,11 +158,10 @@ function initializeEditorMenuActions(): Record<
       onSelect: ({ editor, options }) => {
         if (!editor) return
         const { insertAt, isSelection, context } = getContextAndInsertAt(editor)
-        editor.commands.aiGenerationSetNeedsCommit(isSelection)
         const newOptions: TextOptions = {
           ...options,
           insertAt,
-          insert: !isSelection,
+          insert: true,
           regenerate: !isSelection,
         }
         if (isSelection) {
@@ -183,11 +178,10 @@ function initializeEditorMenuActions(): Record<
       onSelect: ({ editor, options }) => {
         if (!editor) return
         const { insertAt, isSelection, context } = getContextAndInsertAt(editor)
-        editor.commands.aiGenerationSetNeedsCommit(isSelection)
         const newOptions: TextOptions = {
           ...options,
           insertAt,
-          insert: !isSelection,
+          insert: true,
           regenerate: !isSelection,
         }
         if (isSelection) {
@@ -314,12 +308,11 @@ export function LanguageSelectionSubmenu({
       updateState({ language: selectedLanguageCode })
 
       const { insertAt, isSelection, context } = getContextAndInsertAt(editor)
-      editor.commands.aiGenerationSetNeedsCommit(isSelection)
         const langOptions: TextOptions = {
           stream: true,
           format: "rich-text",
           insertAt,
-          insert: !isSelection,
+          insert: true,
           regenerate: !isSelection,
         }
 
@@ -411,12 +404,11 @@ export function ToneSelectionSubmenu({ editor }: { editor: Editor | null }) {
       }
 
       const { insertAt, isSelection, context } = getContextAndInsertAt(editor)
-      editor.commands.aiGenerationSetNeedsCommit(isSelection)
       const toneOptions: TextOptions = {
         stream: true,
         format: "rich-text",
         insertAt,
-        insert: !isSelection,
+        insert: true,
         regenerate: !isSelection,
       }
 
