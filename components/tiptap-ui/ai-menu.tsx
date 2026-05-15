@@ -105,7 +105,7 @@ export function AiMenuContent({
         if (anchorToSelection) {
           const selectionRect = getSelectionRangeRect(editor)
 
-          if (selectionRect) {
+          if (selectionRect && editor.view && editor.view.dom) {
             const anchorRect = createEditorWidthAnchorRect(
               editor.view.dom,
               selectionRect
@@ -221,7 +221,7 @@ export function AiMenuContent({
   }, [aiGenerationIsLoading, updateState])
 
   useEffect(() => {
-    if (!editor || !aiGenerationActive || state.isOpen) return
+    if (!editor || !aiGenerationActive || state.isOpen || !editor.view || !editor.view.dom) return
 
     const selectedElement = getSelectedDOMElement(editor)
     if (selectedElement) {
