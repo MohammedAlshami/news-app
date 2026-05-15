@@ -168,6 +168,11 @@ export const getSelectionBoundingRect = (editor: Editor): DOMRect | null => {
     }
   }
 
+  // Safety check: ensure editor view is available
+  if (!editor.view || !editor.view.dom) {
+    return null
+  }
+
   return posToDOMRect(editor.view, from, to)
 }
 

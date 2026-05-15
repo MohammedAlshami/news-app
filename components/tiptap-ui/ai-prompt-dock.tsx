@@ -4,7 +4,6 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import { Sparkles } from "lucide-react"
 
 import { AiMenuInputTextarea } from "@/components/tiptap-ui/ai-menu-input"
-import { useTiptapEditor } from "@/hooks/use-tiptap-editor"
 import { getContextAndInsertAt } from "@/components/tiptap-ui/ai-menu-utils"
 import { cn } from "@/lib/utils"
 
@@ -16,7 +15,7 @@ type AiPromptDockProps = {
 }
 
 export function AiPromptDock({ editor: providedEditor, articleId }: AiPromptDockProps) {
-  const { editor } = useTiptapEditor(providedEditor)
+  const editor = providedEditor
   const [tone, setTone] = useState<string | null>(null)
   const [isExpanded, setIsExpanded] = useState(false)
   const [articleContext, setArticleContext] = useState<string>("")
@@ -84,7 +83,6 @@ export function AiPromptDock({ editor: providedEditor, articleId }: AiPromptDock
 
       // Don't set needs commit - let it stream directly
       editor.commands.aiGenerationSetIsSelection(false)
-      editor.commands.aiGenerationSetNeedsCommit(false)
       editor.commands.aiGenerationShow()
 
       editor

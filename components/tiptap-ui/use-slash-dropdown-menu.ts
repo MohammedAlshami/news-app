@@ -232,7 +232,6 @@ const getItemImplementations = () => {
         const editorChain = editor.chain().focus()
         const hasSelection = !editor.state.selection.empty
         editor.commands.aiGenerationSetIsSelection(hasSelection)
-        editor.commands.aiGenerationSetNeedsCommit(hasSelection)
 
         const nodeSelectionPosition = findSelectionPosition({ editor })
 
