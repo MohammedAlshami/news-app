@@ -446,4 +446,17 @@ export const ar = {
   adminSiteAdNoFile: "لم يُرسل ملف صورة.",
   adminSiteAdImageTooBig: "الصورة بحد أقصى 5 ميغابايت.",
   adminSiteAdImageType: "يُقبل فقط صورة (JPEG, PNG, WebP, GIF).",
+
+  /** البحث */
+  searchMetaTitle: "البحث | أخبار",
+  searchMetaDescription: "ابحث عن المقالات والأخبار في موقع أخبار.",
+  searchKicker: "البحث",
+  searchTitle: "عما تبحث؟",
+  searchDescription: "ابحث في مئات المقالات والتقارير المنشورة.",
+  searchPlaceholder: "أدخل كلمات البحث…",
+  searchButton: "بحث",
+  searchResultsLabel: "نتائج البحث",
+  searchEmptyState: "ابدأ بكتابة كلمات البحث في المربع أعلاه.",
+  searchNoResults: "لم يتم العثور على نتائج تطابق بحثك.",
+  searchSuggestedTitle: "مقالات قد تهمك",
 } as const

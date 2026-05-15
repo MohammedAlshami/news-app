@@ -9,11 +9,11 @@ import { parseShortcutKeys } from "@/lib/tiptap-utils"
 import { useTiptapEditor } from "@/hooks/use-tiptap-editor"
 
 // --- Tiptap UI ---
-import type { UseCopyToClipboardConfig } from "@/components/tiptap-ui/copy-to-clipboard-button"
+import type { UseCopyToClipboardConfig } from "@/components/tiptap-ui/use-copy-to-clipboard"
 import {
   COPY_TO_CLIPBOARD_SHORTCUT_KEY,
   useCopyToClipboard,
-} from "@/components/tiptap-ui/copy-to-clipboard-button"
+} from "@/components/tiptap-ui/use-copy-to-clipboard"
 
 // --- UI Primitives ---
 import type { ButtonProps } from "@/components/tiptap-ui-primitive/button"

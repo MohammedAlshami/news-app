@@ -1,1 +1,1 @@
-export { TableNode as TableKit } from "@/components/tiptap-node/table-node-extension"
+export { TableKit } from "@/components/tiptap-node/table-node-extension"

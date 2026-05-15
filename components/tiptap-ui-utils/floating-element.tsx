@@ -172,10 +172,10 @@ export const FloatingElement = forwardRef<HTMLDivElement, FloatingElementProps>(
       }
 
       return () => {
-        if (!editorRef.current) return null
+        if (!editorRef.current || !editor?.view?.dom) return null
         return getBoundingClientRectRef.current(editorRef.current)
       }
-    }, [referenceElement])
+    }, [referenceElement, editor])
 
     const { isMounted, ref, style, getFloatingProps } = useFloatingElement(
       open,
@@ -191,6 +191,9 @@ export const FloatingElement = forwardRef<HTMLDivElement, FloatingElementProps>(
           outsidePress(event) {
             const relatedTarget = event.target as Node
             if (!relatedTarget) return false
+            
+            // Safety check: ensure editor is mounted
+            if (!editor?.view?.dom) return false
 
             // Don't close if clicking inside a portaled UI
             if (isElementWithinExternalPortal(relatedTarget)) return false

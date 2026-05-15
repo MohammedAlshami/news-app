@@ -150,6 +150,10 @@ export const isTextSelectionValid = (editor: Editor | null): boolean => {
  * Gets the bounding rect of the current selection in the editor.
  */
 export const getSelectionBoundingRect = (editor: Editor): DOMRect | null => {
+  if (!editor?.view?.state) {
+    return null
+  }
+  
   const { state } = editor.view
   const { selection } = state
   const { ranges } = selection

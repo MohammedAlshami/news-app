@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
 import { type Editor } from "@tiptap/react"
+import { Sparkles } from "lucide-react"
 
 // --- Hooks ---
 import { useTiptapEditor } from "@/hooks/use-tiptap-editor"
@@ -58,6 +59,11 @@ export function NotionToolbarFloating() {
     extraHideWhen: Boolean(aiGenerationActive || commentInputVisible),
   })
 
+  const handleEditWithAi = () => {
+    if (!editor) return
+    editor.commands.aiGenerationShow()
+  }
+
   if (lockDragHandle || isMobile) return null
 
   return (
@@ -88,7 +94,19 @@ export function NotionToolbarFloating() {
             autoOpenOnLinkActive={false}
             hideWhenUnavailable={true}
           />
-          <ColorTextPopover hideWhenUnavailable={true} />
+        </ToolbarGroup>
+
+        <ToolbarSeparator />
+
+        <ToolbarGroup>
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={handleEditWithAi}
+            tooltip="تحرير بالذكاء الاصطناعي"
+          >
+            <Sparkles className="tiptap-button-icon" />
+          </Button>
         </ToolbarGroup>
 
         <MoreOptions hideWhenUnavailable={true} />

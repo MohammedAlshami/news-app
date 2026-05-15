@@ -1,5 +1,6 @@
 import type { Metadata } from "next"
 
+import { AdminScrapedArticlesClient } from "@/components/admin-scraped-articles-client"
 import { AdminScrapedArticlesTable } from "@/components/admin-scraped-articles-table"
 import { AdminPagination } from "@/components/admin-pagination"
 import { ADMIN_SCRAPED_PAGE_SIZE, getAdminScrapedNewsListPage } from "@/lib/db-scraped-news.server"
@@ -36,6 +37,7 @@ export default async function AdminScrapedArticlesPage({ searchParams }: PagePro
             عرض المقالات المستخرجة من المصادر الإخبارية (RT Arabic, Independent Arabia)
           </p>
         </div>
+        <AdminScrapedArticlesClient />
       </div>
 
       <AdminScrapedArticlesTable

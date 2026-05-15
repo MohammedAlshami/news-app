@@ -21,6 +21,8 @@ import {
 
 import { getFilteredEmojis } from "@/components/tiptap-ui/emoji-menu-utils"
 
+export { getFilteredEmojis }
+
 // --- Styles ---
 import "@/components/tiptap-ui/emoji-menu.scss"
 

@@ -46,13 +46,17 @@ function cleanText(value: string): string {
   return decodeBasicEntities(stripTags(value)).trim()
 }
 
+type TiptapNode = {
+  type: string
+  content?: TiptapNode[]
+  text?: string
+  marks?: Array<{ type: string; attrs?: Record<string, any> }>
+  attrs?: Record<string, any>
+}
+
 function htmlToTiptapJson(html: string): string {
   // Parse HTML content into Tiptap JSON structure with proper block-level elements
-  const content: Array<{
-    type: string
-    content?: Array<{ type: string; text?: string; marks?: Array<{ type: string }> }>
-    attrs?: Record<string, unknown>
-  }> = []
+  const content: TiptapNode[] = []
 
   // Remove script and style tags
   let cleanHtml = html.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "")
@@ -101,7 +105,7 @@ function htmlToTiptapJson(html: string): string {
       
       // Handle lists
       if (tag === "ul" || tag === "ol") {
-        const listItems: Array<{ type: string; content: Array<{ type: string; content: Array<{ type: string; text: string }> }> }> = []
+        const listItems: TiptapNode[] = []
         const liRegex = /<li[^>]*>([\s\S]*?)<\/li>/gi
         let liMatch: RegExpExecArray | null
         
@@ -166,9 +170,9 @@ function htmlToTiptapJson(html: string): string {
   })
 }
 
-function parseInlineFormatting(html: string): Array<{ type: string; text: string; marks?: Array<{ type: string }> }> {
+function parseInlineFormatting(html: string): TiptapNode[] {
   // Parse inline formatting like bold, italic, links
-  const nodes: Array<{ type: string; text: string; marks?: Array<{ type: string }> }> = []
+  const nodes: TiptapNode[] = []
   
   // Simple approach: extract text and check for formatting tags
   // This is a simplified parser - for production, consider using a proper HTML parser
@@ -284,51 +288,46 @@ function parseIndependent(html: string): ScrapedNewsItem[] {
   })
 }
 
-async function fetchRtArticleContent(url: string): Promise<string> {
-  try {
-    const html = await fetch(url, {
-      headers: {
-        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-        "accept-language": "ar,en;q=0.9",
-      }
-    }).then((r) => r.text())
-    
-    // Try multiple selectors for RT Arabic content
-    let content = ""
-    
-    // Try article__text class
-    let match = html.match(/<div\b[^>]*class="[^"]*\barticle__text\b[^"]*"[^>]*>([\s\S]*?)<\/div>/i)
-    if (match) content = match[1]
-    
-    // Try article__summary if article__text not found
-    if (!content) {
-      match = html.match(/<div\b[^>]*class="[^"]*\barticle__summary\b[^"]*"[^>]*>([\s\S]*?)<\/div>/i)
-      if (match) content = match[1]
+async function fetchRtArticleContent(url: string): Promise<{ excerpt: string; content: string }> {
+  const html = await fetch(url, {
+    cache: "no-store",
+    headers: {
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+      "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+      "accept-language": "ar,en;q=0.9",
     }
-    
-    // Try article-content class
-    if (!content) {
-      match = html.match(/<div\b[^>]*class="[^"]*\barticle-content\b[^"]*"[^>]*>([\s\S]*?)<\/div>/i)
-      if (match) content = match[1]
-    }
-    
-    if (!content) return ""
-    
-    // Clean up but preserve paragraph structure
-    content = content.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "")
-    content = content.replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, "")
-    
-    // Convert to Tiptap JSON
-    return htmlToTiptapJson(content)
-  } catch {
-    return ""
+  }).then((r) => r.text())
+
+  // Extract excerpt — the summary <p> inside the intro-text block
+  let excerpt = ""
+  const introBlock = html.match(/<div\b[^>]*class="[^"]*\bmain-article__intro-text\b[^"]*"[^>]*>([\s\S]*?)<\/div>/i)
+  if (introBlock) {
+    const summaryP = introBlock[1].match(/<p\b[^>]*class="[^"]*\bmain-article__summary\b[^"]*"[^>]*>([\s\S]*?)<\/p>/i)
+    if (summaryP) excerpt = cleanText(summaryP[1])
   }
+  if (!excerpt) {
+    const summaryDiv = html.match(/<p\b[^>]*class="[^"]*\bmain-article__summary\b[^"]*"[^>]*>([\s\S]*?)<\/p>/i)
+    if (summaryDiv) excerpt = cleanText(summaryDiv[1])
+  }
+
+  // Extract body — everything inside editor-content div
+  const editorMatch = html.match(/<div\b[^>]*class="[^"]*\beditor-content\b[^"]*"[^>]*>([\s\S]+)/i)
+  if (!editorMatch) return { excerpt, content: "" }
+
+  let contentHtml = editorMatch[1]
+  const cutoff = contentHtml.search(/<div\b[^>]*class="[^"]*\bmain-article__block--tags\b[^"]*"/i)
+  if (cutoff > 0) contentHtml = contentHtml.slice(0, cutoff)
+
+  contentHtml = contentHtml.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "")
+  contentHtml = contentHtml.replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, "")
+
+  return { excerpt, content: htmlToTiptapJson(contentHtml) }
 }
 
 async function fetchIndependentArticleContent(url: string): Promise<string> {
   try {
     const html = await fetch(url, {
+      cache: "no-store",
       headers: {
         "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
         "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
@@ -475,7 +474,7 @@ export class NewsScraper {
     const category = (input.category ?? "").trim().toLowerCase()
     const url = this.resolveUrl(query, category)
     const headers = category ? cfg.categoryHeaders ?? cfg.searchHeaders : cfg.searchHeaders
-    const html = await fetch(url, { headers }).then(async (res) => {
+    const html = await fetch(url, { headers, cache: "no-store" }).then(async (res) => {
       const text = await res.text()
       if (!res.ok) throw new Error(`Fetch failed: ${res.status} ${text.slice(0, 200)}`)
       return text
@@ -485,10 +484,17 @@ export class NewsScraper {
     // Fetch content for each article (limit to first 5 to avoid too many requests)
     const itemsWithContent = await Promise.all(
       items.slice(0, 5).map(async (item) => {
-        const content = this.source === "rt" 
-          ? await fetchRtArticleContent(item.url)
-          : await fetchIndependentArticleContent(item.url)
-        return { ...item, content }
+        if (this.source === "rt") {
+          const { excerpt, content } = await fetchRtArticleContent(item.url)
+          return {
+            ...item,
+            excerpt: excerpt || item.excerpt,
+            content,
+          }
+        } else {
+          const content = await fetchIndependentArticleContent(item.url)
+          return { ...item, content }
+        }
       })
     )
     

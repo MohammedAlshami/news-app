@@ -106,12 +106,14 @@ export function AiPromptInputToolbar({
   showPlaceholder,
   onInputSubmit,
   onToneChange,
+  onClose,
   isEmpty = false,
   promptValue = "",
 }: {
   showPlaceholder?: boolean
   onInputSubmit: (prompt: string) => void
   onToneChange?: (tone: string) => void
+  onClose?: () => void
   isEmpty?: boolean
   promptValue?: string
 }) {
@@ -147,6 +149,16 @@ export function AiPromptInputToolbar({
         </Button>
 
         <ToneSelector tone={tone} onToneChange={handleToneChange} />
+        
+        {onClose && (
+          <Button
+            onClick={onClose}
+            variant="ghost"
+            aria-label="إغلاق"
+          >
+            <span className="tiptap-button-text">إغلاق</span>
+          </Button>
+        )}
       </ToolbarGroup>
     </Toolbar>
   )
@@ -234,6 +246,7 @@ export function AiMenuInputTextarea({
             showPlaceholder={showPlaceholder}
             onInputSubmit={handleSubmit}
             onToneChange={onToneChange}
+            onClose={onClose}
             isEmpty={!promptValue?.trim()}
             promptValue={promptValue}
           />

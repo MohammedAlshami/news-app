@@ -1,4 +1,4 @@
-export { TableHandleExtension } from "@/components/tiptap-node/table-handle"
+export { TableHandleExtension } from "@/components/tiptap-node/table-handle-extension"
 export {
   colDragStart,
   rowDragStart,

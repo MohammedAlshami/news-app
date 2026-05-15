@@ -18,9 +18,7 @@ export const TURN_INTO_BLOCKS = [
   "heading",
   "bulletList",
   "orderedList",
-  "taskList",
   "blockquote",
-  "codeBlock",
 ]
 
 /**
@@ -50,7 +48,7 @@ export interface UseTurnIntoDropdownConfig {
 export const blockTypeOptions = [
   {
     type: "paragraph",
-    label: "Text",
+    label: "نص",
     isActive: (editor: Editor) =>
       editor.isActive("paragraph") &&
       !editor.isActive("heading") &&
@@ -62,46 +60,36 @@ export const blockTypeOptions = [
   },
   {
     type: "heading",
-    label: "Heading 1",
+    label: "عنوان 1",
     level: 1 as Level,
     isActive: (editor: Editor) => editor.isActive("heading", { level: 1 }),
   },
   {
     type: "heading",
-    label: "Heading 2",
+    label: "عنوان 2",
     level: 2 as Level,
     isActive: (editor: Editor) => editor.isActive("heading", { level: 2 }),
   },
   {
     type: "heading",
-    label: "Heading 3",
+    label: "عنوان 3",
     level: 3 as Level,
     isActive: (editor: Editor) => editor.isActive("heading", { level: 3 }),
   },
   {
     type: "bulletList",
-    label: "Bulleted list",
+    label: "قائمة نقطية",
     isActive: (editor: Editor) => editor.isActive("bulletList"),
   },
   {
     type: "orderedList",
-    label: "Numbered list",
+    label: "قائمة مرقمة",
     isActive: (editor: Editor) => editor.isActive("orderedList"),
   },
   {
-    type: "taskList",
-    label: "To-do list",
-    isActive: (editor: Editor) => editor.isActive("taskList"),
-  },
-  {
     type: "blockquote",
-    label: "Blockquote",
+    label: "اقتباس",
     isActive: (editor: Editor) => editor.isActive("blockquote"),
-  },
-  {
-    type: "codeBlock",
-    label: "Code block",
-    isActive: (editor: Editor) => editor.isActive("codeBlock"),
   },
 ]
 

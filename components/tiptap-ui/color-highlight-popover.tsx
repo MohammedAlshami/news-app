@@ -31,11 +31,11 @@ import {
 import type {
   HighlightColor,
   UseColorHighlightConfig,
-} from "@/components/tiptap-ui/color-highlight-button"
+} from "@/components/tiptap-ui/use-color-highlight"
+import { useColorHighlight } from "@/components/tiptap-ui/use-color-highlight"
 import {
   ColorHighlightButton,
   pickHighlightColorsByValue,
-  useColorHighlight,
 } from "@/components/tiptap-ui/color-highlight-button"
 import { ButtonGroup } from "@/components/tiptap-ui-primitive/button-group"
 
@@ -59,9 +59,11 @@ export interface ColorHighlightPopoverContentProps {
 export interface ColorHighlightPopoverProps
   extends
     Omit<ButtonProps, "type">,
-    Pick<
-      UseColorHighlightConfig,
-      "editor" | "hideWhenUnavailable" | "onApplied"
+    Partial<
+      Pick<
+        UseColorHighlightConfig,
+        "editor" | "hideWhenUnavailable" | "onApplied"
+      >
     > {
   /**
    * Optional colors to use in the highlight popover.
