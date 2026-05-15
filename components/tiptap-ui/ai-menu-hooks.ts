@@ -116,7 +116,7 @@ export function useAiContentTracker({
   const rafIdRef = useRef<number | null>(null)
 
   useEffect(() => {
-    if (!editor || !aiGenerationActive) return
+    if (!editor || !aiGenerationActive || !editor.view || !editor.view.dom) return
 
     const cleanupStreamingAnchor = () => {
       resizeObserverRef.current?.disconnect()
@@ -131,6 +131,8 @@ export function useAiContentTracker({
     }
 
     const updateStreamingAnchor = (aiElement: HTMLElement) => {
+      if (!editor.view || !editor.view.dom) return
+      
       const anchorRect = createEditorWidthAnchorRect(
         editor.view.dom,
         aiElement.getBoundingClientRect()
@@ -155,6 +157,8 @@ export function useAiContentTracker({
     }
 
     const handleStreamingMode = () => {
+      if (!editor.view || !editor.view.dom) return
+      
       const lastAiElement = getLastAiElement(editor.view.dom)
       if (!lastAiElement) return
 
@@ -169,6 +173,8 @@ export function useAiContentTracker({
     }
 
     const handleStaticMode = () => {
+      if (!editor.view || !editor.view.dom) return
+      
       let targetElement: HTMLElement | null = null
 
       if (anchorToSelection) {
@@ -249,6 +255,8 @@ export function useTextSelectionTracker({
     }
 
     const handleSelectionAnchored = (editor: Editor) => {
+      if (!editor.view || !editor.view.dom) return false
+      
       const selectionRect = getSelectionRangeRect(editor)
       if (!selectionRect) return false
 
