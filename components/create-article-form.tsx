@@ -33,6 +33,7 @@ type Props = {
   initialExcerpt: string
   initialCategoryIds: string[]
   initialIsPublished: boolean
+  initialIsMemberOnly: boolean
   initialBodyJson: string
 }
 
@@ -59,6 +60,7 @@ function buildArticleSnapshot(input: {
   excerpt: string
   categoryIds: Set<string>
   isPublished: boolean
+  isMemberOnly: boolean
   bodyJson: string
 }) {
   return JSON.stringify({
@@ -66,6 +68,7 @@ function buildArticleSnapshot(input: {
     excerpt: input.excerpt.trim(),
     categoryIds: Array.from(input.categoryIds).sort(),
     isPublished: input.isPublished,
+    isMemberOnly: input.isMemberOnly,
     bodyJson: normalizeArticleBodyJson(input.bodyJson),
   })
 }
@@ -80,6 +83,8 @@ function ArticleInfoSheet({
   setExcerpt,
   isPublished,
   setIsPublished,
+  isMemberOnly,
+  setIsMemberOnly,
   categoryIds,
   setCategoryIds,
   addCategoryOpen,
@@ -96,6 +101,8 @@ function ArticleInfoSheet({
   setExcerpt: (value: string) => void
   isPublished: boolean
   setIsPublished: (value: boolean) => void
+  isMemberOnly: boolean
+  setIsMemberOnly: (value: boolean) => void
   categoryIds: Set<string>
   setCategoryIds: (value: Set<string>) => void
   addCategoryOpen: boolean
@@ -151,6 +158,26 @@ function ArticleInfoSheet({
           checked={isPublished}
           onCheckedChange={setIsPublished}
           aria-label={ar.adminArticlePublishToggle}
+        />
+      </div>
+
+      <div
+        className="flex items-center justify-between gap-4 rounded-2xl border border-border bg-card/80 p-4 shadow-sm"
+        dir="rtl"
+      >
+        <div className="space-y-0.5">
+          <Label htmlFor="article-member-only" className="text-sm font-medium">
+            {ar.adminArticleMemberOnlyToggle}
+          </Label>
+          <p className="text-xs text-muted-foreground">
+            {ar.adminArticleMemberOnlyHint}
+          </p>
+        </div>
+        <Switch
+          id="article-member-only"
+          checked={isMemberOnly}
+          onCheckedChange={setIsMemberOnly}
+          aria-label={ar.adminArticleMemberOnlyToggle}
         />
       </div>
 
@@ -210,6 +237,7 @@ export function CreateArticleForm({
   initialExcerpt,
   initialCategoryIds,
   initialIsPublished,
+  initialIsMemberOnly,
   initialBodyJson,
 }: Props) {
   const [title, setTitle] = useState(initialTitle)
@@ -232,6 +260,7 @@ export function CreateArticleForm({
   const [addCategoryOpen, setAddCategoryOpen] = useState(false)
   const [editCategoryOpen, setEditCategoryOpen] = useState(false)
   const [isPublished, setIsPublished] = useState(initialIsPublished)
+  const [isMemberOnly, setIsMemberOnly] = useState(initialIsMemberOnly)
   const [infoOpen, setInfoOpen] = useState(false)
   const [autosaveStatus, setAutosaveStatus] = useState<AutosaveStatus>("idle")
   const [saveError, setSaveError] = useState<string | null>(null)
@@ -247,6 +276,7 @@ export function CreateArticleForm({
       excerpt: initialExcerpt,
       categoryIds: new Set(initialCategoryIds),
       isPublished: initialIsPublished,
+      isMemberOnly: initialIsMemberOnly,
       bodyJson: initialNormalizedBodyJson,
     }),
   )
@@ -255,6 +285,7 @@ export function CreateArticleForm({
     excerpt: initialExcerpt,
     categoryIds: new Set(initialCategoryIds),
     isPublished: initialIsPublished,
+    isMemberOnly: initialIsMemberOnly,
     bodyJson: initialNormalizedBodyJson,
   })
 
@@ -301,6 +332,7 @@ export function CreateArticleForm({
         bodyJson: current.bodyJson,
         categoryIds: Array.from(current.categoryIds).sort(),
         isPublished: current.isPublished,
+        isMemberOnly: current.isMemberOnly,
       })
 
       if (!result.ok) {
@@ -359,10 +391,11 @@ export function CreateArticleForm({
       excerpt,
       categoryIds: new Set(categoryIds),
       isPublished,
+      isMemberOnly,
       bodyJson,
     }
     scheduleDebouncedSave()
-  }, [bodyJson, categoryIds, excerpt, isPublished, scheduleDebouncedSave, title])
+  }, [bodyJson, categoryIds, excerpt, isMemberOnly, isPublished, scheduleDebouncedSave, title])
 
   useEffect(() => {
     const flushSave = () => {
@@ -455,6 +488,8 @@ export function CreateArticleForm({
                       setExcerpt={setExcerpt}
                       isPublished={isPublished}
                       setIsPublished={setIsPublished}
+                      isMemberOnly={isMemberOnly}
+                      setIsMemberOnly={setIsMemberOnly}
                       categoryIds={categoryIds}
                       setCategoryIds={setCategoryIds}
                       addCategoryOpen={addCategoryOpen}

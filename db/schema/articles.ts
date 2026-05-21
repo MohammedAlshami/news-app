@@ -15,6 +15,8 @@ export const articles = sqliteTable("articles", {
   categoryId: text("category_id"),
   /** Shown on the public site only when true. */
   isPublished: integer("is_published", { mode: "boolean" }).notNull().default(false),
+  /** Visible only to logged-in members when true. */
+  isMemberOnly: integer("is_member_only", { mode: "boolean" }).notNull().default(false),
   /**
    * Hero/banner image (URL path e.g. `/uploads/articles/{id}/cover.jpg`).
    */

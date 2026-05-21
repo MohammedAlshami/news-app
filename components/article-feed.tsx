@@ -1,5 +1,4 @@
-import Link from "next/link"
-
+import { SubscriptionGate } from "@/components/subscription-gate"
 import { getArticlePath, type Article } from "@/lib/articles"
 import { formatArticleDate } from "@/lib/format-date"
 import { ar } from "@/lib/ui-ar"
@@ -11,6 +10,7 @@ type ArticleFeedProps = {
   subheading: string
   /** Resolved category names for chip labels (RTL). */
   categoryNameById: Record<string, string>
+  isSubscribed: boolean
 }
 
 const cardClassName = cn(
@@ -24,6 +24,7 @@ export function ArticleFeed({
   heading,
   subheading,
   categoryNameById,
+  isSubscribed,
 }: ArticleFeedProps) {
   return (
     <main className="mx-auto max-w-3xl px-4 py-10">
@@ -36,8 +37,10 @@ export function ArticleFeed({
         <ul className="mt-6 flex flex-col gap-4">
           {articles.map((article) => (
             <li key={article.id}>
-              <Link
-                href={getArticlePath(article.id)}
+              <SubscriptionGate
+                isMemberOnly={article.isMemberOnly}
+                isSubscribed={isSubscribed}
+                href={getArticlePath(article.id, article.title)}
                 className={cardClassName}
               >
                 <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
@@ -51,18 +54,13 @@ export function ArticleFeed({
                       </span>
                     ))
                   ) : (
-                    <span className="text-[0.7rem]">{ar.uncategorized}</span>
+                    <span>{ar.uncategorized}</span>
                   )}
                   <span aria-hidden>·</span>
-                  <time dateTime={article.date}>
-                    {formatArticleDate(article.date)}
-                  </time>
+                  <time dateTime={article.date}>{formatArticleDate(article.date)}</time>
                 </div>
-                <h3 className="mt-2 text-base font-semibold leading-snug">{article.title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                  {article.excerpt}
-                </p>
-              </Link>
+                <p className="mt-1.5 line-clamp-3 text-sm/relaxed font-medium">{article.title}</p>
+              </SubscriptionGate>
             </li>
           ))}
         </ul>

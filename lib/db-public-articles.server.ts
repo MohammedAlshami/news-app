@@ -1,10 +1,10 @@
 import "server-only"
 
-import { and, desc, eq } from "drizzle-orm"
+import { and, desc, eq, like } from "drizzle-orm"
 
 import { getDb } from "@/db/client"
 import { articles } from "@/db/schema"
-import { ALL_CATEGORIES_ID } from "@/lib/site-routes"
+import { ALL_CATEGORIES_ID, parseShortId } from "@/lib/site-routes"
 import type { FeedArticle } from "@/lib/site-types"
 
 export async function getPublishedArticleIdsForStaticParams(): Promise<
@@ -25,6 +25,7 @@ export async function getPublishedArticles() {
       createdAt: articles.createdAt,
       categoryId: articles.categoryId,
       coverImageUrl: articles.coverImageUrl,
+      isMemberOnly: articles.isMemberOnly,
     })
     .from(articles)
     .where(eq(articles.isPublished, true))
@@ -37,6 +38,7 @@ export async function getPublishedArticles() {
     date: r.createdAt.toISOString().slice(0, 10),
     categoryIds: r.categoryId ? [r.categoryId] : [],
     coverImageUrl: r.coverImageUrl,
+    isMemberOnly: r.isMemberOnly,
   }))
 }
 
@@ -45,6 +47,22 @@ export async function getPublishedArticleRowById(id: string) {
     .select()
     .from(articles)
     .where(and(eq(articles.id, id), eq(articles.isPublished, true)))
+    .limit(1)
+  return row
+}
+
+export async function getPublishedArticleRowBySlugId(slugId: string) {
+  const shortId = parseShortId(slugId)
+  if (!shortId) return null
+  const [row] = await getDb()
+    .select()
+    .from(articles)
+    .where(
+      and(
+        like(articles.id, `${shortId}%`),
+        eq(articles.isPublished, true),
+      ),
+    )
     .limit(1)
   return row
 }
@@ -61,6 +79,7 @@ export async function getFeedArticlesByPageId(
     createdAt: articles.createdAt,
     categoryId: articles.categoryId,
     coverImageUrl: articles.coverImageUrl,
+    isMemberOnly: articles.isMemberOnly,
   }
 
   /** `/category/all`: every published article, any category (or uncategorized). */
@@ -91,5 +110,6 @@ export async function getFeedArticlesByPageId(
     date: r.createdAt.toISOString().slice(0, 10),
     categoryIds: r.categoryId ? [r.categoryId] : [],
     coverImageUrl: r.coverImageUrl,
+    isMemberOnly: r.isMemberOnly,
   }))
 }

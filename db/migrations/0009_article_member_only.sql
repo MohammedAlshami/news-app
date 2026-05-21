@@ -1,0 +1,1 @@
+ALTER TABLE articles ADD COLUMN is_member_only INTEGER NOT NULL DEFAULT 0;

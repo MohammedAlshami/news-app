@@ -1,40 +1,23 @@
 "use client"
 
 import Image from "next/image"
-import Link from "next/link"
 import { useCallback, useEffect, useRef, useState } from "react"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 
+import { SubscriptionGate } from "@/components/subscription-gate"
+import { getArticlePath } from "@/lib/site-routes"
+import type { FeedArticle } from "@/lib/site-types"
 import { ar } from "@/lib/ui-ar"
 import { cn } from "@/lib/utils"
 
-const CARDS = [
-  {
-    titleKey: "homeFinanceCard1Title" as const,
-    excerptKey: "homeFinanceCard1Excerpt" as const,
-    src: "https://images.unsplash.com/photo-1592355591829-aaae33fcff1d?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-  },
-  {
-    titleKey: "homeFinanceCard2Title" as const,
-    excerptKey: "homeFinanceCard2Excerpt" as const,
-    src: "https://images.unsplash.com/photo-1568191009535-7d8b407d389a?q=80&w=764&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-  },
-  {
-    titleKey: "homeFinanceCard3Title" as const,
-    excerptKey: "homeFinanceCard3Excerpt" as const,
-    src: "https://images.unsplash.com/photo-1529912626516-e58b23f44f1d?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-  },
-  {
-    titleKey: "homeFinanceCard4Title" as const,
-    excerptKey: "homeFinanceCard4Excerpt" as const,
-    src: "https://images.unsplash.com/photo-1732594207742-1ee7a1bb561b?q=80&w=657&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-  },
-]
+type Props = {
+  articles: FeedArticle[]
+  isSubscribed: boolean
+}
 
-export function HomeFinanceSpotlight() {
+export function HomeFinanceSpotlight({ articles, isSubscribed }: Props) {
   const scrollerRef = useRef<HTMLDivElement>(null)
   const [canScroll, setCanScroll] = useState(false)
-  /** حافة يسار الشاشة: يظهر بعد التمرير نحو البطاقات الأخيرة (يساراً في العربية) */
   const [fadeLeft, setFadeLeft] = useState(false)
 
   const measure = useCallback(() => {
@@ -57,10 +40,6 @@ export function HomeFinanceSpotlight() {
     return () => window.removeEventListener("resize", measure)
   }, [measure])
 
-  /**
-   * شريط ltr + flex-row-reverse: البطاقة الأولى في DOM تظهر يميناً، الأخيرة يساراً (قراءة عربية).
-   * من xl: شبكة direction:rtl حتى يبقى العمود الأول من يمين الصف.
-   */
   const scrollStep = (direction: -1 | 1) => {
     const el = scrollerRef.current
     if (!el) return
@@ -68,6 +47,8 @@ export function HomeFinanceSpotlight() {
     const step = card?.offsetWidth ?? Math.min(el.clientWidth * 0.85, 320)
     el.scrollBy({ behavior: "smooth", left: direction * step * 0.92 })
   }
+
+  if (articles.length === 0) return null
 
   return (
     <section
@@ -86,7 +67,6 @@ export function HomeFinanceSpotlight() {
           </h2>
 
           <div className="flex shrink-0 justify-end gap-1.5 sm:justify-start">
-            {/* السابق = تمرير نحو البطاقة الأولى (يمين) */}
             <button
               type="button"
               disabled={!canScroll}
@@ -96,7 +76,6 @@ export function HomeFinanceSpotlight() {
             >
               <ChevronRight className="h-3.5 w-3.5" aria-hidden />
             </button>
-            {/* التالي = تمرير نحو البطاقة الأخيرة (يسار) */}
             <button
               type="button"
               disabled={!canScroll}
@@ -129,12 +108,11 @@ export function HomeFinanceSpotlight() {
               "[&::-webkit-scrollbar]:hidden",
             )}
           >
-            {CARDS.map((card, index) => (
+            {articles.map((article, index) => (
               <FinanceCard
-                key={card.titleKey}
-                title={ar[card.titleKey]}
-                excerpt={ar[card.excerptKey]}
-                src={card.src}
+                key={article.id}
+                article={article}
+                isSubscribed={isSubscribed}
                 priority={index === 0}
               />
             ))}
@@ -146,16 +124,16 @@ export function HomeFinanceSpotlight() {
 }
 
 function FinanceCard({
-  title,
-  excerpt,
-  src,
+  article,
+  isSubscribed,
   priority,
 }: {
-  title: string
-  excerpt: string
-  src: string
+  article: FeedArticle
+  isSubscribed: boolean
   priority?: boolean
 }) {
+  const href = getArticlePath(article.id, article.title)
+
   return (
     <article
       data-finance-card
@@ -168,23 +146,27 @@ function FinanceCard({
         "focus-within:[&_img]:scale-105 hover:[&_img]:scale-105",
       )}
     >
-      <Link
-        href="#"
+      <SubscriptionGate
+        isMemberOnly={article.isMemberOnly}
+        isSubscribed={isSubscribed}
+        href={href}
         className="absolute inset-0 z-10 block rounded-3xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 focus-visible:ring-offset-white"
       >
         <span className="sr-only">
-          {title} {excerpt}
+          {article.title} {article.excerpt}
         </span>
-      </Link>
+      </SubscriptionGate>
 
-      <Image
-        src={src}
-        alt=""
-        fill
-        sizes="(max-width: 1279px) 82vw, 22vw"
-        priority={priority}
-        className="object-cover transition duration-700 ease-out will-change-transform"
-      />
+      {article.coverImageUrl ? (
+        <Image
+          src={article.coverImageUrl}
+          alt=""
+          fill
+          sizes="(max-width: 1279px) 82vw, 22vw"
+          priority={priority}
+          className="object-cover transition duration-700 ease-out will-change-transform"
+        />
+      ) : null}
 
       <div
         className={cn(
@@ -199,14 +181,14 @@ function FinanceCard({
         className="pointer-events-none absolute inset-x-0 bottom-0 z-[5] p-5 text-right md:p-6"
       >
         <h3 className="text-pretty text-lg font-bold leading-snug text-white drop-shadow-sm md:text-xl">
-          {title}
+          {article.title}
         </h3>
         <p
           className={cn(
             "finance-card-excerpt mt-0 max-h-0 translate-y-2 overflow-hidden opacity-0 transition-all duration-300 ease-out text-pretty text-sm leading-relaxed text-white/95",
           )}
         >
-          {excerpt}
+          {article.excerpt}
         </p>
       </div>
     </article>

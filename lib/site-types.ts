@@ -15,6 +15,7 @@ export type FeedArticle = {
   categoryIds: string[]
   /** Hero image for cards (absolute URL or `/uploads/...`). */
   coverImageUrl?: string | null
+  isMemberOnly: boolean
 }
 
 /** Alias for components that imported `Article` for feed/list usage. */
@@ -38,6 +39,17 @@ export type AdminArticleListItem = {
   date: string
   categoryIds: string[]
   isPublished: boolean
+  isMemberOnly: boolean
+  views: number
+}
+
+/** Admin list row — users. */
+export type AdminUserListItem = {
+  id: string
+  email: string
+  name: string | null
+  role: string
+  createdAt: string
 }
 
 /** Public banner ad (image + link). */

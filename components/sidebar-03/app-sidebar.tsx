@@ -23,6 +23,7 @@ import {
   Radio,
   Sparkles,
   Tag,
+  Users,
 } from "lucide-react"
 import Link from "next/link"
 import { Logo } from "@/components/sidebar-03/logo"
@@ -89,6 +90,16 @@ const dashboardRoutes: Route[] = [
     title: ar.adminNavSiteAds,
     icon: <Images className="size-4" />,
     link: "/admin/ads",
+  },
+  {
+    id: "admin-users",
+    title: "المستخدمون",
+    icon: <Users className="size-4" />,
+    link: "/admin/users",
+    subs: [
+      { title: ar.adminNavUsers, link: "/admin/users" },
+      { title: ar.adminNavClients, link: "/admin/clients" },
+    ],
   },
 ]
 
