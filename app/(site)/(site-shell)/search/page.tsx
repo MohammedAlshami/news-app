@@ -2,10 +2,12 @@ import type { Metadata } from "next"
 import Link from "next/link"
 import Image from "next/image"
 
+import { SubscriptionGate } from "@/components/subscription-gate"
 import { formatArticleDate } from "@/lib/format-date"
 import { getCategories } from "@/lib/categories"
 import { getPublishedArticles } from "@/lib/db-public-articles.server"
 import { getArticlePath } from "@/lib/articles"
+import { isSubscribed } from "@/lib/subscription"
 import { ar } from "@/lib/ui-ar"
 import { cn } from "@/lib/utils"
 
@@ -31,8 +33,11 @@ export default async function SearchPage({ searchParams }: PageProps) {
   const sp = (await searchParams) ?? {}
   const query = (sp.q ?? "").trim()
   const normalizedQuery = normalize(query)
-  const articles = await getPublishedArticles()
-  const categories = await getCategories()
+  const [articles, categories, subscribed] = await Promise.all([
+    getPublishedArticles(),
+    getCategories(),
+    isSubscribed(),
+  ])
   const categoryNameById = Object.fromEntries(
     categories.map((category) => [category.id, category.name]),
   )
@@ -113,13 +118,15 @@ export default async function SearchPage({ searchParams }: PageProps) {
 
                     return (
                       <li key={article.id}>
-                        <Link
-                          href={getArticlePath(article.id)}
-                          className={cn(
-                            "group flex flex-col gap-4 rounded-[1.5rem] border border-slate-200 p-4 transition",
-                            "hover:border-slate-300 hover:bg-slate-50 md:flex-row md:items-stretch",
-                          )}
-                        >
+                      <SubscriptionGate
+                        isMemberOnly={article.isMemberOnly}
+                        isSubscribed={subscribed}
+                        href={getArticlePath(article.id, article.title)}
+                        className={cn(
+                          "group flex flex-col gap-4 rounded-[1.5rem] border border-slate-200 p-4 transition",
+                          "hover:border-slate-300 hover:bg-slate-50 md:flex-row md:items-stretch",
+                        )}
+                      >
                           <div className="relative aspect-[16/10] overflow-hidden rounded-[1.2rem] bg-slate-100 md:w-48 md:shrink-0">
                             <Image
                               src={coverImageUrl}
@@ -148,7 +155,7 @@ export default async function SearchPage({ searchParams }: PageProps) {
                               {article.excerpt}
                             </p>
                           </div>
-                        </Link>
+                        </SubscriptionGate>
                       </li>
                     )
                   })}
@@ -165,8 +172,10 @@ export default async function SearchPage({ searchParams }: PageProps) {
               <ul className="mt-5 space-y-4">
                 {suggestions.map((article) => (
                   <li key={article.id}>
-                    <Link
-                      href={getArticlePath(article.id)}
+                    <SubscriptionGate
+                      isMemberOnly={article.isMemberOnly}
+                      isSubscribed={subscribed}
+                      href={getArticlePath(article.id, article.title)}
                       className="block rounded-2xl bg-slate-50 px-4 py-3 transition hover:bg-slate-100"
                     >
                       <div dir="rtl" className="text-xs text-slate-500">
@@ -177,7 +186,7 @@ export default async function SearchPage({ searchParams }: PageProps) {
                       <div className="mt-1 text-sm font-bold leading-6 text-slate-900">
                         {article.title}
                       </div>
-                    </Link>
+                    </SubscriptionGate>
                   </li>
                 ))}
               </ul>

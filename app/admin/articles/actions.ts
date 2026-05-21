@@ -20,7 +20,7 @@ import {
   putR2Object,
 } from "@/lib/r2.server"
 import { ar } from "@/lib/ui-ar"
-import { eq } from "drizzle-orm"
+import { eq, sql } from "drizzle-orm"
 
 export async function createDraftArticleAction() {
   const bodyJson = JSON.stringify(tiptapEmptyDocument)
@@ -50,6 +50,7 @@ export type UpdateArticleInput = {
   bodyJson: string
   categoryIds: string[]
   isPublished: boolean
+  isMemberOnly: boolean
 }
 
 export async function updateArticleAction(
@@ -89,6 +90,7 @@ export async function updateArticleAction(
       body: bodyJson,
       categoryId: firstCategory,
       isPublished: input.isPublished,
+      isMemberOnly: input.isMemberOnly,
       updatedAt: new Date(),
     })
     .where(eq(articles.id, input.id))
@@ -136,6 +138,42 @@ export async function setArticlePublishedAction(
     revalidatePath(`/category/${existing.categoryId}`)
   }
   return { ok: true }
+}
+
+export async function setArticleMemberOnlyAction(
+  id: string,
+  isMemberOnly: boolean,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const [existing] = await getDb()
+    .select({
+      id: articles.id,
+    })
+    .from(articles)
+    .where(eq(articles.id, id))
+    .limit(1)
+  if (!existing) {
+    return { ok: false, error: "المقال غير موجود." }
+  }
+
+  await getDb()
+    .update(articles)
+    .set({ isMemberOnly, updatedAt: new Date() })
+    .where(eq(articles.id, id))
+
+  revalidatePath("/admin/articles")
+  revalidatePath(`/admin/articles/${id}`)
+  revalidatePath(`/admin/articles/preview/${id}`)
+  revalidatePath(getArticlePath(id))
+  revalidatePath("/")
+  revalidatePath("/category/all")
+  return { ok: true }
+}
+
+export async function incrementArticleViewAction(id: string): Promise<void> {
+  await getDb()
+    .update(articles)
+    .set({ views: sql`${articles.views} + 1` })
+    .where(eq(articles.id, id))
 }
 
 const coverMimeToExt: Record<string, "jpg" | "png" | "webp" | "gif"> = {

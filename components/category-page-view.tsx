@@ -1,6 +1,7 @@
 import Link from "next/link"
 
 import { AdPlaceholder } from "@/components/news-landing"
+import { SubscriptionGate } from "@/components/subscription-gate"
 import { type Article, getArticlePath } from "@/lib/articles"
 import { areSiteAdsEnabled } from "@/lib/site-ads-enabled"
 import { formatArticleDate } from "@/lib/format-date"
@@ -16,6 +17,7 @@ type CategoryPageViewProps = {
   feedSubheading: string
   articles: Article[]
   categoryNameById: Record<string, string>
+  isSubscribed: boolean
 }
 
 const FALLBACK_COVER =
@@ -31,17 +33,21 @@ function CategoryArticleRow({
   article,
   categoryNameById,
   alternate,
+  isSubscribed,
 }: {
   article: Article
   categoryNameById: Record<string, string>
   alternate: boolean
+  isSubscribed: boolean
 }) {
   const imgSrc = article.coverImageUrl?.trim() || FALLBACK_COVER
   const label = labelForArticle(article, categoryNameById)
 
   return (
-    <Link
-      href={getArticlePath(article.id)}
+    <SubscriptionGate
+      isMemberOnly={article.isMemberOnly}
+      isSubscribed={isSubscribed}
+      href={getArticlePath(article.id, article.title)}
       className={cn(
         "group flex cursor-pointer flex-col gap-6 md:flex-row md:gap-10 lg:gap-12",
         alternate && "md:flex-row-reverse",
@@ -51,37 +57,41 @@ function CategoryArticleRow({
         <img
           src={imgSrc}
           alt=""
-          className="h-full w-full object-cover transition duration-500 ease-out group-hover:scale-[1.03]"
+          className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.02]"
         />
       </div>
-      <div className="min-w-0 flex-1 text-right">
-        <span className="mb-2 block text-[11px] font-bold uppercase tracking-[0.15em] text-indigo-800">
-          {label}
-        </span>
-        <h2 className="mb-3 text-pretty text-xl font-bold leading-snug text-neutral-900 decoration-2 underline-offset-4 transition group-hover:text-neutral-700 md:text-2xl lg:text-[1.65rem]">
+      <div className="flex min-w-0 flex-1 flex-col justify-center text-right">
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-neutral-500">
+          <span className="rounded-full bg-neutral-100 px-3 py-0.5 text-[11px] font-bold uppercase tracking-[0.1em] text-indigo-800">
+            {label}
+          </span>
+          <span aria-hidden className="text-neutral-300">
+            ·
+          </span>
+          <time dateTime={article.date} className="text-xs">
+            {formatArticleDate(article.date)}
+          </time>
+        </div>
+        <h2 className="mt-3 text-pretty text-xl font-bold leading-snug text-neutral-900 transition-colors group-hover:text-neutral-700 md:text-2xl">
           {article.title}
         </h2>
-        <p className="mb-5 line-clamp-3 text-pretty text-[15px] leading-relaxed text-neutral-600">
+        <p className="mt-3 line-clamp-3 text-pretty text-[15px] leading-relaxed text-neutral-600">
           {article.excerpt}
         </p>
-        <time
-          dateTime={article.date}
-          className="text-xs font-medium tabular-nums text-neutral-400"
-        >
-          {formatArticleDate(article.date)}
-        </time>
       </div>
-    </Link>
+    </SubscriptionGate>
   )
 }
 
 export function CategoryPageView({
-  activeId: _activeId,
+  activeId,
   heroTitle,
+  kicker,
   description,
   feedSubheading,
   articles,
   categoryNameById,
+  isSubscribed,
 }: CategoryPageViewProps) {
   const mostRead = articles.slice(0, 3)
   const blurb = description.trim() || feedSubheading.trim()
@@ -133,6 +143,7 @@ export function CategoryPageView({
                         article={article}
                         categoryNameById={categoryNameById}
                         alternate={index % 2 === 1}
+                        isSubscribed={isSubscribed}
                       />
                     </div>
                   ))}
@@ -164,22 +175,21 @@ export function CategoryPageView({
                         <span className="w-8 shrink-0 pt-0.5 text-2xl font-bold tabular-nums text-neutral-200">
                           {i + 1}
                         </span>
-                        <Link
-                          href={getArticlePath(a.id)}
+                        <SubscriptionGate
+                          isMemberOnly={a.isMemberOnly}
+                          isSubscribed={isSubscribed}
+                          href={getArticlePath(a.id, a.title)}
                           className="min-w-0 text-pretty text-sm font-bold leading-snug text-neutral-900 transition-colors hover:text-neutral-600"
                         >
                           {a.title}
-                        </Link>
+                        </SubscriptionGate>
                       </li>
                     ))}
                   </ul>
                 )}
               </div>
               {showAds ? (
-                <AdPlaceholder
-                  text={ar.categorySideAdLabel}
-                  className="h-64 rounded-3xl border border-dashed border-neutral-200 bg-neutral-50/80"
-                />
+                <AdPlaceholder text="" />
               ) : null}
             </div>
           </aside>

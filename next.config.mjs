@@ -27,6 +27,7 @@ const nextConfig = {
       { protocol: "https", hostname: "plus.unsplash.com", port: "", pathname: "/**" },
       /** Covers BBC iChef (e.g. imported article covers from BBC export). */
       { protocol: "https", hostname: "**.bbci.co.uk", port: "", pathname: "/**" },
+      { protocol: "https", hostname: "mf.b37mrtl.ru", port: "", pathname: "/**" },
     ],
   },
 }

@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS articles (
   views INTEGER NOT NULL DEFAULT 0,
   category_id TEXT,
   is_published INTEGER NOT NULL DEFAULT 0,
+  is_member_only INTEGER NOT NULL DEFAULT 0,
   cover_image_url TEXT,
   created_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000),
   updated_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000)

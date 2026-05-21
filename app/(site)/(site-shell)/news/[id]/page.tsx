@@ -1,9 +1,11 @@
 import type { Metadata } from "next"
 import Link from "next/link"
-import { notFound } from "next/navigation"
+import { notFound, redirect } from "next/navigation"
 
 import { ArticleTiptapReadOnly } from "@/components/article-tiptap-read-only"
 import { NewsArticleView } from "@/components/news-article-view"
+import { SubscriptionPageGate } from "@/components/subscription-page-gate"
+import { TrackArticleView } from "@/components/track-article-view"
 import { SiteAdSpots } from "@/components/site-ad-spots"
 import { Button } from "@/components/ui/button"
 import {
@@ -12,8 +14,10 @@ import {
 } from "@/lib/news-article-display"
 import { getCategories } from "@/lib/categories"
 import { getActiveSiteAdsForArticle } from "@/lib/db-site-ads.server"
-import { getPublishedArticleRowById } from "@/lib/articles"
+import { getPublishedArticleRowById, getPublishedArticleRowBySlugId } from "@/lib/articles"
 import { areSiteAdsEnabled } from "@/lib/site-ads-enabled"
+import { getArticlePath } from "@/lib/site-routes"
+import { isSubscribed } from "@/lib/subscription"
 import { ar } from "@/lib/ui-ar"
 
 function pageTitle(segment: string) {
@@ -28,7 +32,9 @@ export const dynamic = "force-dynamic"
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { id } = await params
-  const article = await getPublishedArticleRowById(id)
+  const article = await (isFullUuid(id)
+    ? getPublishedArticleRowById(id)
+    : getPublishedArticleRowBySlugId(id))
   if (!article) {
     return { title: ar.storyNotFound }
   }
@@ -41,16 +47,21 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function NewsArticlePage({ params }: PageProps) {
   const { id } = await params
+
   const showAds = areSiteAdsEnabled()
-  const [article, categories, articleAds] = await Promise.all([
-    getPublishedArticleRowById(id),
+  const [article, categories, articleAds, subscribed] = await Promise.all([
+    isFullUuid(id) ? getPublishedArticleRowById(id) : getPublishedArticleRowBySlugId(id),
     getCategories(),
     showAds ? getActiveSiteAdsForArticle() : Promise.resolve([]),
+    isSubscribed(),
   ])
 
   if (!article) {
     notFound()
   }
+
+  const canonical = getArticlePath(article.id, article.title)
+  if (canonical !== `/news/${id}`) redirect(canonical)
 
   const categoryIds = article.categoryId ? [article.categoryId] : []
   const back = newsArticleBackFromCategoryIds(categoryIds, categories)
@@ -60,25 +71,45 @@ export default async function NewsArticlePage({ params }: PageProps) {
   const adSlot =
     showAds && articleAds.length > 0 ? <SiteAdSpots ads={articleAds} /> : undefined
 
+  if (article.isMemberOnly && !subscribed) {
+    return (
+      <>
+        <TrackArticleView articleId={article.id} />
+        <SubscriptionPageGate
+          title={article.title}
+          coverImageUrl={article.coverImageUrl}
+          back={back}
+        />
+      </>
+    )
+  }
+
   return (
-    <NewsArticleView
-      back={back}
-      actions={
-        <Button asChild variant="ghost" size="sm">
-          <Link href="/">{ar.home}</Link>
-        </Button>
-      }
-      coverImageUrl={article.coverImageUrl}
-      categoryByline={categoryByline}
-      date={date}
-      title={article.title}
-      excerpt={article.excerpt}
-      adSlot={adSlot}
-    >
-      <ArticleTiptapReadOnly
-        body={article.body}
-        className="min-w-0 max-w-full [&_.simple-editor-content]:overflow-x-hidden"
-      />
-    </NewsArticleView>
+    <>
+      <TrackArticleView articleId={article.id} />
+      <NewsArticleView
+        back={back}
+        actions={
+          <Button asChild variant="ghost" size="sm">
+            <Link href="/">{ar.home}</Link>
+          </Button>
+        }
+        coverImageUrl={article.coverImageUrl}
+        categoryByline={categoryByline}
+        date={date}
+        title={article.title}
+        excerpt={article.excerpt}
+        adSlot={adSlot}
+      >
+        <ArticleTiptapReadOnly
+          body={article.body}
+          className="min-w-0 max-w-full [&_.simple-editor-content]:overflow-x-hidden"
+        />
+      </NewsArticleView>
+    </>
   )
+}
+
+function isFullUuid(s: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s)
 }

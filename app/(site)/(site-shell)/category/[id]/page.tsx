@@ -9,6 +9,7 @@ import {
   isValidCategoryPageId,
 } from "@/lib/categories"
 import { getFeedArticlesByPageId } from "@/lib/articles"
+import { isSubscribed } from "@/lib/subscription"
 import { ar } from "@/lib/ui-ar"
 
 function pageTitle(segment: string) {
@@ -45,9 +46,10 @@ export default async function CategoryPage({ params }: PageProps) {
     notFound()
   }
 
-  const [articles, categories] = await Promise.all([
+  const [articles, categories, subscribed] = await Promise.all([
     getFeedArticlesByPageId(id),
     getCategories(),
+    isSubscribed(),
   ])
 
   const categoryNameById = Object.fromEntries(
@@ -65,6 +67,7 @@ export default async function CategoryPage({ params }: PageProps) {
         feedSubheading={ar.feedAllSub}
         articles={articles}
         categoryNameById={categoryNameById}
+        isSubscribed={subscribed}
       />
     )
   }
@@ -84,6 +87,7 @@ export default async function CategoryPage({ params }: PageProps) {
       feedSubheading={cat.description}
       articles={articles}
       categoryNameById={categoryNameById}
+      isSubscribed={subscribed}
     />
   )
 }

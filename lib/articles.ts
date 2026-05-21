@@ -4,4 +4,5 @@ export {
   getFeedArticlesByPageId,
   getPublishedArticleIdsForStaticParams,
   getPublishedArticleRowById,
+  getPublishedArticleRowBySlugId,
 } from "./db-public-articles.server"

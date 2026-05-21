@@ -5,7 +5,7 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 
-import { setArticlePublishedAction } from "@/app/admin/articles/actions"
+import { setArticleMemberOnlyAction, setArticlePublishedAction } from "@/app/admin/articles/actions"
 import { AdminArticlePreviewModal } from "@/components/admin-article-preview-modal"
 import { Button } from "@/components/ui/button"
 import {
@@ -20,6 +20,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Switch } from "@/components/ui/switch"
@@ -45,9 +46,16 @@ type Props = {
     colDate: string
     colCategories: string
     colExcerpt: string
-    colPublished: string
+    colViews: string
     colActions: string
     publishToggle: string
+    publishModalTitle: string
+    publishModalDesc: string
+    publishModalPublish: string
+    publishModalUnpublish: string
+    memberOnlyToggle: string
+    memberOnlyModalTitle: string
+    memberOnlyModalDesc: string
     openPublic: string
     edit: string
     notPublic: string
@@ -69,19 +77,34 @@ export function AdminArticlesTable({ articles, categories, labels }: Props) {
   const router = useRouter()
   const [previewId, setPreviewId] = useState<string | null>(null)
   const [previewOpen, setPreviewOpen] = useState(false)
-  const [publishBusyId, setPublishBusyId] = useState<string | null>(null)
-  const [toggleTarget, setToggleTarget] = useState<{
+  const [busyId, setBusyId] = useState<string | null>(null)
+  const [publishTarget, setPublishTarget] = useState<{
+    id: string
+    next: boolean
+  } | null>(null)
+  const [memberOnlyTarget, setMemberOnlyTarget] = useState<{
     id: string
     next: boolean
   } | null>(null)
   const categoryById = categoryLabelMap(categories)
 
-  async function confirmToggle() {
-    if (!toggleTarget) return
-    setPublishBusyId(toggleTarget.id)
-    setToggleTarget(null)
-    const result = await setArticlePublishedAction(toggleTarget.id, toggleTarget.next)
-    setPublishBusyId(null)
+  async function confirmPublish() {
+    if (!publishTarget) return
+    setBusyId(publishTarget.id)
+    const { id, next } = publishTarget
+    setPublishTarget(null)
+    const result = await setArticlePublishedAction(id, next)
+    setBusyId(null)
+    if (result.ok) router.refresh()
+  }
+
+  async function confirmMemberOnly() {
+    if (!memberOnlyTarget) return
+    setBusyId(memberOnlyTarget.id)
+    const { id, next } = memberOnlyTarget
+    setMemberOnlyTarget(null)
+    const result = await setArticleMemberOnlyAction(id, next)
+    setBusyId(null)
     if (result.ok) router.refresh()
   }
 
@@ -104,23 +127,81 @@ export function AdminArticlesTable({ articles, categories, labels }: Props) {
         }}
       />
       <Dialog
-        open={toggleTarget !== null}
+        open={publishTarget !== null}
         onOpenChange={(open) => {
-          if (!open) setToggleTarget(null)
+          if (!open) setPublishTarget(null)
         }}
       >
         <DialogContent className="sm:max-w-md" dir="rtl">
           <DialogHeader>
-            <DialogTitle>تأكيد تغيير النشر</DialogTitle>
+            <DialogTitle>{labels.publishModalTitle}</DialogTitle>
             <DialogDescription>
-              هل تريد {toggleTarget?.next ? "نشر" : "إلغاء نشر"} هذا المقال؟
+              {labels.publishModalDesc.replace(
+                "{action}",
+                publishTarget?.next ? labels.publishModalPublish : labels.publishModalUnpublish,
+              )}
             </DialogDescription>
           </DialogHeader>
+          <div className="flex items-center justify-between gap-4 px-2 py-4">
+            <div className="space-y-0.5">
+              <span className="text-sm font-medium">{labels.publishToggle}</span>
+            </div>
+            <Switch
+              checked={publishTarget?.next ?? false}
+              onCheckedChange={(next) =>
+                setPublishTarget((prev) => (prev ? { ...prev, next } : null))
+              }
+              aria-label={labels.publishToggle}
+            />
+          </div>
           <DialogFooter className="gap-2 sm:justify-start">
-            <Button variant="outline" onClick={() => setToggleTarget(null)}>
+            <Button variant="outline" onClick={() => setPublishTarget(null)}>
               إلغاء
             </Button>
-            <Button onClick={confirmToggle}>تأكيد</Button>
+            <Button
+              onClick={confirmPublish}
+              disabled={busyId === publishTarget?.id}
+            >
+              تأكيد
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <Dialog
+        open={memberOnlyTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) setMemberOnlyTarget(null)
+        }}
+      >
+        <DialogContent className="sm:max-w-md" dir="rtl">
+          <DialogHeader>
+            <DialogTitle>{labels.memberOnlyModalTitle}</DialogTitle>
+            <DialogDescription>
+              {labels.memberOnlyModalDesc}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex items-center justify-between gap-4 px-2 py-4">
+            <div className="space-y-0.5">
+              <span className="text-sm font-medium">{labels.memberOnlyToggle}</span>
+            </div>
+            <Switch
+              checked={memberOnlyTarget?.next ?? false}
+              onCheckedChange={(next) =>
+                setMemberOnlyTarget((prev) => (prev ? { ...prev, next } : null))
+              }
+              aria-label={labels.memberOnlyToggle}
+            />
+          </div>
+          <DialogFooter className="gap-2 sm:justify-start">
+            <Button variant="outline" onClick={() => setMemberOnlyTarget(null)}>
+              إلغاء
+            </Button>
+            <Button
+              onClick={confirmMemberOnly}
+              disabled={busyId === memberOnlyTarget?.id}
+            >
+              تأكيد
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -131,17 +212,17 @@ export function AdminArticlesTable({ articles, categories, labels }: Props) {
               <TableHead className="h-12 min-w-[14rem] px-4 text-start font-medium">
                 {labels.colTitle}
               </TableHead>
+              <TableHead className="h-12 w-[5rem] px-2 text-center font-medium">
+                {labels.colViews}
+              </TableHead>
               <TableHead className="h-12 w-[7rem] px-4 text-start font-medium">
                 {labels.colDate}
               </TableHead>
-              <TableHead className="h-12 min-w-[12rem] px-4 text-start font-medium">
+              <TableHead className="h-12 min-w-[8rem] px-4 text-start font-medium">
                 {labels.colCategories}
               </TableHead>
-              <TableHead className="h-12 min-w-[14rem] px-4 text-start font-medium">
+              <TableHead className="h-12 min-w-[10rem] px-4 text-start font-medium">
                 {labels.colExcerpt}
-              </TableHead>
-              <TableHead className="h-12 w-[5.5rem] px-2 text-center font-medium">
-                {labels.colPublished}
               </TableHead>
               <TableHead className="sticky left-0 z-20 h-12 min-w-[5rem] bg-card px-2 text-center font-medium shadow-[2px_0_0_0_theme(colors.border)]">
                 {labels.colActions}
@@ -156,19 +237,29 @@ export function AdminArticlesTable({ articles, categories, labels }: Props) {
                     <span className="block max-w-full truncate" title={a.title}>
                       {a.title || "—"}
                     </span>
-                    {!a.isPublished ? (
-                      <span className="text-xs font-normal text-amber-600 dark:text-amber-400">
-                        {ar.adminArticleStatusDraft}
-                      </span>
-                    ) : null}
+                    <div className="flex flex-wrap gap-1.5">
+                      {!a.isPublished ? (
+                        <span className="text-xs font-normal text-amber-600 dark:text-amber-400">
+                          {ar.adminArticleStatusDraft}
+                        </span>
+                      ) : null}
+                      {a.isMemberOnly ? (
+                        <span className="text-xs font-normal text-blue-600 dark:text-blue-400">
+                          {labels.memberOnlyToggle}
+                        </span>
+                      ) : null}
+                    </div>
                   </div>
+                </TableCell>
+                <TableCell className="h-16 w-[5rem] px-2 text-center text-sm tabular-nums text-muted-foreground">
+                  {a.views.toLocaleString("ar")}
                 </TableCell>
                 <TableCell className="h-16 max-w-[7rem] px-4 text-start text-sm text-muted-foreground">
                   <span className="block truncate whitespace-nowrap" title={formatArticleDate(a.date)}>
                     {formatArticleDate(a.date)}
                   </span>
                 </TableCell>
-                <TableCell className="h-16 max-w-[12rem] px-4 text-start text-sm text-muted-foreground">
+                <TableCell className="h-16 max-w-[8rem] px-4 text-start text-sm text-muted-foreground">
                   <div className="flex min-w-0 flex-wrap gap-1" title={categoryNames(a, categories)}>
                     {a.categoryIds.length > 0 ? (
                       a.categoryIds.map((id) => {
@@ -190,17 +281,8 @@ export function AdminArticlesTable({ articles, categories, labels }: Props) {
                     )}
                   </div>
                 </TableCell>
-                <TableCell className="h-16 max-w-[18rem] px-4 text-start text-sm text-muted-foreground" title={a.excerpt}>
+                <TableCell className="h-16 max-w-[12rem] px-4 text-start text-sm text-muted-foreground" title={a.excerpt}>
                   <span className="block truncate whitespace-nowrap">{a.excerpt || "—"}</span>
-                </TableCell>
-                <TableCell className="h-16 px-2 text-center align-middle">
-                  <Switch
-                    className="mx-auto"
-                    checked={a.isPublished}
-                    disabled={publishBusyId === a.id}
-                    onCheckedChange={(next) => setToggleTarget({ id: a.id, next })}
-                    aria-label={`${labels.publishToggle}: ${a.title || a.id}`}
-                  />
                 </TableCell>
                 <TableCell className="sticky left-0 z-10 h-16 min-w-[5rem] bg-card px-2 text-center shadow-[2px_0_0_0_theme(colors.border)]">
                   <DropdownMenu dir="rtl">
@@ -227,13 +309,33 @@ export function AdminArticlesTable({ articles, categories, labels }: Props) {
                         <Eye className="size-4" />
                         {labels.preview}
                       </DropdownMenuItem>
-                    {a.isPublished ? (
-                      <DropdownMenuItem asChild>
-                        <Link href={getArticlePath(a.id)} target="_blank" rel="noopener noreferrer">
-                          <ExternalLink className="size-4" />
-                          {labels.viewLive}
-                        </Link>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onSelect={(e) => {
+                          e.preventDefault()
+                          setPublishTarget({ id: a.id, next: a.isPublished })
+                        }}
+                      >
+                        <PencilLine className="size-4" />
+                        {a.isPublished ? labels.publishModalUnpublish : labels.publishModalPublish}
                       </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onSelect={(e) => {
+                          e.preventDefault()
+                          setMemberOnlyTarget({ id: a.id, next: a.isMemberOnly })
+                        }}
+                      >
+                        <PencilLine className="size-4" />
+                        {labels.memberOnlyToggle}
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      {a.isPublished ? (
+                        <DropdownMenuItem asChild>
+                          <Link href={getArticlePath(a.id)} target="_blank" rel="noopener noreferrer">
+                            <ExternalLink className="size-4" />
+                            {labels.viewLive}
+                          </Link>
+                        </DropdownMenuItem>
                       ) : (
                         <DropdownMenuItem disabled>
                           <PencilLine className="size-4" />

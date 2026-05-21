@@ -42,6 +42,7 @@ export default async function AdminEditArticlePage({ params }: PageProps) {
         initialExcerpt={row.excerpt}
         initialCategoryIds={initialCategoryIds}
         initialIsPublished={row.isPublished}
+        initialIsMemberOnly={row.isMemberOnly}
         initialBodyJson={row.body}
         categories={categories}
       />

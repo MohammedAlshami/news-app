@@ -21,6 +21,7 @@ binding = "ASSETS"
 binding = "DB"
 database_name = "news-site"
 database_id = "2da1adf6-5917-41f3-b473-c79d8e5c789c"
+migrations_dir = "db/migrations"
 remote = true
 
 [[r2_buckets]]

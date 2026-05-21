@@ -33,6 +33,8 @@ export async function getAdminArticleListPage(input: {
       date: r.createdAt.toISOString().slice(0, 10),
       categoryIds: r.categoryId ? [r.categoryId] : [],
       isPublished: r.isPublished,
+      isMemberOnly: r.isMemberOnly,
+      views: r.views,
     })),
   }
 }
@@ -49,6 +51,8 @@ export async function getAdminArticleList(): Promise<AdminArticleListItem[]> {
     date: r.createdAt.toISOString().slice(0, 10),
     categoryIds: r.categoryId ? [r.categoryId] : [],
     isPublished: r.isPublished,
+    isMemberOnly: r.isMemberOnly,
+    views: r.views,
   }))
 }
 

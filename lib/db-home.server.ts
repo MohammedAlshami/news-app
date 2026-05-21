@@ -1,59 +1,140 @@
 import "server-only"
 
-import { getCategories } from "@/lib/db-categories.server"
-import { getFeedArticlesByPageId } from "@/lib/db-public-articles.server"
-import { ALL_CATEGORIES_ID } from "@/lib/site-routes"
-import type { Article, FeedArticle, SiteCategory } from "@/lib/site-types"
+import { desc, eq, sql } from "drizzle-orm"
 
-/** Rows needed for hero, side rail, and “latest” on the home page only. */
-const HOME_TOP_FEED_LIMIT = 24
-/** Enough for section grids + featured-side fallback without scanning whole tables. */
-const HOME_SECTION_FEED_LIMIT = 32
+import { getDb } from "@/db/client"
+import { articles } from "@/db/schema"
+import type { FeedArticle } from "@/lib/site-types"
 
-export type HomeSection = {
+export async function getMarqueeArticles(limit = 10) {
+  const rows = await getDb()
+    .select({
+      id: articles.id,
+      title: articles.title,
+    })
+    .from(articles)
+    .where(eq(articles.isPublished, true))
+    .orderBy(desc(articles.updatedAt))
+    .limit(limit)
+  return rows
+}
+
+const financeCategoryId = "44444444-4444-4444-4444-444444444444"
+const sportsCategoryId = "33333333-3333-3333-3333-333333333333"
+const techCategoryId = "11111111-1111-1111-1111-111111111111"
+
+function toFeedArticle(r: {
   id: string
   title: string
-  href: string
-  articles: Article[]
-}
-
-export type HomeData = {
-  hero: Article | null
-  sideStories: Article[]
-  latestArticles: Article[]
-  sections: HomeSection[]
-  categories: SiteCategory[]
-}
-
-export async function getMarqueeArticles(limit: number): Promise<FeedArticle[]> {
-  return getFeedArticlesByPageId(ALL_CATEGORIES_ID, { limit })
-}
-
-export async function getHomeData(): Promise<HomeData> {
-  const categories = await getCategories()
-  const allArticles = await getFeedArticlesByPageId(ALL_CATEGORIES_ID, {
-    limit: HOME_TOP_FEED_LIMIT,
-  })
-  const hero = allArticles[0] ?? null
-  const sideStories = allArticles.slice(1, 4)
-  const latestArticles = allArticles.slice(0, 6)
-
-  const sections = await Promise.all(
-    categories.slice(0, 3).map(async (category) => ({
-      id: category.id,
-      title: category.name,
-      href: `/category/${category.slug}`,
-      articles: await getFeedArticlesByPageId(category.id, {
-        limit: HOME_SECTION_FEED_LIMIT,
-      }),
-    })),
-  )
-
+  excerpt: string
+  createdAt: Date
+  categoryId: string | null
+  coverImageUrl: string | null
+  isMemberOnly: boolean
+}): FeedArticle {
   return {
-    hero,
-    sideStories,
-    latestArticles,
-    sections,
-    categories,
+    id: r.id,
+    title: r.title,
+    excerpt: r.excerpt,
+    date: r.createdAt.toISOString().slice(0, 10),
+    categoryIds: r.categoryId ? [r.categoryId] : [],
+    coverImageUrl: r.coverImageUrl,
+    isMemberOnly: r.isMemberOnly,
   }
+}
+
+export async function getHeroArticles(): Promise<FeedArticle[]> {
+  const rows = await getDb()
+    .select({
+      id: articles.id,
+      title: articles.title,
+      excerpt: articles.excerpt,
+      createdAt: articles.createdAt,
+      categoryId: articles.categoryId,
+      coverImageUrl: articles.coverImageUrl,
+      isMemberOnly: articles.isMemberOnly,
+    })
+    .from(articles)
+    .where(eq(articles.isPublished, true))
+    .orderBy(desc(articles.updatedAt))
+    .limit(3)
+  return rows.map(toFeedArticle)
+}
+
+export async function getCampusNewsArticles(): Promise<FeedArticle[]> {
+  const rows = await getDb()
+    .select({
+      id: articles.id,
+      title: articles.title,
+      excerpt: articles.excerpt,
+      createdAt: articles.createdAt,
+      categoryId: articles.categoryId,
+      coverImageUrl: articles.coverImageUrl,
+      isMemberOnly: articles.isMemberOnly,
+    })
+    .from(articles)
+    .where(eq(articles.isPublished, true))
+    .orderBy(desc(articles.updatedAt))
+    .limit(4)
+  return rows.map(toFeedArticle)
+}
+
+export async function getFinanceArticles(): Promise<FeedArticle[]> {
+  const rows = await getDb()
+    .select({
+      id: articles.id,
+      title: articles.title,
+      excerpt: articles.excerpt,
+      createdAt: articles.createdAt,
+      categoryId: articles.categoryId,
+      coverImageUrl: articles.coverImageUrl,
+      isMemberOnly: articles.isMemberOnly,
+    })
+    .from(articles)
+    .where(
+      sql`${articles.isPublished} = 1 AND ${articles.categoryId} = ${financeCategoryId}`,
+    )
+    .orderBy(desc(articles.updatedAt))
+    .limit(4)
+  return rows.map(toFeedArticle)
+}
+
+export async function getSportsArticles(): Promise<FeedArticle[]> {
+  const rows = await getDb()
+    .select({
+      id: articles.id,
+      title: articles.title,
+      excerpt: articles.excerpt,
+      createdAt: articles.createdAt,
+      categoryId: articles.categoryId,
+      coverImageUrl: articles.coverImageUrl,
+      isMemberOnly: articles.isMemberOnly,
+    })
+    .from(articles)
+    .where(
+      sql`${articles.isPublished} = 1 AND ${articles.categoryId} = ${sportsCategoryId}`,
+    )
+    .orderBy(desc(articles.updatedAt))
+    .limit(5)
+  return rows.map(toFeedArticle)
+}
+
+export async function getTechArticles(): Promise<FeedArticle[]> {
+  const rows = await getDb()
+    .select({
+      id: articles.id,
+      title: articles.title,
+      excerpt: articles.excerpt,
+      createdAt: articles.createdAt,
+      categoryId: articles.categoryId,
+      coverImageUrl: articles.coverImageUrl,
+      isMemberOnly: articles.isMemberOnly,
+    })
+    .from(articles)
+    .where(
+      sql`${articles.isPublished} = 1 AND ${articles.categoryId} = ${techCategoryId}`,
+    )
+    .orderBy(desc(articles.updatedAt))
+    .limit(5)
+  return rows.map(toFeedArticle)
 }

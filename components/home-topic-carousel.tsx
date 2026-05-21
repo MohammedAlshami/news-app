@@ -1,33 +1,30 @@
 "use client"
 
 import Image from "next/image"
-import Link from "next/link"
 import { useCallback, useEffect, useRef, useState } from "react"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 
+import { SubscriptionGate } from "@/components/subscription-gate"
+import { getArticlePath } from "@/lib/site-routes"
+import type { FeedArticle } from "@/lib/site-types"
 import { cn } from "@/lib/utils"
-
-export type TopicCarouselCard = {
-  title: string
-  excerpt: string
-  src: string
-}
 
 type HomeTopicCarouselProps = {
   headingId: string
   title: string
-  cards: TopicCarouselCard[]
+  articles: FeedArticle[]
   navPrevLabel: string
   navNextLabel: string
+  isSubscribed: boolean
 }
 
-/** صف أفقي قابل للتمرير — بطاقات صورة + عنوان + ملخص (يُستخدَم لعدة أقسام في الصفحة الرئيسية). */
 export function HomeTopicCarousel({
   headingId,
   title,
-  cards,
+  articles,
   navPrevLabel,
   navNextLabel,
+  isSubscribed,
 }: HomeTopicCarouselProps) {
   const scrollerRef = useRef<HTMLDivElement>(null)
   const [canScroll, setCanScroll] = useState(false)
@@ -37,7 +34,7 @@ export function HomeTopicCarousel({
     if (!el) return
     const max = el.scrollWidth - el.clientWidth
     setCanScroll(max > 2)
-  }, [cards.length])
+  }, [articles.length])
 
   useEffect(() => {
     measure()
@@ -52,6 +49,8 @@ export function HomeTopicCarousel({
     const step = card?.offsetWidth ?? Math.min(el.clientWidth * 0.88, 360)
     el.scrollBy({ behavior: "smooth", left: direction * step * 0.94 })
   }
+
+  if (articles.length === 0) return null
 
   return (
     <section
@@ -102,12 +101,11 @@ export function HomeTopicCarousel({
               "[&::-webkit-scrollbar]:hidden",
             )}
           >
-            {cards.map((card, index) => (
+            {articles.map((article, index) => (
               <TopicArticleCard
-                key={`${headingId}-${index}`}
-                title={card.title}
-                excerpt={card.excerpt}
-                src={card.src}
+                key={article.id}
+                article={article}
+                isSubscribed={isSubscribed}
                 priority={index === 0}
               />
             ))}
@@ -119,44 +117,48 @@ export function HomeTopicCarousel({
 }
 
 function TopicArticleCard({
-  title,
-  excerpt,
-  src,
+  article,
+  isSubscribed,
   priority,
 }: {
-  title: string
-  excerpt: string
-  src: string
+  article: FeedArticle
+  isSubscribed: boolean
   priority?: boolean
 }) {
+  const href = getArticlePath(article.id, article.title)
+
   return (
     <article
       data-topic-carousel-card
       className="w-[min(88vw,360px)] shrink-0 snap-center sm:w-[min(82vw,380px)]"
     >
-      <Link
-        href="#"
+      <SubscriptionGate
+        isMemberOnly={article.isMemberOnly}
+        isSubscribed={isSubscribed}
+        href={href}
         className="group block rounded-3xl outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 focus-visible:ring-offset-white"
       >
         <div className="relative aspect-[16/10] w-full overflow-hidden rounded-3xl bg-neutral-100">
-          <Image
-            src={src}
-            alt=""
-            fill
-            sizes="(max-width: 640px) 88vw, 380px"
-            priority={priority}
-            className="object-cover transition duration-500 ease-out will-change-transform group-hover:scale-[1.03]"
-          />
+          {article.coverImageUrl ? (
+            <Image
+              src={article.coverImageUrl}
+              alt=""
+              fill
+              sizes="(max-width: 640px) 88vw, 380px"
+              priority={priority}
+              className="object-cover transition duration-500 ease-out will-change-transform group-hover:scale-[1.03]"
+            />
+          ) : null}
         </div>
         <div className="mt-4 space-y-2 px-0.5 text-right">
           <h3 className="text-pretty text-lg font-bold leading-snug text-neutral-900 transition group-hover:text-neutral-700 md:text-xl">
-            {title}
+            {article.title}
           </h3>
           <p className="line-clamp-2 text-pretty text-sm leading-relaxed text-neutral-600 md:text-[15px]">
-            {excerpt}
+            {article.excerpt}
           </p>
         </div>
-      </Link>
+      </SubscriptionGate>
     </article>
   )
 }
