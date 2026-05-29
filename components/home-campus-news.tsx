@@ -68,14 +68,12 @@ export function HomeCampusNewsSection({ articles, isSubscribed }: Props) {
                   ) : null}
                 </div>
               </SubscriptionGate>
-              <SubscriptionGate
-                isMemberOnly={featured.isMemberOnly}
-                isSubscribed={isSubscribed}
+              <Link
                 href={getArticlePath(featured.id, featured.title)}
                 className="mt-5 block text-pretty text-right text-xl font-bold leading-snug text-neutral-900 transition hover:text-neutral-700 md:text-2xl"
               >
                 {featured.title}
-              </SubscriptionGate>
+              </Link>
             </article>
           ) : null}
 

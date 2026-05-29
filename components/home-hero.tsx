@@ -1,4 +1,5 @@
 import Image from "next/image"
+import Link from "next/link"
 import { ExternalLink } from "lucide-react"
 
 import { SubscriptionGate } from "@/components/subscription-gate"
@@ -53,14 +54,9 @@ function ArticleCard({
             size === "large" ? "text-2xl md:text-4xl" : "text-xl",
           )}
         >
-          <SubscriptionGate
-            isMemberOnly={article.isMemberOnly}
-            isSubscribed={isSubscribed}
-            href={getArticlePath(article.id, article.title)}
-            className="block"
-          >
+          <Link href={getArticlePath(article.id, article.title)} className="block">
             {article.title}
-          </SubscriptionGate>
+          </Link>
         </h2>
         <p
           className={cn(
@@ -128,14 +124,9 @@ export function HomeHeroSection({ featured, side, row, isSubscribed }: Props) {
                 </SubscriptionGate>
                 <div className="min-w-0 flex-1 space-y-2">
                   <h3 className="cursor-pointer text-lg font-extrabold leading-tight text-gray-900 hover:underline">
-                    <SubscriptionGate
-                      isMemberOnly={row.isMemberOnly}
-                      isSubscribed={isSubscribed}
-                      href={getArticlePath(row.id, row.title)}
-                      className="block"
-                    >
+                    <Link href={getArticlePath(row.id, row.title)} className="block">
                       {row.title}
-                    </SubscriptionGate>
+                    </Link>
                   </h3>
                   <p className="line-clamp-2 text-[14px] leading-relaxed text-gray-600">
                     {row.excerpt}

@@ -4,6 +4,7 @@ export type AppUser = {
   id: string
   email: string
   password: string
+  role: "admin" | "user"
 }
 
 const data = users as { users: AppUser[] }

@@ -26,7 +26,10 @@ export async function loginAction(
     path: "/",
     maxAge: 60 * 60 * 24 * 7,
   })
-  redirect("/admin")
+  if (user.role === "admin") {
+    redirect("/admin")
+  }
+  redirect("/user")
 }
 
 export async function logoutAction() {

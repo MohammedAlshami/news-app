@@ -95,7 +95,7 @@ export function CategoryPageView({
 }: CategoryPageViewProps) {
   const mostRead = articles.slice(0, 3)
   const blurb = description.trim() || feedSubheading.trim()
-  const showAds = areSiteAdsEnabled()
+  const showAds = areSiteAdsEnabled() && !isSubscribed
 
   return (
     <div dir="rtl" lang="ar" className="min-h-svh bg-white text-neutral-900">

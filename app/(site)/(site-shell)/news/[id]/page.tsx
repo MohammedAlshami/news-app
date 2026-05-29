@@ -48,12 +48,12 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 export default async function NewsArticlePage({ params }: PageProps) {
   const { id } = await params
 
-  const showAds = areSiteAdsEnabled()
-  const [article, categories, articleAds, subscribed] = await Promise.all([
+  const subscribed = await isSubscribed()
+  const showAds = areSiteAdsEnabled() && !subscribed
+  const [article, categories, articleAds] = await Promise.all([
     isFullUuid(id) ? getPublishedArticleRowById(id) : getPublishedArticleRowBySlugId(id),
     getCategories(),
     showAds ? getActiveSiteAdsForArticle() : Promise.resolve([]),
-    isSubscribed(),
   ])
 
   if (!article) {

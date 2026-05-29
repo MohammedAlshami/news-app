@@ -1,6 +1,6 @@
 import Link from "next/link"
 import type { ReactNode } from "react"
-import { MapPin, Send } from "lucide-react"
+import { Send } from "lucide-react"
 
 import { ALL_CATEGORIES_ID } from "@/lib/site-routes"
 import { getCategoryNavItems } from "@/lib/categories"
@@ -69,7 +69,7 @@ export async function SiteFooter() {
       dir="rtl"
       lang="ar"
       className={cn(
-        "w-full bg-[#151515] px-4 py-12 font-sans text-white sm:px-6 sm:py-14 md:px-10 lg:px-16 xl:px-24 lg:py-16",
+        "w-full bg-[#151515] px-4 pb-20 pt-12 font-sans text-white sm:px-6 sm:py-14 md:px-10 lg:px-16 xl:px-24 lg:py-16",
         "selection:bg-gray-700",
       )}
     >
@@ -81,13 +81,13 @@ export async function SiteFooter() {
         */}
         <div
           className={cn(
-            "mb-12 grid grid-cols-1 gap-10 sm:mb-16 sm:grid-cols-2 sm:gap-x-8 sm:gap-y-12",
+            "mb-12 grid grid-cols-2 gap-8 sm:mb-16 sm:grid-cols-2 sm:gap-x-8 sm:gap-y-12",
             "lg:grid-cols-4 lg:gap-x-10 lg:gap-y-10 xl:gap-x-12",
             "items-start",
           )}
         >
           {/* Brand */}
-          <div className="space-y-5 sm:col-span-2 lg:col-span-1">
+          <div className="space-y-5 sm:col-span-2 lg:col-span-1 col-span-2">
             <SiteBrandMark variant="onDark" />
 
             <p className="max-w-xl text-sm leading-relaxed text-gray-400 sm:max-w-2xl lg:max-w-xs">
@@ -133,7 +133,7 @@ export async function SiteFooter() {
           </div>
 
           {/* Address */}
-          <div className="min-w-0 sm:col-span-2 lg:col-span-1">
+          <div className="min-w-0 sm:col-span-2 lg:col-span-1 col-span-2">
             <h3 className="mb-4 text-lg font-medium text-gray-200 sm:mb-6 sm:text-xl">
               {ar.footerColAddress}
             </h3>
@@ -142,15 +142,6 @@ export async function SiteFooter() {
               <p>{ar.footerAddressLine2}</p>
               <p>{ar.footerAddressLine3}</p>
             </div>
-            <a
-              href="https://maps.google.com/?q=Wasilla+AK+99654"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 font-medium text-white transition-colors duration-200 hover:text-gray-300"
-            >
-              <MapPin size={20} className="shrink-0" aria-hidden />
-              <span>{ar.footerSeeOnMap}</span>
-            </a>
           </div>
         </div>
 

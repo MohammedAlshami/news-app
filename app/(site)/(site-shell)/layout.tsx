@@ -6,6 +6,7 @@ import { SiteNavbar } from "@/components/site-navbar"
 import { getCategoryNavItems } from "@/lib/categories"
 import { getMarqueeArticles } from "@/lib/db-home.server"
 import { areSiteAdsEnabled } from "@/lib/site-ads-enabled"
+import { isSubscribed } from "@/lib/subscription"
 import { ar } from "@/lib/ui-ar"
 
 /** Toggle to restore the top breaking-news marquee / ticker. */
@@ -20,7 +21,11 @@ export default async function SiteShellLayout({
   const categoryLinks = (await getCategoryNavItems())
     .filter((item) => item.id !== "all")
     .slice(0, 5)
-  const showAds = areSiteAdsEnabled()
+  const [showAdsUncached, subscribed] = await Promise.all([
+    areSiteAdsEnabled(),
+    isSubscribed(),
+  ])
+  const showAds = showAdsUncached && !subscribed
 
   return (
     <>
@@ -55,7 +60,7 @@ export default async function SiteShellLayout({
         </div>
       ) : null}
       <SiteNavbar primaryLinks={categoryLinks} />
-      <main className="flex min-h-0 min-w-0 flex-1 flex-col pt-24 md:pt-[5.75rem]">
+      <main className="flex min-h-0 min-w-0 flex-1 flex-col pb-16 pt-24 md:pb-0 md:pt-[5.75rem]">
         {children}
       </main>
       <SiteFooter />
