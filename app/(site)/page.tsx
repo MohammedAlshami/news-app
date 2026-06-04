@@ -58,7 +58,11 @@ export default async function HomePage() {
         <HomeTechRow articles={techArticles} isSubscribed={subscribed} />
       </main>
       <SiteSubscribeBanner />
-      <SiteFooter />
+      <div className="px-2 pb-2 sm:px-4">
+        <div className="-mt-32 overflow-hidden rounded-2xl">
+          <SiteFooter />
+        </div>
+      </div>
     </>
   )
 }

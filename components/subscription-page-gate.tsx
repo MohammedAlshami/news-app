@@ -23,6 +23,7 @@ export function SubscriptionPageGate({ title, coverImageUrl, back }: Props) {
               fill
               className="object-cover opacity-40 blur-sm"
               sizes="(max-width: 640px) 100vw, 400px"
+              loading="eager"
             />
           </div>
         ) : null}

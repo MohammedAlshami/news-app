@@ -1,17 +1,9 @@
 import type { ReactNode } from "react"
 import Image from "next/image"
-import Link from "next/link"
-import { ArrowRight } from "lucide-react"
-
-import { Button } from "@/components/ui/button"
 import { formatArticleDate } from "@/lib/format-date"
 import { cn } from "@/lib/utils"
 
 type Props = {
-  /** Primary nav control (e.g. back to category) */
-  back: { href: string; label: string }
-  /** More buttons in the top bar, e.g. “الرئيسية” (home) */
-  actions?: ReactNode
   /** Optional hero (banner) above the byline. */
   coverImageUrl?: string | null
   /** Category line text (before the date). */
@@ -26,10 +18,6 @@ type Props = {
    * (e.g. admin preview modal).
    */
   embedded?: boolean
-  /**
-   * When false, hides the muted top bar with the back link (used in the admin preview modal).
-   */
-  showTopBar?: boolean
   /** Optional promotional banner(s) between excerpt and article body. */
   adSlot?: ReactNode
 }
@@ -39,8 +27,6 @@ type Props = {
  * the admin preview modal).
  */
 export function NewsArticleView({
-  back,
-  actions,
   coverImageUrl,
   categoryByline,
   date,
@@ -48,7 +34,6 @@ export function NewsArticleView({
   excerpt,
   children,
   embedded = false,
-  showTopBar = true,
   adSlot,
 }: Props) {
   return (
@@ -58,25 +43,6 @@ export function NewsArticleView({
         "min-w-0 max-w-full",
       )}
     >
-      {showTopBar ? (
-        <div className="border-b bg-muted/40">
-          <div className="mx-auto w-full max-w-2xl px-4 py-6 sm:px-6">
-            <div className="flex flex-wrap items-center gap-2 sm:justify-center">
-              <Button
-                asChild
-                variant="outline"
-                size="sm"
-              >
-                <Link href={back.href} aria-label={back.label}>
-                  <ArrowRight className="size-4 rotate-180" />
-                  <span className="sr-only">{back.label}</span>
-                </Link>
-              </Button>
-              {actions}
-            </div>
-          </div>
-        </div>
-      ) : null}
 
       {coverImageUrl ? (
         <div className="mx-auto w-full min-w-0 max-w-3xl px-4 pt-6 sm:px-6">
@@ -88,6 +54,7 @@ export function NewsArticleView({
               className="object-cover"
               sizes="(max-width: 48rem) 100vw, 48rem"
               unoptimized
+              loading="eager"
             />
           </div>
         </div>
@@ -111,10 +78,10 @@ export function NewsArticleView({
         <p className="mt-4 text-pretty text-lg text-muted-foreground">
           {excerpt}
         </p>
-        {adSlot ? <div className="mt-8 min-w-0 max-w-full">{adSlot}</div> : null}
         <div className="mt-10 min-w-0 max-w-full overflow-x-hidden text-pretty text-lg text-muted-foreground [&_h2]:text-foreground [&_h3]:text-foreground [&_h4]:text-foreground">
           {children}
         </div>
+        {adSlot ? <div className="mt-8 min-w-0 max-w-full">{adSlot}</div> : null}
       </article>
     </div>
   )

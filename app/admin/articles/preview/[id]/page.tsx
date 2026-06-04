@@ -96,14 +96,6 @@ export default async function AdminArticlePreviewPage({ params }: PageProps) {
 
     <NewsArticleView
 
-      back={{
-
-        href: `/admin/articles/${id}`,
-
-        label: ar.adminPreviewBackToEdit,
-
-      }}
-
       coverImageUrl={row.coverImageUrl}
 
       categoryByline={categoryByline}

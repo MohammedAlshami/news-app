@@ -1,5 +1,6 @@
 import type { Metadata } from "next"
 import { Tajawal } from "next/font/google"
+import Script from "next/script"
 
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
@@ -32,6 +33,13 @@ export default function RootLayout({
       className={cn(fontArabic.variable, "font-sans antialiased")}
     >
       <body className="min-h-svh">
+        {process.env.NODE_ENV === "development" && (
+          <Script
+            src="//unpkg.com/react-grab/dist/index.global.js"
+            crossOrigin="anonymous"
+            strategy="beforeInteractive"
+          />
+        )}
         <ThemeProvider>
           <TooltipProvider delayDuration={0}>{children}</TooltipProvider>
         </ThemeProvider>
