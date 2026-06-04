@@ -38,8 +38,10 @@ export async function getPublishedArticleIdsForStaticParams(): Promise<
   return result
 }
 
-export async function getPublishedArticles() {
-  const cached = cacheGet<ReturnType<typeof mapRow>>("published-articles")
+type ArticleRow = ReturnType<typeof mapRow>
+
+export async function getPublishedArticles(): Promise<ArticleRow[]> {
+  const cached = cacheGet<ArticleRow[]>("published-articles")
   if (cached) return cached
 
   const rows = await getDb()

@@ -1,6 +1,5 @@
 import type { Metadata } from "next"
 
-import { SiteNavbar } from "@/components/site-navbar"
 import { HomeCampusNewsSection } from "@/components/home-campus-news"
 import { HomeFinanceSpotlight } from "@/components/home-finance-spotlight"
 import { HomeHeroSection } from "@/components/home-hero"
@@ -13,7 +12,6 @@ import {
   getSportsArticles,
   getTechArticles,
 } from "@/lib/db-home.server"
-import { getCategoryNavItems } from "@/lib/categories"
 import { isSubscribed } from "@/lib/subscription"
 import { ar } from "@/lib/ui-ar"
 
@@ -25,10 +23,6 @@ export const metadata: Metadata = {
 }
 
 export default async function HomePage() {
-  const categoryLinks = (await getCategoryNavItems())
-    .filter((item) => item.id !== "all")
-    .slice(0, 5)
-
   const subscribed = await isSubscribed()
 
   const [heroArticles, campusArticles, financeArticles, sportsArticles, techArticles] =
@@ -42,9 +36,7 @@ export default async function HomePage() {
 
   return (
     <>
-      <SiteNavbar primaryLinks={categoryLinks} />
-      <main className="flex min-h-0 min-w-0 flex-1 flex-col pt-24 md:pt-[5.75rem]">
-        <HomeHeroSection
+      <HomeHeroSection
           featured={heroArticles[0] ?? null}
           side={heroArticles[1] ?? null}
           row={heroArticles[2] ?? null}
@@ -54,7 +46,6 @@ export default async function HomePage() {
         <HomeFinanceSpotlight articles={financeArticles} isSubscribed={subscribed} />
         <HomeSportsRow articles={sportsArticles} isSubscribed={subscribed} />
         <HomeTechRow articles={techArticles} isSubscribed={subscribed} />
-      </main>
     </>
   )
 }
