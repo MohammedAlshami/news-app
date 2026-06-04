@@ -1,40 +1,164 @@
+"use client"
+
+import { useState } from "react"
 import Link from "next/link"
-import { ArrowUpLeft } from "lucide-react"
 
 import { ar } from "@/lib/ui-ar"
+import { Globe } from "@/components/ui/globe"
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { X } from "lucide-react"
+
+const STAR_COUNT = 18
 
 export function SiteSubscribeBanner() {
+  const [open, setOpen] = useState(false)
+
+  const stars = Array.from({ length: STAR_COUNT }, (_, i) => {
+    const size = Math.random() < 0.4 ? 3 : 2
+    return {
+      size,
+      top: `${Math.random() * 90}%`,
+      left: `${Math.random() * 95}%`,
+      opacity: 0.3 + Math.random() * 0.5,
+      duration: `${2 + Math.random() * 2}s`,
+      delay: `${Math.random() * 2}s`,
+    }
+  })
+
   return (
-    <aside
-      dir="rtl"
-      lang="ar"
-      aria-labelledby="site-subscribe-banner-heading"
-      className="w-full bg-white px-6 py-12 md:px-12 md:py-16 lg:py-20"
-    >
-      <div className="mx-auto max-w-[90rem]">
-        <div className="flex flex-col items-stretch justify-between gap-8 rounded-3xl bg-neutral-900 px-8 py-14 text-white shadow-sm sm:px-10 sm:py-16 md:flex-row md:items-center md:gap-10 md:px-14 md:py-20 lg:py-24">
-          <div className="min-w-0 flex-1 space-y-2 text-right">
-            <h2
-              id="site-subscribe-banner-heading"
-              className="text-pretty text-2xl font-bold tracking-tight md:text-3xl"
+    <>
+      <aside
+        dir="rtl"
+        lang="ar"
+        aria-labelledby="site-subscribe-banner-heading"
+        className="w-full bg-white px-6 pt-12 md:px-12 md:pt-16 lg:pt-20"
+      >
+        <div className="mx-auto max-w-[90rem]">
+          <div
+            className="relative overflow-hidden rounded-3xl"
+            style={{
+              background: "linear-gradient(135deg, #0d4a6e 0%, #0a6b8a 40%, #0e8fa8 70%, #1aa3b8 100%)",
+            }}
+          >
+            <div
+              className="pointer-events-none absolute inset-0"
+              aria-hidden="true"
+              style={{ zIndex: 1 }}
             >
-              {ar.siteSubscribeBannerTitle}
-            </h2>
-            <p className="max-w-xl text-pretty text-[15px] leading-relaxed text-neutral-300 md:text-base">
-              {ar.siteSubscribeBannerDescription}
-            </p>
-          </div>
-          <div className="shrink-0 md:ps-4">
-            <Link
-              href="#"
-              className="group inline-flex w-full items-center justify-center gap-2 rounded-full bg-white px-8 py-3.5 text-center text-sm font-bold text-neutral-900 transition-colors hover:bg-neutral-100 md:w-auto md:min-w-[12rem]"
+              {stars.map((s, i) => (
+                <span
+                  key={i}
+                  style={{
+                    position: "absolute",
+                    width: `${s.size}px`,
+                    height: `${s.size}px`,
+                    borderRadius: "50%",
+                    background: `rgba(255, 255, 255, ${s.opacity})`,
+                    top: s.top,
+                    left: s.left,
+                    animation: `twinkle ${s.duration} ease-in-out infinite alternate`,
+                    animationDelay: s.delay,
+                  }}
+                />
+              ))}
+            </div>
+
+            <div
+              className="relative flex min-h-[300px] items-center justify-between gap-8 px-8 py-8 sm:px-10 md:px-14"
+              style={{ zIndex: 2 }}
             >
-              {ar.siteSubscribeBannerCta}
-              <ArrowUpLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5 group-hover:-translate-y-0.5" aria-hidden />
-            </Link>
+              <div className="min-w-0 flex-1 text-center md:text-right">
+                <h2
+                  id="site-subscribe-banner-heading"
+                  className="text-pretty text-2xl font-bold leading-tight text-white md:text-3xl"
+                >
+                  {ar.siteSubscribeBannerTitle}
+                </h2>
+                <p className="mt-2 max-w-xl text-pretty text-[15px] leading-relaxed text-white/85 md:text-base">
+                  {ar.siteSubscribeBannerDescription}
+                </p>
+                <p className="mt-4 text-3xl font-bold text-white">$2 فقط</p>
+                <button
+                  onClick={() => setOpen(true)}
+                  className="mt-5 inline-flex items-center gap-2 rounded-full bg-white px-8 py-3 text-center text-sm font-bold text-neutral-900 transition-colors hover:bg-neutral-100"
+                >
+                  {ar.siteSubscribeBannerCta}
+                </button>
+              </div>
+              <Globe className="absolute left-[-90%] top-1/2 -translate-y-1/2 w-[250px] h-[250px] md:w-[500px] md:h-[500px] pointer-events-none" />
+            </div>
           </div>
         </div>
-      </div>
-    </aside>
+      </aside>
+
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent
+          dir="rtl"
+          className="sm:max-w-2xl rounded-3xl border-0 p-0 overflow-hidden"
+          style={{
+            background: "linear-gradient(135deg, #0d4a6e 0%, #0a6b8a 40%, #0e8fa8 70%, #1aa3b8 100%)",
+          }}
+        >
+          <DialogTitle className="sr-only">{ar.siteSubscribeBannerTitle}</DialogTitle>
+          <button
+            onClick={() => setOpen(false)}
+            className="absolute left-4 top-4 z-10 rounded-full bg-white/20 p-1.5 text-white transition-colors hover:bg-white/30"
+          >
+            <X className="h-4 w-4" />
+          </button>
+          <div
+            className="pointer-events-none absolute inset-0"
+            aria-hidden="true"
+          >
+            {stars.map((s, i) => (
+              <span
+                key={i}
+                style={{
+                  position: "absolute",
+                  width: `${s.size}px`,
+                  height: `${s.size}px`,
+                  borderRadius: "50%",
+                  background: `rgba(255, 255, 255, ${s.opacity})`,
+                  top: s.top,
+                  left: s.left,
+                  animation: `twinkle ${s.duration} ease-in-out infinite alternate`,
+                  animationDelay: s.delay,
+                }}
+              />
+            ))}
+          </div>
+          <div className="relative px-8 py-12 text-center">
+            <h3 className="text-2xl font-bold text-white">{ar.siteSubscribeBannerTitle}</h3>
+            <p className="mt-2 text-[15px] text-white/85">{ar.siteSubscribeBannerDescription}</p>
+            <p className="mt-6 text-4xl font-bold text-white">$2 فقط</p>
+            <p className="mt-1 text-sm text-white/70">شهرياً</p>
+            <ul className="mt-6 space-y-3 text-right">
+              <li className="flex items-center gap-2 text-sm text-white/90">
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/20 text-[11px] text-white">✓</span>
+                جميع المقالات الحصرية
+              </li>
+              <li className="flex items-center gap-2 text-sm text-white/90">
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/20 text-[11px] text-white">✓</span>
+                محتوى مميز بدون إعلانات
+              </li>
+              <li className="flex items-center gap-2 text-sm text-white/90">
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/20 text-[11px] text-white">✓</span>
+                إشعارات فورية بالأخبار العاجلة
+              </li>
+            </ul>
+            <button
+              onClick={() => setOpen(false)}
+              className="mt-8 w-full rounded-full bg-white px-8 py-3.5 text-center text-sm font-bold text-neutral-900 transition-colors hover:bg-neutral-100"
+            >
+              {ar.siteSubscribeBannerCta}
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   )
 }

@@ -88,11 +88,6 @@ export function AdminArticlePreviewModal({
           {!pending && data ? (
             <NewsArticleView
               embedded
-              showTopBar={false}
-              back={{
-                href: `/admin/articles/${data.id}`,
-                label: ar.adminPreviewBackToEdit,
-              }}
               coverImageUrl={data.coverImageUrl}
               categoryByline={data.categoryByline}
               date={data.date}

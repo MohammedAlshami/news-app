@@ -1,5 +1,4 @@
 import type { Metadata } from "next"
-import Link from "next/link"
 import { notFound, redirect } from "next/navigation"
 
 import { ArticleTiptapReadOnly } from "@/components/article-tiptap-read-only"
@@ -7,7 +6,6 @@ import { NewsArticleView } from "@/components/news-article-view"
 import { SubscriptionPageGate } from "@/components/subscription-page-gate"
 import { TrackArticleView } from "@/components/track-article-view"
 import { SiteAdSpots } from "@/components/site-ad-spots"
-import { Button } from "@/components/ui/button"
 import {
   newsArticleBackFromCategoryIds,
   newsArticleCategoryBylineFromIds,
@@ -88,12 +86,6 @@ export default async function NewsArticlePage({ params }: PageProps) {
     <>
       <TrackArticleView articleId={article.id} />
       <NewsArticleView
-        back={back}
-        actions={
-          <Button asChild variant="ghost" size="sm">
-            <Link href="/">{ar.home}</Link>
-          </Button>
-        }
         coverImageUrl={article.coverImageUrl}
         categoryByline={categoryByline}
         date={date}

@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
+import Image from "next/image"
 import Link from "next/link"
 import { AnimatePresence, motion } from "framer-motion"
 import { Home, Landmark, Menu, Newspaper, Search, Trophy, User, X } from "lucide-react"
@@ -26,7 +27,22 @@ export function SiteNavbar({ primaryLinks }: SiteNavbarProps) {
   const allNewsHref = getCategoryPagePath(ALL_CATEGORIES_ID)
   const [hidden, setHidden] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [categoriesOpen, setCategoriesOpen] = useState(false)
+  const categoriesRef = useRef<HTMLDivElement>(null)
   const lastY = useRef(0)
+
+  const visibleLinks = primaryLinks.slice(0, 2)
+  const overflowLinks = primaryLinks.slice(2)
+
+  useEffect(() => {
+    const onPointerDown = (e: PointerEvent) => {
+      if (categoriesRef.current && !categoriesRef.current.contains(e.target as Node)) {
+        setCategoriesOpen(false)
+      }
+    }
+    document.addEventListener("pointerdown", onPointerDown)
+    return () => document.removeEventListener("pointerdown", onPointerDown)
+  }, [])
 
   useEffect(() => {
     lastY.current = window.scrollY
@@ -66,23 +82,28 @@ export function SiteNavbar({ primaryLinks }: SiteNavbarProps) {
       lang="ar"
       aria-label={ar.newsBrand}
       className={cn(
-        "fixed inset-x-0 top-2 z-50 w-full",
+        "fixed inset-x-0 top-1 z-50 w-full",
         hidden && "pointer-events-none",
       )}
       animate={{ y: hidden ? "-120%" : 0 }}
       transition={{ duration: 0.5, ease: [0.32, 0.72, 0, 1] }}
     >
-      <div className="mx-auto w-full max-w-[90rem] px-6 pb-2 pt-2 md:px-12 md:pb-2 md:pt-3">
-        <div className="w-full rounded-full border border-gray-100 bg-white px-5 py-3 md:px-10 md:py-4">
+      <div className="mx-auto w-full max-w-[90rem] px-6 pb-1 pt-1 md:px-12 md:pb-1 md:pt-1">
+        <div className="w-full rounded-full border border-gray-100 bg-white px-4 py-2 md:px-8 md:py-2.5">
           <div className="flex w-full items-center justify-between">
             <div className="flex items-center gap-8 lg:gap-10">
-              <Link href="/" className="flex items-center gap-2 transition-opacity hover:opacity-80">
-                <span className="text-3xl font-black leading-none tracking-tighter text-gray-900">
-                  {ar.siteMark}
-                </span>
+              <Link href="/" className="flex items-center transition-opacity hover:opacity-80">
+                <Image
+                  src="/logo-light.svg"
+                  alt={ar.newsBrand}
+                  width={160}
+                  height={85}
+                  className="h-14 w-auto"
+                  priority
+                />
               </Link>
 
-              <div className="hidden items-center gap-8 text-[15px] font-bold text-gray-800 lg:flex">
+              <div className="hidden items-center gap-8 text-[15px] font-bold text-gray-800 xl:flex">
                 <Link href={allNewsHref} className={navLinkClass}>
                   {ar.navPrimaryNews}
                 </Link>
@@ -95,9 +116,49 @@ export function SiteNavbar({ primaryLinks }: SiteNavbarProps) {
                   {ar.footerAdvertise}
                 </Link>
               </div>
+              <div className="hidden items-center gap-6 text-[15px] font-bold text-gray-800 lg:flex xl:hidden">
+                <Link href={allNewsHref} className={navLinkClass}>
+                  {ar.navPrimaryNews}
+                </Link>
+                {visibleLinks.map((item) => (
+                  <Link key={item.href} href={item.href} className={navLinkClass}>
+                    {item.label}
+                  </Link>
+                ))}
+                <Link href="/advertise" className={navLinkClass}>
+                  {ar.footerAdvertise}
+                </Link>
+                {overflowLinks.length > 0 && (
+                  <div ref={categoriesRef} className="relative">
+                    <button
+                      onClick={() => setCategoriesOpen(!categoriesOpen)}
+                      className={cn(navLinkClass, "flex items-center gap-1")}
+                    >
+                      {"تصنيفات"}
+                      <svg className={`h-3 w-3 transition-transform duration-200 ${categoriesOpen ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
+                    {categoriesOpen && (
+                      <div className="absolute left-0 top-full mt-2 min-w-44 rounded-xl border border-gray-100 bg-white py-2 shadow-lg">
+                        {overflowLinks.map((item) => (
+                          <Link
+                            key={item.href}
+                            href={item.href}
+                            className="block px-4 py-2 text-[15px] font-bold text-gray-800 transition-colors hover:bg-gray-100"
+                            onClick={() => setCategoriesOpen(false)}
+                          >
+                            {item.label}
+                          </Link>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
 
-            <div className="flex items-center gap-4 lg:hidden">
+            <div className="flex items-center gap-4 xl:hidden">
               <Link
                 href="/admin"
                 className="transition-opacity hover:opacity-70"
@@ -113,7 +174,7 @@ export function SiteNavbar({ primaryLinks }: SiteNavbarProps) {
                 <Menu className="h-5 w-5 stroke-[2.5]" aria-hidden />
               </button>
             </div>
-            <div className="hidden items-center gap-6 text-[15px] font-bold text-gray-800 lg:flex">
+            <div className="hidden items-center gap-6 text-[15px] font-bold text-gray-800 xl:flex">
               <Link
                 href="/search"
                 className="flex items-center gap-2 transition-opacity hover:opacity-70"
@@ -141,7 +202,7 @@ export function SiteNavbar({ primaryLinks }: SiteNavbarProps) {
         </div>
       </div>
     </motion.nav>
-    <div className="fixed inset-x-0 bottom-0 z-50 lg:hidden">
+    <div className="fixed inset-x-0 bottom-0 z-50 sm:hidden">
       <div className="mx-auto w-full max-w-[90rem] px-6 pb-2 pt-2">
         <div className="w-full rounded-full border border-gray-100 bg-white px-5 py-3">
           <div className="flex items-center justify-around">
