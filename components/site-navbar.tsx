@@ -192,7 +192,7 @@ export function SiteNavbar({ primaryLinks }: SiteNavbarProps) {
                 <span className="hidden sm:inline">{ar.navAccount}</span>
               </Link>
               <Link
-                href="#"
+                href="/subscribe"
                 className="rounded-full bg-black px-5 py-2 text-sm font-bold text-white transition-opacity hover:opacity-80"
               >
                 {ar.siteSubscribeBannerTitle}

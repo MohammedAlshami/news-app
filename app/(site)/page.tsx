@@ -1,8 +1,6 @@
 import type { Metadata } from "next"
 
-import { SiteFooter } from "@/components/site-footer"
 import { SiteNavbar } from "@/components/site-navbar"
-import { SiteSubscribeBanner } from "@/components/site-subscribe-banner"
 import { HomeCampusNewsSection } from "@/components/home-campus-news"
 import { HomeFinanceSpotlight } from "@/components/home-finance-spotlight"
 import { HomeHeroSection } from "@/components/home-hero"
@@ -57,12 +55,6 @@ export default async function HomePage() {
         <HomeSportsRow articles={sportsArticles} isSubscribed={subscribed} />
         <HomeTechRow articles={techArticles} isSubscribed={subscribed} />
       </main>
-      <SiteSubscribeBanner />
-      <div className="px-2 pb-2 sm:px-4">
-        <div className="-mt-32 overflow-hidden rounded-2xl">
-          <SiteFooter />
-        </div>
-      </div>
     </>
   )
 }

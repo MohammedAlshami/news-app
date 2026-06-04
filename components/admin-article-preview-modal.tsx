@@ -69,9 +69,9 @@ export function AdminArticlePreviewModal({
       >
         <DialogTitle className="sr-only">{ar.adminArticlePreview}</DialogTitle>
 
-        <div className="min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain">
+        <div className="min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain px-4">
           {pending ? (
-            <div className="space-y-4 px-4 py-6">
+            <div className="space-y-4 py-6">
               <Skeleton className="h-8 w-3/4 rounded-md" />
               <Skeleton className="h-4 w-full rounded-md" />
               <Skeleton className="h-4 w-full rounded-md" />
@@ -88,7 +88,6 @@ export function AdminArticlePreviewModal({
           {!pending && data ? (
             <NewsArticleView
               embedded
-              coverImageUrl={data.coverImageUrl}
               categoryByline={data.categoryByline}
               date={data.date}
               title={data.title}

@@ -1,22 +1,47 @@
 import "server-only"
 
-import { and, desc, eq, like } from "drizzle-orm"
+import { and, desc, eq, like, sql } from "drizzle-orm"
 
 import { getDb } from "@/db/client"
 import { articles } from "@/db/schema"
 import { ALL_CATEGORIES_ID, parseShortId } from "@/lib/site-routes"
 import type { FeedArticle } from "@/lib/site-types"
 
+const cache = new Map<string, { data: unknown; expiry: number }>()
+
+function cacheGet<T>(key: string): T | undefined {
+  const entry = cache.get(key)
+  if (!entry) return undefined
+  if (Date.now() > entry.expiry) {
+    cache.delete(key)
+    return undefined
+  }
+  return entry.data as T
+}
+
+function cacheSet<T>(key: string, data: T, ttlMs = 60_000) {
+  cache.set(key, { data, expiry: Date.now() + ttlMs })
+}
+
 export async function getPublishedArticleIdsForStaticParams(): Promise<
   { id: string }[]
 > {
-  return (await getDb())
+  const cached = cacheGet<{ id: string }[]>("static-params")
+  if (cached) return cached
+
+  const result = await getDb()
     .select({ id: articles.id })
     .from(articles)
     .where(eq(articles.isPublished, true))
+
+  cacheSet("static-params", result)
+  return result
 }
 
 export async function getPublishedArticles() {
+  const cached = cacheGet<ReturnType<typeof mapRow>>("published-articles")
+  if (cached) return cached
+
   const rows = await getDb()
     .select({
       id: articles.id,
@@ -31,7 +56,21 @@ export async function getPublishedArticles() {
     .where(eq(articles.isPublished, true))
     .orderBy(desc(articles.updatedAt))
 
-  return rows.map((r) => ({
+  const result = rows.map(mapRow)
+  cacheSet("published-articles", result)
+  return result
+}
+
+function mapRow(r: {
+  id: string
+  title: string
+  excerpt: string
+  createdAt: Date
+  categoryId: string | null
+  coverImageUrl: string | null
+  isMemberOnly: boolean
+}) {
+  return {
     id: r.id,
     title: r.title,
     excerpt: r.excerpt,
@@ -39,7 +78,7 @@ export async function getPublishedArticles() {
     categoryIds: r.categoryId ? [r.categoryId] : [],
     coverImageUrl: r.coverImageUrl,
     isMemberOnly: r.isMemberOnly,
-  }))
+  }
 }
 
 export async function getPublishedArticleRowById(id: string) {
@@ -65,6 +104,34 @@ export async function getPublishedArticleRowBySlugId(slugId: string) {
     )
     .limit(1)
   return row
+}
+
+export async function getRecommendedArticles(excludeId: string, limit = 8) {
+  const rows = await getDb()
+    .select({
+      id: articles.id,
+      title: articles.title,
+      excerpt: articles.excerpt,
+      createdAt: articles.createdAt,
+      categoryId: articles.categoryId,
+      coverImageUrl: articles.coverImageUrl,
+      isMemberOnly: articles.isMemberOnly,
+    })
+    .from(articles)
+    .where(
+      and(eq(articles.isPublished, true), sql`${articles.id} != ${excludeId}`),
+    )
+    .orderBy(desc(articles.updatedAt))
+    .limit(limit)
+  return rows.map((r) => ({
+    id: r.id,
+    title: r.title,
+    excerpt: r.excerpt,
+    date: r.createdAt.toISOString().slice(0, 10),
+    categoryIds: r.categoryId ? [r.categoryId] : [],
+    coverImageUrl: r.coverImageUrl,
+    isMemberOnly: r.isMemberOnly,
+  }))
 }
 
 export async function getFeedArticlesByPageId(

@@ -40,7 +40,7 @@ export function SiteAdSpots({ ads, className }: Props) {
           href.startsWith("http://") || href.startsWith("https://")
         const inner = (
           <span className="relative block w-full overflow-hidden rounded-xl border border-border bg-muted/40">
-            <span className="relative block aspect-[21/9] w-full max-h-[220px] sm:aspect-[24/5] sm:max-h-[180px]">
+            <span className="relative block aspect-[21/10] w-full max-h-[300px] sm:aspect-[24/7] sm:max-h-[280px]">
               <Image
                 src={ad.imageUrl}
                 alt=""

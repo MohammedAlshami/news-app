@@ -14,18 +14,27 @@ import { X } from "lucide-react"
 
 const STAR_COUNT = 18
 
+function seededRandom(seed: number) {
+  let s = seed
+  return () => {
+    s = (s * 16807 + 0) % 2147483647
+    return (s - 1) / 2147483646
+  }
+}
+
 export function SiteSubscribeBanner() {
   const [open, setOpen] = useState(false)
 
+  const rand = seededRandom(42)
   const stars = Array.from({ length: STAR_COUNT }, (_, i) => {
-    const size = Math.random() < 0.4 ? 3 : 2
+    const size = rand() < 0.4 ? 3 : 2
     return {
       size,
-      top: `${Math.random() * 90}%`,
-      left: `${Math.random() * 95}%`,
-      opacity: 0.3 + Math.random() * 0.5,
-      duration: `${2 + Math.random() * 2}s`,
-      delay: `${Math.random() * 2}s`,
+      top: `${rand() * 90}%`,
+      left: `${rand() * 95}%`,
+      opacity: 0.3 + rand() * 0.5,
+      duration: `${2 + rand() * 2}s`,
+      delay: `${rand() * 2}s`,
     }
   })
 
@@ -84,7 +93,7 @@ export function SiteSubscribeBanner() {
                 <p className="mt-4 text-3xl font-bold text-white">$2 فقط</p>
                 <button
                   onClick={() => setOpen(true)}
-                  className="mt-5 inline-flex items-center gap-2 rounded-full bg-white px-8 py-3 text-center text-sm font-bold text-neutral-900 transition-colors hover:bg-neutral-100"
+                  className="mt-5 inline-flex items-center gap-2 rounded-full bg-black px-8 py-3 text-center text-sm font-bold text-white transition-opacity hover:opacity-80"
                 >
                   {ar.siteSubscribeBannerCta}
                 </button>
@@ -152,7 +161,7 @@ export function SiteSubscribeBanner() {
             </ul>
             <button
               onClick={() => setOpen(false)}
-              className="mt-8 w-full rounded-full bg-white px-8 py-3.5 text-center text-sm font-bold text-neutral-900 transition-colors hover:bg-neutral-100"
+              className="mt-8 w-full rounded-full bg-black px-8 py-3.5 text-center text-sm font-bold text-white transition-opacity hover:opacity-80"
             >
               {ar.siteSubscribeBannerCta}
             </button>
