@@ -3,6 +3,7 @@ import Link from "next/link"
 import { AdPlaceholder } from "@/components/news-landing"
 import { SiteFooter } from "@/components/site-footer"
 import { SiteNavbar } from "@/components/site-navbar"
+import { SiteSubscribeBanner } from "@/components/site-subscribe-banner"
 import { getCategoryNavItems } from "@/lib/categories"
 import { getMarqueeArticles } from "@/lib/db-home.server"
 import { areSiteAdsEnabled } from "@/lib/site-ads-enabled"
@@ -51,19 +52,18 @@ export default async function SiteShellLayout({
           </div>
         </div>
       ) : null}
-      {showAds ? (
-        <div className="container mx-auto px-4 pt-24 md:pt-28">
-          <AdPlaceholder
-            text={ar.adPlaceholderLeaderboard}
-            className="h-24 w-full rounded-lg"
-          />
-        </div>
-      ) : null}
       <SiteNavbar primaryLinks={categoryLinks} />
       <main className="flex min-h-0 min-w-0 flex-1 flex-col pb-16 pt-24 md:pb-0 md:pt-[5.75rem]">
         {children}
       </main>
-      <SiteFooter />
+      <div className="px-4 sm:px-6 md:px-10">
+        <SiteSubscribeBanner />
+      </div>
+      <div className="px-2 pb-2 sm:px-4">
+        <div className="-mt-32 overflow-hidden rounded-2xl">
+          <SiteFooter />
+        </div>
+      </div>
     </>
   )
 }

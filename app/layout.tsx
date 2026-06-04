@@ -37,7 +37,7 @@ export default function RootLayout({
           <Script
             src="//unpkg.com/react-grab/dist/index.global.js"
             crossOrigin="anonymous"
-            strategy="beforeInteractive"
+            strategy="afterInteractive"
           />
         )}
         <ThemeProvider>

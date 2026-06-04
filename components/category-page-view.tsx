@@ -1,9 +1,10 @@
 import Link from "next/link"
 
-import { AdPlaceholder } from "@/components/news-landing"
+import { SiteAdSpots } from "@/components/site-ad-spots"
 import { SubscriptionGate } from "@/components/subscription-gate"
 import { type Article, getArticlePath } from "@/lib/articles"
 import { areSiteAdsEnabled } from "@/lib/site-ads-enabled"
+import type { SiteAdPublic } from "@/lib/site-types"
 import { formatArticleDate } from "@/lib/format-date"
 import { ar } from "@/lib/ui-ar"
 import { cn } from "@/lib/utils"
@@ -18,6 +19,7 @@ type CategoryPageViewProps = {
   articles: Article[]
   categoryNameById: Record<string, string>
   isSubscribed: boolean
+  ads?: SiteAdPublic[]
 }
 
 const FALLBACK_COVER =
@@ -92,6 +94,7 @@ export function CategoryPageView({
   articles,
   categoryNameById,
   isSubscribed,
+  ads = [],
 }: CategoryPageViewProps) {
   const mostRead = articles.slice(0, 3)
   const blurb = description.trim() || feedSubheading.trim()
@@ -101,7 +104,7 @@ export function CategoryPageView({
     <div dir="rtl" lang="ar" className="min-h-svh bg-white text-neutral-900">
       <div className="mx-auto w-full max-w-[90rem] px-4 py-12 sm:px-6 md:px-10 md:py-16 lg:px-8 lg:py-20 xl:px-8 2xl:px-10">
         <nav
-          className="mb-8 flex flex-wrap items-center justify-end gap-2 text-sm text-neutral-500"
+          className="mb-8 flex flex-wrap items-center justify-start gap-2 text-sm text-neutral-500"
           aria-label={ar.categoryBreadcrumbAria}
         >
           <Link href="/" className="transition-colors hover:text-neutral-900">
@@ -162,6 +165,9 @@ export function CategoryPageView({
 
           <aside className="lg:col-span-4 xl:col-span-4">
             <div className="sticky top-28 space-y-8">
+              {showAds && ads.length > 0 ? (
+                <SiteAdSpots ads={ads} />
+              ) : null}
               <div className="rounded-3xl border border-neutral-100 bg-white p-6 shadow-sm md:p-8">
                 <h2 className="mb-6 border-b border-neutral-100 pb-4 text-right text-lg font-bold text-neutral-900">
                   {ar.categoryMostReadTitle}
@@ -188,9 +194,7 @@ export function CategoryPageView({
                   </ul>
                 )}
               </div>
-              {showAds ? (
-                <AdPlaceholder text="" />
-              ) : null}
+
             </div>
           </aside>
         </div>

@@ -94,9 +94,8 @@ export default async function AdminArticlePreviewPage({ params }: PageProps) {
 
   return (
 
+    <div className="mx-auto max-w-3xl px-4 sm:px-6">
     <NewsArticleView
-
-      coverImageUrl={row.coverImageUrl}
 
       categoryByline={categoryByline}
 
@@ -111,8 +110,7 @@ export default async function AdminArticlePreviewPage({ params }: PageProps) {
       <ArticleTiptapReadOnly body={row.body} />
 
     </NewsArticleView>
-
+    </div>
   )
-
 }
 

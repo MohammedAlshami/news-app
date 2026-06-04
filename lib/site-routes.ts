@@ -27,14 +27,7 @@ export function parseShortId(slugId: string): string | null {
   return shortId
 }
 
-export function getArticlePath(articleId: string, title?: string) {
-  if (title) {
-    const slugId = makeArticleSlugId(articleId, title)
-    const dash = slugId.lastIndexOf(SLUG_SEPARATOR)
-    const slug = slugId.slice(0, dash)
-    const suffix = slugId.slice(dash)
-    return `/news/${encodeURIComponent(slug)}${suffix}` as const
-  }
+export function getArticlePath(articleId: string, _title?: string) {
   return `/news/${articleId}` as const
 }
 

@@ -9,6 +9,7 @@ import {
   isValidCategoryPageId,
 } from "@/lib/categories"
 import { getFeedArticlesByPageId } from "@/lib/articles"
+import { getActiveSiteAdsForHome } from "@/lib/db-site-ads.server"
 import { isSubscribed } from "@/lib/subscription"
 import { ar } from "@/lib/ui-ar"
 
@@ -51,6 +52,7 @@ export default async function CategoryPage({ params }: PageProps) {
     getCategories(),
     isSubscribed(),
   ])
+  const categoryAds = !subscribed ? await getActiveSiteAdsForHome() : []
 
   const categoryNameById = Object.fromEntries(
     categories.map((c) => [c.id, c.name] as const),
@@ -68,6 +70,7 @@ export default async function CategoryPage({ params }: PageProps) {
         articles={articles}
         categoryNameById={categoryNameById}
         isSubscribed={subscribed}
+        ads={categoryAds}
       />
     )
   }
@@ -88,6 +91,7 @@ export default async function CategoryPage({ params }: PageProps) {
       articles={articles}
       categoryNameById={categoryNameById}
       isSubscribed={subscribed}
+      ads={categoryAds}
     />
   )
 }
