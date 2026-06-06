@@ -13,6 +13,10 @@
   - `Al Quds`
   - `El Watan News`
   - `Al Araby Al Jadeed`
+  - `Alhurra`
+  - `Asharq Al-Awsat`
+  - `Shabiba`
+  - `Addustour`
 - The old admin pagination type errors were fixed.
 
 ## Architecture
@@ -175,6 +179,58 @@ What works:
 
 - Category pages parsed via HTML regex for article links.
 - Article content extracted from HTML (Drupal).
+
+### Alhurra
+
+Base URLs:
+
+- Search: `https://alhurra.com/?s=...`
+- Categories:
+  - `america`, `iran`, `lebanon`, `israel`, `gulf`, `iraq`, `egypt`, `syria`
+
+What works:
+
+- Category pages parsed via HTML regex for article links.
+- Article content extracted from HTML (WordPress).
+
+### Asharq Al-Awsat
+
+Base URLs:
+
+- Search: `https://aawsat.com/search?search=...`
+- Categories:
+  - `middle-east`, `world`, `economy`, `sport`, `culture`
+
+What works:
+
+- Category pages parsed via HTML regex for article links.
+- Article content extracted from HTML (Drupal).
+
+### Shabiba
+
+Base URLs:
+
+- Search: `https://shabiba.com/search?q=...`
+- Categories:
+  - `local`, `event`, `economy`, `sports`, `tech`, `lifestyle`
+
+What works:
+
+- Category pages parsed via HTML regex for article links.
+- Article content extracted from HTML.
+
+### Addustour
+
+Base URLs:
+
+- Search: `https://addustour.com/search.php?search=...`
+- Categories:
+  - `local`, `arab-world`, `economy`, `sports`, `culture`, `opinions`
+
+What works:
+
+- Category pages parsed via HTML regex for article links.
+- Article content extracted from HTML.
 - Categories:
   - `world`
   - `middle_east`
