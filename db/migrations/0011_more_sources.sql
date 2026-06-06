@@ -43,3 +43,39 @@ INSERT OR IGNORE INTO news_sources (key, name, name_ar, url, is_enabled, metadat
   1,
   '{"logoUrl":"https://www.aajeg.com/themes/custom/alaraby_revamp/logo.svg","country":"المملكة المتحدة","language":"العربية"}'
 );
+
+INSERT OR IGNORE INTO news_sources (key, name, name_ar, url, is_enabled, metadata) VALUES (
+  'alhurra',
+  'Alhurra',
+  'الحرة',
+  'https://alhurra.com',
+  1,
+  '{"logoUrl":"https://alhurra.com/wp-content/uploads/2023/12/cropped-alhurra-site-icon-192x192.png","country":"الولايات المتحدة","language":"العربية"}'
+);
+
+INSERT OR IGNORE INTO news_sources (key, name, name_ar, url, is_enabled, metadata) VALUES (
+  'aawsat',
+  'Asharq Al-Awsat',
+  'الشرق الأوسط',
+  'https://aawsat.com',
+  1,
+  '{"logoUrl":"https://aawsat.com/themes/custom/aawsatv3/favicon-new.png","country":"السعودية","language":"العربية"}'
+);
+
+INSERT OR IGNORE INTO news_sources (key, name, name_ar, url, is_enabled, metadata) VALUES (
+  'shabiba',
+  'Shabiba',
+  'الشبيبة',
+  'https://shabiba.com',
+  1,
+  '{"logoUrl":"https://shabiba.com/assets/img/favicon.png","country":"عمان","language":"العربية"}'
+);
+
+INSERT OR IGNORE INTO news_sources (key, name, name_ar, url, is_enabled, metadata) VALUES (
+  'addustour',
+  'Addustour',
+  'الدستور',
+  'https://addustour.com',
+  1,
+  '{"logoUrl":"https://addustour.com/favicon.ico","country":"الأردن","language":"العربية"}'
+);
