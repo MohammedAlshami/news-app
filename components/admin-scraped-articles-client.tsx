@@ -5,7 +5,7 @@ import { useState } from "react"
 import { AdminScrapeModal } from "@/components/admin-scrape-modal"
 import { Button } from "@/components/ui/button"
 
-// Combined categories from both RT and Independent sources
+// Combined categories from all news sources
 const SCRAPE_CATEGORIES = [
   { key: "news", label: "أخبار" },
   { key: "world", label: "عالم" },
@@ -21,6 +21,17 @@ const SCRAPE_CATEGORIES = [
   { key: "arts", label: "فنون" },
   { key: "environment", label: "بيئة" },
   { key: "varieties", label: "منوعات" },
+  { key: "technology", label: "تكنولوجيا" },
+  { key: "arab", label: "عرب" },
+  { key: "climate", label: "مناخ" },
+  { key: "palestine", label: "فلسطين" },
+  { key: "arab-and-world", label: "عربي ودولي" },
+  { key: "accidents", label: "حوادث" },
+  { key: "egypt", label: "مصر" },
+  { key: "news-syria", label: "سورية" },
+  { key: "news-palestine", label: "فلسطين (عربي جديد)" },
+  { key: "news-egypt", label: "مصر (عربي جديد)" },
+  { key: "opinions", label: "أقلام وأراء" },
 ]
 
 export function AdminScrapedArticlesClient() {

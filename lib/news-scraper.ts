@@ -1,4 +1,4 @@
-export type ScraperSourceKey = "rt" | "independent"
+export type ScraperSourceKey = "rt" | "independent" | "skynews" | "youm7" | "bbc" | "alaraby" | "elwatan" | "alquds" | "shabiba" | "addustour" | "alhurra" | "aawsat"
 
 export type ScrapedNewsItem = {
   title: string
@@ -367,6 +367,847 @@ async function fetchIndependentArticleContent(url: string): Promise<string> {
   }
 }
 
+function parseSkynews(html: string): ScrapedNewsItem[] {
+  // Parse JSON-LD ItemList from skynewsarabia.com pages
+  const jsonLdMatch = html.match(
+    /<script type="application\/ld\+json">[\s\S]*?"@type"\s*:\s*"ItemList"[\s\S]*?<\/script>/i,
+  )
+  if (!jsonLdMatch) return []
+
+  const urls: string[] = []
+  const urlRegex = /"url"\s*:\s*"(https:\/\/www\.skynewsarabia\.com\/[^"]+)"/g
+  let m: RegExpExecArray | null
+  while ((m = urlRegex.exec(jsonLdMatch[0])) !== null) {
+    urls.push(m[1])
+  }
+
+  return urls.slice(0, 20).map((url) => {
+    // Extract category from URL: /{category}/{id}-{slug}
+    const pathParts = url.replace("https://www.skynewsarabia.com/", "").split("/")
+    const category = pathParts[0] ?? ""
+    // Derive a title from the slug
+    const slug = pathParts.slice(1).join("/") || ""
+    const title = cleanText(decodeURIComponent(slug).replace(/-/g, " ").replace(/\d+/g, "").trim()) || category
+    return {
+      title,
+      url,
+      excerpt: "",
+      rawJson: { url, category, slug },
+    }
+  })
+}
+
+function parseYoum7(html: string): ScrapedNewsItem[] {
+  const scriptMatch = html.match(/<\s*script\b[^>]*type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/i)
+  if (!scriptMatch) return []
+  try {
+    const parsed = JSON.parse(scriptMatch[1])
+    let list = parsed?.mainEntity?.itemListElement
+    if (!list && Array.isArray(parsed?.["@graph"])) {
+      for (const item of parsed["@graph"]) {
+        if (item?.mainEntity?.itemListElement) {
+          list = item.mainEntity.itemListElement
+          break
+        }
+        if (item?.itemListElement) {
+          list = item.itemListElement
+          break
+        }
+      }
+    }
+    if (!Array.isArray(list)) return []
+    return list
+      .filter((el: any) => el?.url && el?.name)
+      .map((el: any) => ({
+        title: cleanText(el.name),
+        url: el.url,
+        excerpt: "",
+        rawJson: { position: el.position, url: el.url, name: el.name },
+      }))
+  } catch {
+    return []
+  }
+}
+
+function parseBbc(html: string): ScrapedNewsItem[] {
+  const items: ScrapedNewsItem[] = []
+  const seen = new Set<string>()
+  // Extract from h2/h3 elements containing article links
+  const blockRegex = /<h[23][^>]*>[\s\S]*?<a\b[^>]*href="(https:\/\/www\.bbc\.com\/arabic\/articles\/[^"]+)"[^>]*>([\s\S]*?)<\/a>[\s\S]*?<\/h[23]>/gi
+  let m: RegExpExecArray | null
+  while ((m = blockRegex.exec(html)) !== null) {
+    const url = m[1]
+    if (seen.has(url)) continue
+    seen.add(url)
+    const title = cleanText(m[2])
+    if (!title) continue
+    items.push({ title, url, excerpt: "", rawJson: { url } })
+  }
+  return items
+}
+
+function parseElwatan(html: string): ScrapedNewsItem[] {
+  const items: ScrapedNewsItem[] = []
+  const articleRegex = /<a\b[^>]*href="\/news\/details\/(\d+)"[^>]*>([\s\S]*?)<\/a>/gi
+  let m: RegExpExecArray | null
+  const seen = new Set<string>()
+  while ((m = articleRegex.exec(html)) !== null) {
+    const id = m[1]
+    if (seen.has(id)) continue
+    seen.add(id)
+    const title = cleanText(m[2])
+    if (!title) continue
+    const url = `https://www.elwatannews.com/news/details/${id}`
+    items.push({ title, url, excerpt: "", rawJson: { id, title } })
+  }
+  return items
+}
+
+async function fetchElwatanArticleContent(url: string): Promise<{ title: string; excerpt: string; imageUrl: string; publishedAt: string; content: string }> {
+  try {
+    const html = await fetch(url, {
+      cache: "no-store",
+      headers: {
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "accept-language": "ar,en;q=0.9",
+      }
+    }).then((r) => r.text())
+
+    let title = ""
+    let excerpt = ""
+    let imageUrl = ""
+    let publishedAt = ""
+
+    const ogTitle = html.match(/<meta\b[^>]*property="og:title"[^>]*content="([^"]+)"/i)
+    if (ogTitle) title = cleanText(ogTitle[1])
+    if (!title) {
+      const titleTag = html.match(/<title>([\s\S]*?)<\/title>/i)
+      if (titleTag) title = cleanText(titleTag[1])
+    }
+
+    const metaDesc = html.match(/<meta\b[^>]*name="description"[^>]*content="([^"]+)"/i)
+    if (metaDesc) excerpt = cleanText(metaDesc[1])
+
+    const ogImage = html.match(/<meta\b[^>]*property="og:image"[^>]*content="([^"]+)"/i)
+    if (ogImage) imageUrl = ogImage[1]
+
+    const pubDate = html.match(/<meta\b[^>]*property="article:published_time"[^>]*content="([^"]+)"/i)
+    if (pubDate) publishedAt = pubDate[1]
+
+    let content = ""
+    let bodyMatch = html.match(/<div\b[^>]*class="[^"]*\bcontent-text-wrapper\b[^"]*"[^>]*>([\s\S]*?)(?:<div\b[^>]*id="taboola|<ul\b[^>]*class="row\b)/i)
+    if (!bodyMatch) {
+      bodyMatch = html.match(/<div\b[^>]*class="[^"]*\b(?:article-body|article-content|story-body|news-body)[^"]*"[^>]*>([\s\S]*?)<\/div>/i)
+    }
+    if (bodyMatch) {
+      let bodyHtml = bodyMatch[1]
+      bodyHtml = bodyHtml.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "")
+      bodyHtml = bodyHtml.replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, "")
+      content = htmlToTiptapJson(bodyHtml)
+    }
+
+    return { title, excerpt, imageUrl, publishedAt, content }
+  } catch {
+    return { title: "", excerpt: "", imageUrl: "", publishedAt: "", content: "" }
+  }
+}
+
+async function fetchSkynewsArticleContent(url: string): Promise<{ title: string; excerpt: string; imageUrl: string; publishedAt: string; content: string }> {
+  try {
+    // Fetch AMP version which has server-rendered content
+    const ampUrl = url.replace("https://www.skynewsarabia.com", "https://www.skynewsarabia.com/amp")
+    const html = await fetch(ampUrl, {
+      cache: "no-store",
+      headers: {
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "accept-language": "ar,en;q=0.9",
+      }
+    }).then((r) => r.text())
+
+    // Extract from JSON-LD
+    const jsonLdMatch = html.match(/<script type="application\/ld\+json">[\s\S]*?"@type"\s*:\s*"NewsArticle"[\s\S]*?<\/script>/i)
+    let title = ""
+    let excerpt = ""
+    let imageUrl = ""
+    let publishedAt = ""
+
+    if (jsonLdMatch) {
+      const ld = jsonLdMatch[0]
+      const tMatch = ld.match(/"headline"\s*:\s*"([^"]+)"/)
+      if (tMatch) title = cleanText(tMatch[1])
+      const dMatch = ld.match(/"description"\s*:\s*"([^"]+)"/)
+      if (dMatch) excerpt = cleanText(dMatch[1])
+      const iMatch = ld.match(/"image"\s*:\s*\{[^}]*"url"\s*:\s*"([^"]+)"/)
+      if (iMatch) imageUrl = iMatch[1]
+      const pMatch = ld.match(/"datePublished"\s*:\s*"([^"]+)"/)
+      if (pMatch) publishedAt = pMatch[1]
+    }
+
+    // Fallback to meta tags
+    if (!title) {
+      const ogTitle = html.match(/<meta\b[^>]*property="og:title"[^>]*content="([^"]+)"/i)
+      if (ogTitle) title = cleanText(ogTitle[1])
+    }
+    if (!excerpt) {
+      const metaDesc = html.match(/<meta\b[^>]*name="description"[^>]*content="([^"]+)"/i)
+      if (metaDesc) excerpt = cleanText(metaDesc[1])
+    }
+    if (!imageUrl) {
+      const ogImage = html.match(/<meta\b[^>]*property="og:image"[^>]*content="([^"]+)"/i)
+      if (ogImage) imageUrl = ogImage[1]
+    }
+
+    // Extract body from article-description div
+    const bodyMatch = html.match(/<div\b[^>]*class="[^"]*\barticle-description\b[^"]*"[^>]*>([\s\S]*?)<\/div>\s*<\/div>/i)
+    let content = ""
+    if (bodyMatch) {
+      let bodyHtml = bodyMatch[1]
+      bodyHtml = bodyHtml.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "")
+      bodyHtml = bodyHtml.replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, "")
+      bodyHtml = bodyHtml.replace(/<amp-[^>]+>[\s\S]*?<\/amp-[^>]+>/gi, "")
+      bodyHtml = bodyHtml.replace(/<amp-[^/][^>]*\/>/gi, "")
+      content = htmlToTiptapJson(bodyHtml)
+    }
+
+    return { title, excerpt, imageUrl, publishedAt, content }
+  } catch {
+    return { title: "", excerpt: "", imageUrl: "", publishedAt: "", content: "" }
+  }
+}
+
+async function fetchYoum7ArticleContent(url: string): Promise<{ title: string; excerpt: string; imageUrl: string; publishedAt: string; content: string }> {
+  try {
+    const html = await fetch(url, {
+      cache: "no-store",
+      headers: {
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "accept-language": "ar,en;q=0.9",
+      }
+    }).then((r) => r.text())
+
+    let title = ""
+    let excerpt = ""
+    let imageUrl = ""
+    let publishedAt = ""
+
+    const scriptMatch = html.match(/<\s*script\b[^>]*type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/i)
+    if (scriptMatch) {
+      try {
+        const parsed = JSON.parse(scriptMatch[1])
+        if (parsed?.headline) title = cleanText(parsed.headline)
+        if (parsed?.description) excerpt = cleanText(parsed.description)
+        if (parsed?.datePublished) publishedAt = parsed.datePublished
+        if (parsed?.image?.url) imageUrl = parsed.image.url
+      } catch {}
+    }
+
+    if (!title) {
+      const ogTitle = html.match(/<meta\b[^>]*property="og:title"[^>]*content="([^"]+)"/i)
+      if (ogTitle) title = cleanText(ogTitle[1])
+    }
+    if (!excerpt) {
+      const metaDesc = html.match(/<meta\b[^>]*name="description"[^>]*content="([^"]+)"/i)
+      if (metaDesc) excerpt = cleanText(metaDesc[1])
+    }
+    if (!imageUrl) {
+      const ogImage = html.match(/<meta\b[^>]*property="og:image"[^>]*content="([^"]+)"/i)
+      if (ogImage) imageUrl = ogImage[1]
+    }
+    if (!publishedAt) {
+      const ptMatch = html.match(/<meta\b[^>]*property="article:published_time"[^>]*content="([^"]+)"/i)
+      if (ptMatch) publishedAt = ptMatch[1]
+    }
+
+    let content = ""
+    const bodyMatch = html.match(/<div\b[^>]*id="articleBody"[^>]*>([\s\S]*?)<\/div>\s*<\/(?:div|article|section)/i)
+    if (!bodyMatch) {
+      // Fallback: try to match until next tag or end of parent
+      const fallback = html.match(/<div\b[^>]*id="articleBody"[^>]*>([\s\S]*?)(?:<\/div>\s*<(?:br|div|script|aside))/i)
+      if (fallback) {
+        let bodyHtml = fallback[1]
+        bodyHtml = bodyHtml.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "")
+        bodyHtml = bodyHtml.replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, "")
+        content = htmlToTiptapJson(bodyHtml)
+      }
+    } else {
+      let bodyHtml = bodyMatch[1]
+      bodyHtml = bodyHtml.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "")
+      bodyHtml = bodyHtml.replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, "")
+      content = htmlToTiptapJson(bodyHtml)
+    }
+
+    return { title, excerpt, imageUrl, publishedAt, content }
+  } catch {
+    return { title: "", excerpt: "", imageUrl: "", publishedAt: "", content: "" }
+  }
+}
+
+async function fetchBbcArticleContent(url: string): Promise<{ title: string; excerpt: string; imageUrl: string; publishedAt: string; content: string }> {
+  try {
+    const html = await fetch(url, {
+      cache: "no-store",
+      headers: {
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "accept-language": "ar,en;q=0.9",
+      }
+    }).then((r) => r.text())
+
+    let title = ""
+    let excerpt = ""
+    let imageUrl = ""
+    let publishedAt = ""
+    let content = ""
+
+    const scriptMatch = html.match(/<\s*script\b[^>]*type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/i)
+    if (scriptMatch) {
+      try {
+        const parsed = JSON.parse(scriptMatch[1])
+        const article = Array.isArray(parsed?.["@graph"])
+          ? parsed["@graph"].find((g: any) => g?.["@type"]?.includes?.("NewsArticle"))
+          : parsed
+        if (article?.headline) title = cleanText(article.headline)
+        if (article?.description) excerpt = cleanText(article.description)
+        if (article?.datePublished) publishedAt = article.datePublished
+        if (article?.image?.url) imageUrl = article.image.url
+      } catch {}
+    }
+
+    if (!title) {
+      const ogTitle = html.match(/<meta\b[^>]*property="og:title"[^>]*content="([^"]+)"/i)
+      if (ogTitle) title = cleanText(ogTitle[1])
+    }
+    if (!excerpt) {
+      const metaDesc = html.match(/<meta\b[^>]*name="description"[^>]*content="([^"]+)"/i)
+      if (metaDesc) excerpt = cleanText(metaDesc[1])
+    }
+    if (!imageUrl) {
+      const ogImage = html.match(/<meta\b[^>]*property="og:image"[^>]*content="([^"]+)"/i)
+      if (ogImage) imageUrl = ogImage[1]
+    }
+
+    // Try AMP version for content
+    const ampUrl = url + ".amp"
+    try {
+      const ampHtml = await fetch(ampUrl, {
+        cache: "no-store",
+        headers: {
+          "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+          "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+          "accept-language": "ar,en;q=0.9",
+        }
+      }).then((r) => r.text())
+
+      const bodyMatch = ampHtml.match(/<main[^>]*>([\s\S]*?)<\/main>/i)
+      if (bodyMatch) {
+        let bodyHtml = bodyMatch[1]
+        bodyHtml = bodyHtml.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "")
+        bodyHtml = bodyHtml.replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, "")
+        const pContent = [...bodyHtml.matchAll(/<p\b[^>]*>([\s\S]*?)<\/p>/gi)]
+          .map(m => m[1])
+          .join("")
+        if (pContent) content = htmlToTiptapJson(`<div>${pContent}</div>`)
+      }
+    } catch {
+      // Fallback: use excerpt as content
+    }
+
+    return { title, excerpt, imageUrl, publishedAt, content }
+  } catch {
+    return { title: "", excerpt: "", imageUrl: "", publishedAt: "", content: "" }
+  }
+}
+
+function parseAlaraby(html: string): ScrapedNewsItem[] {
+  const items: ScrapedNewsItem[] = []
+  const seen = new Set<string>()
+  // Extract from h2/h3 elements containing article links to content pages
+  const blockRegex = /<h[23][^>]*>[\s\S]*?<a\b[^>]*href="(\/(?:politics|news|economy|sport|culture|society|opinion|investigations|entertainment_media)\/[^"]+)"[^>]*>([\s\S]*?)<\/a>[\s\S]*?<\/h[23]>/gi
+  let m: RegExpExecArray | null
+  while ((m = blockRegex.exec(html)) !== null) {
+    const link = m[1]
+    const title = cleanText(m[2])
+    if (!title || !link || seen.has(link)) continue
+    seen.add(link)
+    items.push({
+      title,
+      url: normalizeUrl(link, "https://www.aajeg.com"),
+      excerpt: "",
+      rawJson: { title, link },
+    })
+  }
+  return items
+}
+
+async function fetchAlarabyArticleContent(url: string): Promise<{ title: string; excerpt: string; imageUrl: string; publishedAt: string; content: string }> {
+  try {
+    const html = await fetch(url, {
+      cache: "no-store",
+      headers: {
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "accept-language": "ar,en;q=0.9",
+      }
+    }).then((r) => r.text())
+
+    let title = ""
+    let excerpt = ""
+    let imageUrl = ""
+    let publishedAt = ""
+
+    const ogTitle = html.match(/<meta\b[^>]*property="og:title"[^>]*content="([^"]+)"/i)
+    if (ogTitle) title = cleanText(ogTitle[1])
+    if (!title) {
+      const h1 = html.match(/<h1\b[^>]*>([\s\S]*?)<\/h1>/i)
+      if (h1) title = cleanText(h1[1])
+    }
+
+    const metaDesc = html.match(/<meta\b[^>]*name="description"[^>]*content="([^"]+)"/i)
+    if (metaDesc) excerpt = cleanText(metaDesc[1])
+
+    const ogImage = html.match(/<meta\b[^>]*property="og:image"[^>]*content="([^"]+)"/i)
+    if (ogImage) imageUrl = ogImage[1]
+
+    const publishedMatch = html.match(/<meta\b[^>]*property="article:published_time"[^>]*content="([^"]+)"/i)
+    if (publishedMatch) { publishedAt = publishedMatch[1] }
+    if (!publishedAt) {
+      const ldScript = html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/i)
+      if (ldScript) {
+        const dp = ldScript[1].match(/"datePublished"\s*:\s*"([^"]+)"/)
+        if (dp) publishedAt = dp[1]
+      }
+    }
+
+    let bodyHtml = ""
+    const bodyMatch = html.match(/<div\b[^>]*class="[^"]*\bfield--name-body\b[^"]*"[^>]*>([\s\S]*?)<\/div>/i)
+    if (bodyMatch) bodyHtml = bodyMatch[1]
+
+    if (!bodyHtml) {
+      const articleContent = html.match(/<div\b[^>]*class="[^"]*\barticle-content\b[^"]*"[^>]*>([\s\S]*?)<\/div>/i)
+      if (articleContent) bodyHtml = articleContent[1]
+    }
+
+    if (!bodyHtml) {
+      const mainContent = html.match(/<main[^>]*>([\s\S]*?)<\/main>/i)
+      if (mainContent) bodyHtml = mainContent[1]
+    }
+
+    if (bodyHtml) {
+      bodyHtml = bodyHtml.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "")
+      bodyHtml = bodyHtml.replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, "")
+    }
+
+    const content = bodyHtml ? htmlToTiptapJson(bodyHtml) : ""
+
+    return { title, excerpt, imageUrl, publishedAt, content }
+  } catch {
+    return { title: "", excerpt: "", imageUrl: "", publishedAt: "", content: "" }
+  }
+}
+
+function parseAlquds(html: string): ScrapedNewsItem[] {
+  const items: ScrapedNewsItem[] = []
+  const seen = new Set<string>()
+  const regex = /<a\b[^>]*href="\/ar\/posts\/(\d+)"[^>]*>([\s\S]*?)<\/a>/gi
+  let m: RegExpExecArray | null
+  while ((m = regex.exec(html)) !== null) {
+    const id = m[1]
+    if (seen.has(id)) continue
+    seen.add(id)
+    const title = cleanText(m[2])
+    if (!title) continue
+    items.push({
+      title,
+      url: `https://www.alquds.com/ar/posts/${id}`,
+      excerpt: "",
+      rawJson: { id, title },
+    })
+  }
+  return items
+}
+
+async function fetchAlqudsArticleContent(url: string): Promise<{ title: string; excerpt: string; imageUrl: string; publishedAt: string; content: string }> {
+  try {
+    const html = await fetch(url, {
+      cache: "no-store",
+      headers: {
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "accept-language": "ar,en;q=0.9",
+      }
+    }).then((r) => r.text())
+
+    let title = ""
+    let excerpt = ""
+    let imageUrl = ""
+    let publishedAt = ""
+
+    const ogTitle = html.match(/<meta\b[^>]*property="og:title"[^>]*content="([^"]+)"/i)
+    if (ogTitle) title = cleanText(ogTitle[1])
+
+    const metaDesc = html.match(/<meta\b[^>]*name="description"[^>]*content="([^"]+)"/i)
+    if (metaDesc) excerpt = cleanText(metaDesc[1])
+
+    const ogImage = html.match(/<meta\b[^>]*property="og:image"[^>]*content="([^"]+)"/i)
+    if (ogImage) imageUrl = ogImage[1]
+
+    const ptMatch = html.match(/<meta\b[^>]*property="article:published_time"[^>]*content="([^"]+)"/i)
+    if (ptMatch) publishedAt = ptMatch[1]
+
+    let bodyHtml = ""
+    const bodyMatch = html.match(/<div\b[^>]*class="[^"]*\barticle-content\b[^"]*"[^>]*>([\s\S]*?)<\/div>/i)
+    if (bodyMatch) bodyHtml = bodyMatch[1]
+
+    if (!bodyHtml) {
+      const proseMatch = html.match(/<div\b[^>]*class="[^"]*\bprose\b[^"]*"[^>]*>([\s\S]*?)<\/div>/i)
+      if (proseMatch) bodyHtml = proseMatch[1]
+    }
+
+    if (bodyHtml) {
+      bodyHtml = bodyHtml.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "")
+      bodyHtml = bodyHtml.replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, "")
+    }
+
+    const content = bodyHtml ? htmlToTiptapJson(bodyHtml) : ""
+
+    return { title, excerpt, imageUrl, publishedAt, content }
+  } catch {
+    return { title: "", excerpt: "", imageUrl: "", publishedAt: "", content: "" }
+  }
+}
+
+function parseAlhurra(html: string): ScrapedNewsItem[] {
+  const items: ScrapedNewsItem[] = []
+  const seen = new Set<string>()
+
+  const numericLinkRegex = /<a\b[^>]*href="(https:\/\/alhurra\.com\/(\d+))"[^>]*>([\s\S]*?)<\/a>/gi
+  let m: RegExpExecArray | null
+  while ((m = numericLinkRegex.exec(html)) !== null) {
+    const url = m[1]
+    const id = m[2]
+    if (seen.has(id)) continue
+    seen.add(id)
+    const title = cleanText(m[3])
+    if (!title) continue
+    items.push({ title, url, excerpt: "", rawJson: { id, title } })
+  }
+
+  const hRegex = /<h[23][^>]*>[\s\S]*?<a\b[^>]*href="(https:\/\/alhurra\.com\/(\d+))"[^>]*>([\s\S]*?)<\/a>[\s\S]*?<\/h[23]>/gi
+  while ((m = hRegex.exec(html)) !== null) {
+    const url = m[1]
+    const id = m[2]
+    if (seen.has(id)) continue
+    seen.add(id)
+    const title = cleanText(m[3])
+    if (!title) continue
+    items.push({ title, url, excerpt: "", rawJson: { id, title } })
+  }
+
+  return items
+}
+
+async function fetchAlhurraArticleContent(url: string): Promise<{ title: string; excerpt: string; imageUrl: string; publishedAt: string; content: string }> {
+  try {
+    const html = await fetch(url, {
+      cache: "no-store",
+      headers: {
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "accept-language": "ar,en;q=0.9",
+      }
+    }).then((r) => r.text())
+
+    let title = ""
+    let excerpt = ""
+    let imageUrl = ""
+    let publishedAt = ""
+
+    const ogTitle = html.match(/<meta\b[^>]*property="og:title"[^>]*content="([^"]+)"/i)
+    if (ogTitle) title = cleanText(ogTitle[1])
+
+    const metaDesc = html.match(/<meta\b[^>]*name="description"[^>]*content="([^"]+)"/i)
+    if (metaDesc) excerpt = cleanText(metaDesc[1])
+
+    const ogImage = html.match(/<meta\b[^>]*property="og:image"[^>]*content="([^"]+)"/i)
+    if (ogImage) imageUrl = ogImage[1]
+
+    const ptMatch = html.match(/<meta\b[^>]*property="article:published_time"[^>]*content="([^"]+)"/i)
+    if (ptMatch) publishedAt = ptMatch[1]
+
+    let bodyHtml = ""
+    const bodyMatch = html.match(/<div\b[^>]*class="[^"]*\b(?:entry-content|bt_bb_text|article-content)[^"]*"[^>]*>([\s\S]*?)<\/div>/i)
+    if (bodyMatch) bodyHtml = bodyMatch[1]
+
+    if (!bodyHtml) {
+      const articleMatch = html.match(/<article[^>]*>([\s\S]*?)<\/article>/i)
+      if (articleMatch) bodyHtml = articleMatch[1]
+    }
+
+    if (bodyHtml) {
+      bodyHtml = bodyHtml.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "")
+      bodyHtml = bodyHtml.replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, "")
+    }
+
+    const content = bodyHtml ? htmlToTiptapJson(bodyHtml) : ""
+
+    return { title, excerpt, imageUrl, publishedAt, content }
+  } catch {
+    return { title: "", excerpt: "", imageUrl: "", publishedAt: "", content: "" }
+  }
+}
+
+function parseAawsat(html: string): ScrapedNewsItem[] {
+  const items: ScrapedNewsItem[] = []
+  const seen = new Set<string>()
+
+  const hRegex = /<h[23][^>]*>[\s\S]*?<a\b[^>]*href="(https:\/\/aawsat\.com\/[^"]+)"[^>]*>([\s\S]*?)<\/a>[\s\S]*?<\/h[23]>/gi
+  let m: RegExpExecArray | null
+  while ((m = hRegex.exec(html)) !== null) {
+    const url = m[1]
+    const title = cleanText(m[2])
+    if (!title || !url || seen.has(url)) continue
+    seen.add(url)
+    items.push({ title, url, excerpt: "", rawJson: { title, url } })
+  }
+
+  const fieldRegex = /<div\b[^>]*class="[^"]*\bfield--name-node-title\b[^"]*"[^>]*>[\s\S]*?<a\b[^>]*href="(https:\/\/aawsat\.com\/[^"]+)"[^>]*>([\s\S]*?)<\/a>[\s\S]*?<\/div>/gi
+  while ((m = fieldRegex.exec(html)) !== null) {
+    const url = m[1]
+    const title = cleanText(m[2])
+    if (!title || !url || seen.has(url)) continue
+    seen.add(url)
+    items.push({ title, url, excerpt: "", rawJson: { title, url } })
+  }
+
+  const nodeLinkRegex = /<a\b[^>]*href="(https:\/\/aawsat\.com\/node\/(\d+))"[^>]*>([\s\S]*?)<\/a>/gi
+  while ((m = nodeLinkRegex.exec(html)) !== null) {
+    const url = m[1]
+    const id = m[2]
+    if (seen.has(url)) continue
+    seen.add(url)
+    const title = cleanText(m[3])
+    if (!title) continue
+    items.push({ title, url, excerpt: "", rawJson: { id, title, url } })
+  }
+
+  return items
+}
+
+async function fetchAawsatArticleContent(url: string): Promise<{ title: string; excerpt: string; imageUrl: string; publishedAt: string; content: string }> {
+  try {
+    const html = await fetch(url, {
+      cache: "no-store",
+      headers: {
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "accept-language": "ar,en;q=0.9",
+      }
+    }).then((r) => r.text())
+
+    let title = ""
+    let excerpt = ""
+    let imageUrl = ""
+    let publishedAt = ""
+
+    const ogTitle = html.match(/<meta\b[^>]*property="og:title"[^>]*content="([^"]+)"/i)
+    if (ogTitle) title = cleanText(ogTitle[1])
+
+    if (!title) {
+      const h1 = html.match(/<h1\b[^>]*>([\s\S]*?)<\/h1>/i)
+      if (h1) title = cleanText(h1[1])
+    }
+
+    const metaDesc = html.match(/<meta\b[^>]*name="description"[^>]*content="([^"]+)"/i)
+    if (metaDesc) excerpt = cleanText(metaDesc[1])
+
+    const ogImage = html.match(/<meta\b[^>]*property="og:image"[^>]*content="([^"]+)"/i)
+    if (ogImage) imageUrl = ogImage[1]
+
+    const ptMatch = html.match(/<meta\b[^>]*property="article:published_time"[^>]*content="([^"]+)"/i)
+    if (ptMatch) publishedAt = ptMatch[1]
+
+    let bodyHtml = ""
+    const bodyMatch = html.match(/<div\b[^>]*class="[^"]*\bfield--name-body\b[^"]*"[^>]*>([\s\S]*?)<\/div>/i)
+    if (bodyMatch) bodyHtml = bodyMatch[1]
+
+    if (!bodyHtml) {
+      const contentMatch = html.match(/<div\b[^>]*class="[^"]*\b(?:article-content|content-body|node-content)[^"]*"[^>]*>([\s\S]*?)<\/div>/i)
+      if (contentMatch) bodyHtml = contentMatch[1]
+    }
+
+    if (!bodyHtml) {
+      const mainMatch = html.match(/<main[^>]*>([\s\S]*?)<\/main>/i)
+      if (mainMatch) bodyHtml = mainMatch[1]
+    }
+
+    if (bodyHtml) {
+      bodyHtml = bodyHtml.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "")
+      bodyHtml = bodyHtml.replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, "")
+    }
+
+    const content = bodyHtml ? htmlToTiptapJson(bodyHtml) : ""
+
+    return { title, excerpt, imageUrl, publishedAt, content }
+  } catch {
+    return { title: "", excerpt: "", imageUrl: "", publishedAt: "", content: "" }
+  }
+}
+
+function parseShabiba(html: string): ScrapedNewsItem[] {
+  const items: ScrapedNewsItem[] = []
+  const seen = new Set<string>()
+  const articleRegex = /<article\b[^>]*class="[^"]*\bpost\b[^"]*"[^>]*>([\s\S]*?)<\/article>/gi
+  let m: RegExpExecArray | null
+  while ((m = articleRegex.exec(html)) !== null) {
+    const block = m[1]
+    const linkMatch = block.match(/<h3\b[^>]*class="[^"]*\bpost-title\b[^"]*"[^>]*>[\s\S]*?<a\b[^>]*href="(\/[^"]+)"[^>]*>([\s\S]*?)<\/a>/i)
+    if (!linkMatch) continue
+    const link = linkMatch[1]
+    const title = cleanText(linkMatch[2])
+    if (!title || seen.has(link)) continue
+    seen.add(link)
+    const imageUrl = firstMatch(block, /<img\b[^>]*src="([^"]+)"/i)
+    items.push({
+      title,
+      url: normalizeUrl(link, "https://shabiba.com"),
+      excerpt: "",
+      imageUrl: imageUrl ? normalizeUrl(imageUrl, "https://shabiba.com") : undefined,
+      rawJson: { link, title },
+    })
+  }
+  return items
+}
+
+function parseAddustour(html: string): ScrapedNewsItem[] {
+  const items: ScrapedNewsItem[] = []
+  const seen = new Set<string>()
+  const articleRegex = /<a\b[^>]*href="\/articles\/(\d+-[^"]+)"[^>]*>([\s\S]*?)<\/a>/gi
+  let m: RegExpExecArray | null
+  while ((m = articleRegex.exec(html)) !== null) {
+    const slug = m[1]
+    if (seen.has(slug)) continue
+    seen.add(slug)
+    const title = cleanText(m[2])
+    if (!title) continue
+    items.push({
+      title,
+      url: `https://addustour.com/articles/${slug}`,
+      excerpt: "",
+      rawJson: { slug, title },
+    })
+  }
+  return items
+}
+
+async function fetchShabibaArticleContent(url: string): Promise<{ title: string; excerpt: string; imageUrl: string; publishedAt: string; content: string }> {
+  try {
+    const html = await fetch(url, {
+      cache: "no-store",
+      headers: {
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "accept-language": "ar,en;q=0.9",
+      }
+    }).then((r) => r.text())
+
+    let title = ""
+    let excerpt = ""
+    let imageUrl = ""
+    let publishedAt = ""
+
+    const ogTitle = html.match(/<meta\b[^>]*property="og:title"[^>]*content="([^"]+)"/i)
+    if (ogTitle) title = cleanText(ogTitle[1])
+    if (!title) {
+      const h1 = html.match(/<h1\b[^>]*>([\s\S]*?)<\/h1>/i)
+      if (h1) title = cleanText(h1[1])
+    }
+
+    const metaDesc = html.match(/<meta\b[^>]*name="description"[^>]*content="([^"]+)"/i)
+    if (metaDesc) excerpt = cleanText(metaDesc[1])
+
+    const ogImage = html.match(/<meta\b[^>]*property="og:image"[^>]*content="([^"]+)"/i)
+    if (ogImage) imageUrl = ogImage[1]
+
+    const ptMatch = html.match(/<meta\b[^>]*property="article:published_time"[^>]*content="([^"]+)"/i)
+    if (ptMatch) publishedAt = ptMatch[1]
+
+    let bodyHtml = ""
+    const bodyMatch = html.match(/<div\b[^>]*class="[^"]*\barticle-body\b[^"]*"[^>]*>([\s\S]*?)<\/div>/i)
+    if (bodyMatch) bodyHtml = bodyMatch[1]
+    if (!bodyHtml) {
+      const postBody = html.match(/<div\b[^>]*class="[^"]*\bpost-body\b[^"]*"[^>]*>([\s\S]*?)<\/div>/i)
+      if (postBody) bodyHtml = postBody[1]
+    }
+
+    if (bodyHtml) {
+      bodyHtml = bodyHtml.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "")
+      bodyHtml = bodyHtml.replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, "")
+    }
+
+    const content = bodyHtml ? htmlToTiptapJson(bodyHtml) : ""
+
+    return { title, excerpt, imageUrl, publishedAt, content }
+  } catch {
+    return { title: "", excerpt: "", imageUrl: "", publishedAt: "", content: "" }
+  }
+}
+
+async function fetchAddustourArticleContent(url: string): Promise<{ title: string; excerpt: string; imageUrl: string; publishedAt: string; content: string }> {
+  try {
+    const html = await fetch(url, {
+      cache: "no-store",
+      headers: {
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "accept-language": "ar,en;q=0.9",
+      }
+    }).then((r) => r.text())
+
+    let title = ""
+    let excerpt = ""
+    let imageUrl = ""
+    let publishedAt = ""
+
+    const ogTitle = html.match(/<meta\b[^>]*property="og:title"[^>]*content="([^"]+)"/i)
+    if (ogTitle) title = cleanText(ogTitle[1])
+    if (!title) {
+      const h1 = html.match(/<h1\b[^>]*>([\s\S]*?)<\/h1>/i)
+      if (h1) title = cleanText(h1[1])
+    }
+
+    const metaDesc = html.match(/<meta\b[^>]*name="description"[^>]*content="([^"]+)"/i)
+    if (metaDesc) excerpt = cleanText(metaDesc[1])
+
+    const ogImage = html.match(/<meta\b[^>]*property="og:image"[^>]*content="([^"]+)"/i)
+    if (ogImage) imageUrl = ogImage[1]
+
+    const ptMatch = html.match(/<meta\b[^>]*property="article:published_time"[^>]*content="([^"]+)"/i)
+    if (ptMatch) publishedAt = ptMatch[1]
+
+    let bodyHtml = ""
+    const bodyMatch = html.match(/<div\b[^>]*class="[^"]*\barticle-body\b[^"]*"[^>]*>([\s\S]*?)<\/div>/i)
+    if (bodyMatch) bodyHtml = bodyMatch[1]
+    if (!bodyHtml) {
+      const contentDiv = html.match(/<div\b[^>]*class="[^"]*\bcontent\b[^"]*"[^>]*>([\s\S]*?)<\/div>/i)
+      if (contentDiv) bodyHtml = contentDiv[1]
+    }
+
+    if (bodyHtml) {
+      bodyHtml = bodyHtml.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "")
+      bodyHtml = bodyHtml.replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, "")
+    }
+
+    const content = bodyHtml ? htmlToTiptapJson(bodyHtml) : ""
+
+    return { title, excerpt, imageUrl, publishedAt, content }
+  } catch {
+    return { title: "", excerpt: "", imageUrl: "", publishedAt: "", content: "" }
+  }
+}
+
 const SOURCES: Record<ScraperSourceKey, SourceConfig> = {
   rt: {
     searchUrl: (query) => `https://arabic.rt.com/search/?q=${encodeURIComponent(query)}`,
@@ -443,6 +1284,291 @@ const SOURCES: Record<ScraperSourceKey, SourceConfig> = {
     },
     parse: parseIndependent,
   },
+  skynews: {
+    searchUrl: (query) => `https://www.skynewsarabia.com/search?q=${encodeURIComponent(query)}`,
+    categoryUrl: (category) => {
+      const map: Record<string, string> = {
+        business: "https://www.skynewsarabia.com/business",
+        middle_east: "https://www.skynewsarabia.com/middle-east",
+        sport: "https://www.skynewsarabia.com/sport",
+        technology: "https://www.skynewsarabia.com/technology",
+        varieties: "https://www.skynewsarabia.com/varieties",
+        world: "https://www.skynewsarabia.com/world",
+      }
+      return map[category] ?? null
+    },
+    supportedCategories: {
+      business: "https://www.skynewsarabia.com/business",
+      middle_east: "https://www.skynewsarabia.com/middle-east",
+      sport: "https://www.skynewsarabia.com/sport",
+      technology: "https://www.skynewsarabia.com/technology",
+      varieties: "https://www.skynewsarabia.com/varieties",
+      world: "https://www.skynewsarabia.com/world",
+    },
+    searchHeaders: {
+      accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+      "user-agent": "news-worker/3.0 (Sky News Arabia frontend scraper)",
+      "accept-language": "ar,en;q=0.8",
+    },
+    parse: parseSkynews,
+  },
+  youm7: {
+    searchUrl: (query) => `https://www.youm7.com/Home/Search?allwords=${encodeURIComponent(query)}`,
+    categoryUrl: (category) => {
+      const map: Record<string, string> = {
+        politics: "https://www.youm7.com/Section/سياسة/319/1",
+        world: "https://www.youm7.com/Section/أخبار-عالمية/286/1",
+        arab: "https://www.youm7.com/Section/أخبار-عربية/88/1",
+        business: "https://www.youm7.com/Section/اقتصاد-وبورصة/297/1",
+        sport: "https://www.youm7.com/Section/أخبار-الرياضة/298/1",
+        art: "https://www.youm7.com/Section/فن/48/1",
+        health: "https://www.youm7.com/Section/صحة-وطب/245/1",
+        tech: "https://www.youm7.com/Section/علوم-و-تكنولوجيا/328/1",
+      }
+      return map[category] ?? null
+    },
+    supportedCategories: {
+      politics: "https://www.youm7.com/Section/سياسة/319/1",
+      world: "https://www.youm7.com/Section/أخبار-عالمية/286/1",
+      arab: "https://www.youm7.com/Section/أخبار-عربية/88/1",
+      business: "https://www.youm7.com/Section/اقتصاد-وبورصة/297/1",
+      sport: "https://www.youm7.com/Section/أخبار-الرياضة/298/1",
+      art: "https://www.youm7.com/Section/فن/48/1",
+      health: "https://www.youm7.com/Section/صحة-وطب/245/1",
+      tech: "https://www.youm7.com/Section/علوم-و-تكنولوجيا/328/1",
+    },
+    searchHeaders: {
+      accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+      "accept-language": "ar,en;q=0.8",
+    },
+    parse: parseYoum7,
+  },
+  bbc: {
+    searchUrl: (query) => `https://www.bbc.com/arabic/search?q=${encodeURIComponent(query)}`,
+    categoryUrl: (category) => {
+      const map: Record<string, string> = {
+        world: "https://www.bbc.com/arabic",
+        middle_east: "https://www.bbc.com/arabic",
+        tech: "https://www.bbc.com/arabic",
+        sport: "https://www.bbc.com/arabic",
+      }
+      return map[category] ?? null
+    },
+    supportedCategories: {
+      world: "https://www.bbc.com/arabic",
+      middle_east: "https://www.bbc.com/arabic",
+      tech: "https://www.bbc.com/arabic",
+      sport: "https://www.bbc.com/arabic",
+    },
+    searchHeaders: {
+      accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+      "accept-language": "ar,en;q=0.8",
+    },
+    parse: parseBbc,
+  },
+  alaraby: {
+    searchUrl: (query) => `https://www.aajeg.com/search?search_api_fulltext=${encodeURIComponent(query)}`,
+    categoryUrl: (category) => {
+      const map: Record<string, string> = {
+        "news-egypt": "https://www.aajeg.com/news/egypt",
+        "news-syria": "https://www.aajeg.com/news/syria",
+        "news-palestine": "https://www.aajeg.com/news/palestine",
+        "news-gulf": "https://www.aajeg.com/news/gulf",
+        "news-iraq": "https://www.aajeg.com/news/iraq",
+        "news-world": "https://www.aajeg.com/news/world",
+        politics: "https://www.aajeg.com/politics",
+        economy: "https://www.aajeg.com/economy",
+        sport: "https://www.aajeg.com/sport",
+        culture: "https://www.aajeg.com/culture",
+      }
+      return map[category] ?? null
+    },
+    supportedCategories: {
+      "news-egypt": "https://www.aajeg.com/news/egypt",
+      "news-syria": "https://www.aajeg.com/news/syria",
+      "news-palestine": "https://www.aajeg.com/news/palestine",
+      "news-gulf": "https://www.aajeg.com/news/gulf",
+      "news-iraq": "https://www.aajeg.com/news/iraq",
+      "news-world": "https://www.aajeg.com/news/world",
+      politics: "https://www.aajeg.com/politics",
+      economy: "https://www.aajeg.com/economy",
+      sport: "https://www.aajeg.com/sport",
+      culture: "https://www.aajeg.com/culture",
+    },
+    searchHeaders: {
+      accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+      "accept-language": "ar,en;q=0.9",
+    },
+    parse: parseAlaraby,
+  },
+  elwatan: {
+    searchUrl: (query) => `https://www.elwatannews.com/Home/Search?allwords=${encodeURIComponent(query)}`,
+    categoryUrl: (category) => {
+      const map: Record<string, string> = {
+        egypt: "https://www.elwatannews.com/section/115",
+        world: "https://www.elwatannews.com/section/39",
+        business: "https://www.elwatannews.com/section/77",
+        art: "https://www.elwatannews.com/section/60",
+        misc: "https://www.elwatannews.com/section/52",
+        accidents: "https://www.elwatannews.com/section/99",
+      }
+      return map[category] ?? null
+    },
+    supportedCategories: {
+      egypt: "https://www.elwatannews.com/section/115",
+      world: "https://www.elwatannews.com/section/39",
+      business: "https://www.elwatannews.com/section/77",
+      art: "https://www.elwatannews.com/section/60",
+      misc: "https://www.elwatannews.com/section/52",
+      accidents: "https://www.elwatannews.com/section/99",
+    },
+    searchHeaders: {
+      accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+      "accept-language": "ar,en;q=0.9",
+    },
+    parse: parseElwatan,
+  },
+  alquds: {
+    searchUrl: (query) => `https://www.alquds.com/search?q=${encodeURIComponent(query)}`,
+    categoryUrl: (category) => {
+      const map: Record<string, string> = {
+        palestine: "https://www.alquds.com/ar/categories/palestine",
+        "arab-and-world": "https://www.alquds.com/ar/categories/arab-and-world",
+        misc: "https://www.alquds.com/ar/categories/misc",
+        business: "https://www.alquds.com/ar/categories/business",
+        sport: "https://www.alquds.com/ar/categories/sport",
+        opinions: "https://www.alquds.com/ar/categories/opinions",
+      }
+      return map[category] ?? null
+    },
+    supportedCategories: {
+      palestine: "https://www.alquds.com/ar/categories/palestine",
+      "arab-and-world": "https://www.alquds.com/ar/categories/arab-and-world",
+      misc: "https://www.alquds.com/ar/categories/misc",
+      business: "https://www.alquds.com/ar/categories/business",
+      sport: "https://www.alquds.com/ar/categories/sport",
+      opinions: "https://www.alquds.com/ar/categories/opinions",
+    },
+    parse: parseAlquds,
+  },
+  shabiba: {
+    searchUrl: (query) => `https://shabiba.com/search?q=${encodeURIComponent(query)}`,
+    categoryUrl: (category) => {
+      const map: Record<string, string> = {
+        local: "https://shabiba.com/category/بلادنا",
+        event: "https://shabiba.com/category/الحدث",
+        economy: "https://shabiba.com/category/مؤشر",
+        sports: "https://shabiba.com/category/الجماهير",
+        tech: "https://shabiba.com/category/تكنولوجيا",
+        lifestyle: "https://shabiba.com/category/مزاج",
+      }
+      return map[category] ?? null
+    },
+    supportedCategories: {
+      local: "https://shabiba.com/category/بلادنا",
+      event: "https://shabiba.com/category/الحدث",
+      economy: "https://shabiba.com/category/مؤشر",
+      sports: "https://shabiba.com/category/الجماهير",
+      tech: "https://shabiba.com/category/تكنولوجيا",
+      lifestyle: "https://shabiba.com/category/مزاج",
+    },
+    searchHeaders: {
+      accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+      "accept-language": "ar,en;q=0.9",
+    },
+    parse: parseShabiba,
+  },
+  addustour: {
+    searchUrl: (query) => `https://addustour.com/search.php?search=${encodeURIComponent(query)}`,
+    categoryUrl: (category) => {
+      const map: Record<string, string> = {
+        local: "https://addustour.com/categories/1-محليات",
+        "arab-world": "https://addustour.com/categories/5-عربي-ودولي",
+        economy: "https://addustour.com/categories/4-اقتصاد",
+        sports: "https://addustour.com/categories/7-رياضة",
+        culture: "https://addustour.com/categories/3-ثقافة",
+        opinions: "https://addustour.com/categories/8-قضايا-واراء",
+      }
+      return map[category] ?? null
+    },
+    supportedCategories: {
+      local: "https://addustour.com/categories/1-محليات",
+      "arab-world": "https://addustour.com/categories/5-عربي-ودولي",
+      economy: "https://addustour.com/categories/4-اقتصاد",
+      sports: "https://addustour.com/categories/7-رياضة",
+      culture: "https://addustour.com/categories/3-ثقافة",
+      opinions: "https://addustour.com/categories/8-قضايا-واراء",
+    },
+    searchHeaders: {
+      accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+      "accept-language": "ar,en;q=0.9",
+    },
+    parse: parseAddustour,
+  },
+  alhurra: {
+    searchUrl: (query) => `https://alhurra.com/?s=${encodeURIComponent(query)}`,
+    categoryUrl: (category) => {
+      const map: Record<string, string> = {
+        america: "https://alhurra.com/category/أميركا",
+        iran: "https://alhurra.com/category/إيران",
+        lebanon: "https://alhurra.com/category/لبنان",
+        israel: "https://alhurra.com/category/إسرائيل",
+        gulf: "https://alhurra.com/category/الخليج",
+        iraq: "https://alhurra.com/category/العراق",
+        egypt: "https://alhurra.com/category/مصر",
+        syria: "https://alhurra.com/category/سوريا",
+      }
+      return map[category] ?? null
+    },
+    supportedCategories: {
+      america: "https://alhurra.com/category/أميركا",
+      iran: "https://alhurra.com/category/إيران",
+      lebanon: "https://alhurra.com/category/لبنان",
+      israel: "https://alhurra.com/category/إسرائيل",
+      gulf: "https://alhurra.com/category/الخليج",
+      iraq: "https://alhurra.com/category/العراق",
+      egypt: "https://alhurra.com/category/مصر",
+      syria: "https://alhurra.com/category/سوريا",
+    },
+    searchHeaders: {
+      accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+      "accept-language": "ar,en;q=0.9",
+    },
+    parse: parseAlhurra,
+  },
+  aawsat: {
+    searchUrl: (query) => `https://aawsat.com/search?search=${encodeURIComponent(query)}`,
+    categoryUrl: (category) => {
+      const map: Record<string, string> = {
+        "middle-east": "https://aawsat.com/%D8%A7%D9%84%D8%B4%D8%B1%D9%82-%D8%A7%D9%84%D8%A3%D9%88%D8%B3%D8%B7",
+        world: "https://aawsat.com/%D8%A7%D9%84%D8%B9%D8%A7%D9%84%D9%85",
+        economy: "https://aawsat.com/%D8%A7%D9%84%D8%A7%D9%82%D8%AA%D8%B5%D8%A7%D8%AF",
+        sport: "https://aawsat.com/%D8%A7%D9%84%D8%B1%D9%8A%D8%A7%D8%B6%D8%A9",
+        culture: "https://aawsat.com/%D8%AB%D9%82%D8%A7%D9%81%D8%A9-%D9%88%D9%81%D9%86%D9%88%D9%86",
+      }
+      return map[category] ?? null
+    },
+    supportedCategories: {
+      "middle-east": "https://aawsat.com/%D8%A7%D9%84%D8%B4%D8%B1%D9%82-%D8%A7%D9%84%D8%A3%D9%88%D8%B3%D8%B7",
+      world: "https://aawsat.com/%D8%A7%D9%84%D8%B9%D8%A7%D9%84%D9%85",
+      economy: "https://aawsat.com/%D8%A7%D9%84%D8%A7%D9%82%D8%AA%D8%B5%D8%A7%D8%AF",
+      sport: "https://aawsat.com/%D8%A7%D9%84%D8%B1%D9%8A%D8%A7%D8%B6%D8%A9",
+      culture: "https://aawsat.com/%D8%AB%D9%82%D8%A7%D9%81%D8%A9-%D9%88%D9%81%D9%86%D9%88%D9%86",
+    },
+    searchHeaders: {
+      accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+      "accept-language": "ar,en;q=0.9",
+    },
+    parse: parseAawsat,
+  },
 }
 
 export class NewsScraper {
@@ -457,7 +1583,18 @@ export class NewsScraper {
   }
 
   get defaultCategory(): string {
-    return this.source === "rt" ? "world" : "news"
+    if (this.source === "rt") return "world"
+    if (this.source === "skynews") return "world"
+    if (this.source === "youm7") return "politics"
+    if (this.source === "bbc") return "world"
+    if (this.source === "alaraby") return "politics"
+    if (this.source === "elwatan") return "world"
+    if (this.source === "alquds") return "palestine"
+    if (this.source === "shabiba") return "local"
+    if (this.source === "addustour") return "local"
+    if (this.source === "alhurra") return "america"
+    if (this.source === "aawsat") return "middle-east"
+    return "news"
   }
 
   resolveUrl(query: string, category: string): string {
@@ -489,6 +1626,76 @@ export class NewsScraper {
           return {
             ...item,
             excerpt: excerpt || item.excerpt,
+            content,
+          }
+          } else if (this.source === "skynews") {
+          const { title, excerpt, imageUrl, publishedAt, content } = await fetchSkynewsArticleContent(item.url)
+          return {
+            ...item,
+            title: title || item.title,
+            excerpt: excerpt || item.excerpt,
+            imageUrl: imageUrl || item.imageUrl,
+            publishedAt: publishedAt || item.publishedAt,
+            content,
+          }
+        } else if (this.source === "youm7") {
+          const { title, excerpt, imageUrl, publishedAt, content } = await fetchYoum7ArticleContent(item.url)
+          return {
+            ...item,
+            title: title || item.title,
+            excerpt: excerpt || item.excerpt,
+            imageUrl: imageUrl || item.imageUrl,
+            publishedAt: publishedAt || item.publishedAt,
+            content,
+          }
+        } else if (this.source === "bbc") {
+          const { title, excerpt, imageUrl, publishedAt, content } = await fetchBbcArticleContent(item.url)
+          return {
+            ...item,
+            title: title || item.title,
+            excerpt: excerpt || item.excerpt,
+            imageUrl: imageUrl || item.imageUrl,
+            publishedAt: publishedAt || item.publishedAt,
+            content,
+          }
+        } else if (this.source === "alaraby") {
+          const { title, excerpt, imageUrl, publishedAt, content } = await fetchAlarabyArticleContent(item.url)
+          return {
+            ...item,
+            title: title || item.title,
+            excerpt: excerpt || item.excerpt,
+            imageUrl: imageUrl || item.imageUrl,
+            publishedAt: publishedAt || item.publishedAt,
+            content,
+          }
+        } else if (this.source === "alquds") {
+          const { title, excerpt, imageUrl, publishedAt, content } = await fetchAlqudsArticleContent(item.url)
+          return {
+            ...item,
+            title: title || item.title,
+            excerpt: excerpt || item.excerpt,
+            imageUrl: imageUrl || item.imageUrl,
+            publishedAt: publishedAt || item.publishedAt,
+            content,
+          }
+        } else if (this.source === "shabiba") {
+          const { title, excerpt, imageUrl, publishedAt, content } = await fetchShabibaArticleContent(item.url)
+          return {
+            ...item,
+            title: title || item.title,
+            excerpt: excerpt || item.excerpt,
+            imageUrl: imageUrl || item.imageUrl,
+            publishedAt: publishedAt || item.publishedAt,
+            content,
+          }
+        } else if (this.source === "addustour") {
+          const { title, excerpt, imageUrl, publishedAt, content } = await fetchAddustourArticleContent(item.url)
+          return {
+            ...item,
+            title: title || item.title,
+            excerpt: excerpt || item.excerpt,
+            imageUrl: imageUrl || item.imageUrl,
+            publishedAt: publishedAt || item.publishedAt,
             content,
           }
         } else {
