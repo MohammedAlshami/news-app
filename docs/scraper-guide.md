@@ -7,6 +7,12 @@
 - Direct scraper tests pass for:
   - `RT Arabic`
   - `Independent Arabia`
+  - `Sky News Arabia`
+  - `Youm7`
+  - `BBC Arabic`
+  - `Al Quds`
+  - `El Watan News`
+  - `Al Araby Al Jadeed`
 - The old admin pagination type errors were fixed.
 
 ## Architecture
@@ -98,6 +104,91 @@ What works:
 - Search page returns structured result URLs.
 - Category pages return structured result URLs.
 - The current parser reads the embedded `ItemList` URLs and uses them as results.
+
+### Sky News Arabia
+
+Base URLs:
+
+- Search: `https://www.skynewsarabia.com/search?q=...` (search is JS-rendered, not scrapable)
+
+### Youm7
+
+Base URLs:
+
+- Search: `https://www.youm7.com/Home/Search?allwords=...`
+- Categories:
+  - `politics`, `world`, `arab`, `business`, `sport`, `art`, `health`, `tech`
+
+What works:
+
+- Category pages return JSON-LD CollectionPage with ItemList (40 articles).
+- Article content extracted from HTML.
+
+### BBC Arabic
+
+Base URLs:
+
+- Search: `https://www.bbc.com/arabic/search?q=...`
+- Categories:
+  - `world`, `middle_east`, `sport`, `climate`
+
+What works:
+
+- Category pages return JSON-LD @graph with ItemList.
+- Article content extracted from AMP version.
+
+### Al Quds
+
+Base URLs:
+
+- Search: `https://www.alquds.com/search?q=...`
+- Categories:
+  - `palestine`, `arab-and-world`, `business`, `sport`, `misc`, `opinions`
+
+What works:
+
+- Category pages parsed via HTML regex for article links.
+- Article content extracted from HTML.
+
+### El Watan News
+
+Base URLs:
+
+- Search: `https://www.elwatannews.com/Home/Search?allwords=...`
+- Categories:
+  - `egypt`, `world`, `business`, `art`, `misc`, `accidents`
+
+What works:
+
+- Category pages parsed via HTML regex for article links.
+- Article content extracted from HTML.
+
+### Al Araby Al Jadeed
+
+Base URLs:
+
+- Search: `https://www.aajeg.com/search?search_api_fulltext=...`
+- Categories:
+  - `news-egypt`, `news-syria`, `news-palestine`, `news-world`, `politics`, `economy`, `sport`, `culture`
+
+What works:
+
+- Category pages parsed via HTML regex for article links.
+- Article content extracted from HTML (Drupal).
+- Categories:
+  - `world`
+  - `middle_east`
+  - `sport`
+  - `business`
+  - `technology`
+  - `varieties`
+
+What works:
+
+- Category pages return JSON-LD `ItemList` with article URLs.
+- Article content is fetched from AMP version (`/amp/{path}`) which has server-rendered HTML.
+- Article metadata (title, description, image, date) extracted from JSON-LD on AMP page.
+- Search is not supported (results loaded via AngularJS API calls).
 
 ## Cron Flow
 
