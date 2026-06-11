@@ -3,6 +3,7 @@ import type { Metadata } from "next"
 import { createDraftArticleAction } from "@/app/admin/articles/actions"
 import { AdminArticlesTable } from "@/components/admin-articles-table"
 import { AdminPagination } from "@/components/admin-pagination"
+import { AdminSearchBar } from "@/components/admin-search-bar"
 import { Button } from "@/components/ui/button"
 import { ADMIN_PAGE_SIZE, getAdminArticleListPage } from "@/lib/db-articles.server"
 import { getCategories } from "@/lib/categories"
@@ -17,14 +18,15 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic"
 
 type PageProps = {
-  searchParams: Promise<{ saved?: string; page?: string }>
+  searchParams: Promise<{ saved?: string; page?: string; q?: string }>
 }
 
 export default async function AdminArticlesPage({ searchParams }: PageProps) {
   const sp = await searchParams
   const showSaved = sp?.saved === "1"
   const page = Math.max(1, Number(sp?.page ?? "1") || 1)
-  const { rows: articles, total } = await getAdminArticleListPage({ page })
+  const q = sp?.q ?? ""
+  const { rows: articles, total } = await getAdminArticleListPage({ page, q })
   const categories = await getCategories()
 
   return (
@@ -40,9 +42,12 @@ export default async function AdminArticlesPage({ searchParams }: PageProps) {
             {ar.adminArticlesPageTitle}
           </h1>
         </div>
-        <form action={createDraftArticleAction}>
-          <Button type="submit">{ar.adminArticlesAdd}</Button>
-        </form>
+        <div className="flex items-center gap-2">
+          <AdminSearchBar />
+          <form action={createDraftArticleAction}>
+            <Button type="submit">{ar.adminArticlesAdd}</Button>
+          </form>
+        </div>
       </div>
 
       {showSaved ? (
@@ -84,10 +89,10 @@ export default async function AdminArticlesPage({ searchParams }: PageProps) {
         page={page}
         pageSize={ADMIN_PAGE_SIZE}
         total={total}
-        prevHref={page > 1 ? `/admin/articles?page=${page - 1}` : undefined}
+        prevHref={page > 1 ? `/admin/articles?page=${page - 1}${q ? `&q=${q}` : ""}` : undefined}
         nextHref={
           page * ADMIN_PAGE_SIZE < total
-            ? `/admin/articles?page=${page + 1}`
+            ? `/admin/articles?page=${page + 1}${q ? `&q=${q}` : ""}`
             : undefined
         }
       />

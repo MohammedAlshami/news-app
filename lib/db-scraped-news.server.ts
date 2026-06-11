@@ -1,6 +1,6 @@
 import "server-only"
 
-import { desc, eq, sql } from "drizzle-orm"
+import { desc, eq, like, or, sql } from "drizzle-orm"
 
 import { getDb } from "@/db/client"
 import { scrapedNews } from "@/db/schema"
@@ -121,16 +121,30 @@ export async function saveScrapeResult(result: ScrapeResult): Promise<ScrapeRunS
 export async function getAdminScrapedNewsListPage(input: {
   page: number
   pageSize?: number
+  q?: string
 }): Promise<{ rows: AdminScrapedNewsListItem[]; total: number }> {
   const pageSize = input.pageSize ?? ADMIN_SCRAPED_PAGE_SIZE
   const page = Math.max(1, input.page)
   const offset = (page - 1) * pageSize
-  const [{ total }] = await getDb()
+  const db = getDb()
+
+  const filter = input.q
+    ? or(
+        like(scrapedNews.title, `%${input.q}%`),
+        like(scrapedNews.excerpt, `%${input.q}%`),
+        like(scrapedNews.source, `%${input.q}%`),
+      )
+    : undefined
+
+  const [{ total }] = await db
     .select({ total: sql<number>`count(*)` })
     .from(scrapedNews)
-  const rows = await getDb()
+    .where(filter)
+
+  const rows = await db
     .select()
     .from(scrapedNews)
+    .where(filter)
     .orderBy(desc(scrapedNews.scrapedAt))
     .limit(pageSize)
     .offset(offset)

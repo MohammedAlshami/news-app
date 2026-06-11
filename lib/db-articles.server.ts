@@ -1,6 +1,6 @@
 import "server-only"
 
-import { desc, eq, sql } from "drizzle-orm"
+import { desc, eq, like, or, sql } from "drizzle-orm"
 
 import { getDb } from "@/db/client"
 import { articles } from "@/db/schema"
@@ -11,16 +11,26 @@ export const ADMIN_PAGE_SIZE = 10
 export async function getAdminArticleListPage(input: {
   page: number
   pageSize?: number
+  q?: string
 }): Promise<{ rows: AdminArticleListItem[]; total: number }> {
   const pageSize = input.pageSize ?? ADMIN_PAGE_SIZE
   const page = Math.max(1, input.page)
   const offset = (page - 1) * pageSize
-  const [{ total }] = await getDb()
+  const db = getDb()
+
+  const filter = input.q
+    ? or(like(articles.title, `%${input.q}%`), like(articles.excerpt, `%${input.q}%`))
+    : undefined
+
+  const [{ total }] = await db
     .select({ total: sql<number>`count(*)` })
     .from(articles)
-  const rows = await getDb()
+    .where(filter)
+
+  const rows = await db
     .select()
     .from(articles)
+    .where(filter)
     .orderBy(desc(articles.updatedAt))
     .limit(pageSize)
     .offset(offset)
@@ -35,6 +45,7 @@ export async function getAdminArticleListPage(input: {
       isPublished: r.isPublished,
       isMemberOnly: r.isMemberOnly,
       views: r.views,
+      coverImageUrl: r.coverImageUrl,
     })),
   }
 }
@@ -53,6 +64,7 @@ export async function getAdminArticleList(): Promise<AdminArticleListItem[]> {
     isPublished: r.isPublished,
     isMemberOnly: r.isMemberOnly,
     views: r.views,
+    coverImageUrl: r.coverImageUrl,
   }))
 }
 

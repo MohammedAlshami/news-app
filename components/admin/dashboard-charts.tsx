@@ -1,7 +1,7 @@
 "use client"
 
 import { TrendingUp } from "lucide-react"
-import { Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, XAxis, YAxis } from "recharts"
+import { Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, LabelList, Pie, PieChart, XAxis, YAxis } from "recharts"
 
 import {
   Card,
@@ -187,6 +187,11 @@ function TopArticlesChart({ data }: { data: TopArticle[] }) {
               content={<ChartTooltipContent hideLabel />}
             />
             <Bar dataKey="views" radius={4}>
+              <LabelList
+                dataKey="views"
+                position="insideStart"
+                className="fill-white font-bold"
+              />
               {data.map((entry, index) => (
                 <Cell
                   key={entry.id}

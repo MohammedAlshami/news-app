@@ -208,7 +208,6 @@ export function AdminGeneratedArticlesTable({ articles }: Props) {
                         alt={a.title}
                         fill
                         className="object-cover"
-                        unoptimized
                       />
                     </div>
                   ) : (

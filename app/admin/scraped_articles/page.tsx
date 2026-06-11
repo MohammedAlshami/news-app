@@ -3,6 +3,7 @@ import type { Metadata } from "next"
 import { AdminScrapedArticlesClient } from "@/components/admin-scraped-articles-client"
 import { AdminScrapedArticlesTable } from "@/components/admin-scraped-articles-table"
 import { AdminPagination } from "@/components/admin-pagination"
+import { AdminSearchBar } from "@/components/admin-search-bar"
 import { ADMIN_SCRAPED_PAGE_SIZE, getAdminScrapedNewsListPage } from "@/lib/db-scraped-news.server"
 import { ar } from "@/lib/ui-ar"
 import { cn } from "@/lib/utils"
@@ -15,13 +16,14 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic"
 
 type PageProps = {
-  searchParams: Promise<{ page?: string }>
+  searchParams: Promise<{ page?: string; q?: string }>
 }
 
 export default async function AdminScrapedArticlesPage({ searchParams }: PageProps) {
   const sp = await searchParams
   const page = Math.max(1, Number(sp?.page ?? "1") || 1)
-  const { rows: articles, total } = await getAdminScrapedNewsListPage({ page })
+  const q = sp?.q ?? ""
+  const { rows: articles, total } = await getAdminScrapedNewsListPage({ page, q })
 
   return (
     <div className={cn("flex-1 p-4 md:p-6 lg:p-8")}>
@@ -37,7 +39,10 @@ export default async function AdminScrapedArticlesPage({ searchParams }: PagePro
             عرض المقالات المستخرجة من المصادر الإخبارية (RT Arabic, Independent Arabia)
           </p>
         </div>
-        <AdminScrapedArticlesClient />
+        <div className="flex items-center gap-2">
+          <AdminSearchBar />
+          <AdminScrapedArticlesClient />
+        </div>
       </div>
 
       <AdminScrapedArticlesTable
@@ -59,10 +64,10 @@ export default async function AdminScrapedArticlesPage({ searchParams }: PagePro
         page={page}
         pageSize={ADMIN_SCRAPED_PAGE_SIZE}
         total={total}
-        prevHref={page > 1 ? `/admin/scraped_articles?page=${page - 1}` : undefined}
+        prevHref={page > 1 ? `/admin/scraped_articles?page=${page - 1}${q ? `&q=${q}` : ""}` : undefined}
         nextHref={
           page * ADMIN_SCRAPED_PAGE_SIZE < total
-            ? `/admin/scraped_articles?page=${page + 1}`
+            ? `/admin/scraped_articles?page=${page + 1}${q ? `&q=${q}` : ""}`
             : undefined
         }
       />
