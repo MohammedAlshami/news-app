@@ -1,6 +1,7 @@
 "use client"
 
 import { ExternalLink, Eye, MoreVertical, Pencil, PencilLine } from "lucide-react"
+import Image from "next/image"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
@@ -209,6 +210,7 @@ export function AdminArticlesTable({ articles, categories, labels }: Props) {
         <Table dir="rtl">
           <TableHeader>
             <TableRow className="border-b hover:bg-transparent">
+              <TableHead className="h-12 w-16 px-3 text-start font-medium">صورة</TableHead>
               <TableHead className="h-12 min-w-[14rem] px-4 text-start font-medium">
                 {labels.colTitle}
               </TableHead>
@@ -232,6 +234,20 @@ export function AdminArticlesTable({ articles, categories, labels }: Props) {
           <TableBody>
             {articles.map((a) => (
               <TableRow key={a.id} className="hover:bg-muted/50">
+                <TableCell className="h-16 px-3">
+                  {a.coverImageUrl ? (
+                    <div className="relative h-10 w-14 overflow-hidden rounded bg-muted">
+                      <Image
+                        src={a.coverImageUrl}
+                        alt={a.title}
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+                  ) : (
+                    <div className="h-10 w-14 rounded bg-muted" />
+                  )}
+                </TableCell>
                 <TableCell className="h-16 max-w-[22rem] px-4 text-start font-medium">
                   <div className="flex min-w-0 flex-col items-start gap-0.5">
                     <span className="block max-w-full truncate" title={a.title}>

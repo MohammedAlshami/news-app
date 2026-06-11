@@ -1,6 +1,7 @@
 "use client"
 
 import { ExternalLink, Eye, MoreVertical } from "lucide-react"
+import Image from "next/image"
 import Link from "next/link"
 import { useState } from "react"
 
@@ -64,8 +65,9 @@ export function AdminScrapedArticlesTable({ articles, labels }: Props) {
       />
     <div className="w-full min-w-0 max-w-full overflow-x-auto rounded-lg border bg-card">
       <Table dir="rtl">
-        <TableHeader>
+          <TableHeader>
           <TableRow className="border-b hover:bg-transparent">
+            <TableHead className="h-12 w-16 px-3 text-start font-medium">صورة</TableHead>
             <TableHead className="h-12 min-w-[14rem] px-4 text-start font-medium">
               {labels.colTitle}
             </TableHead>
@@ -92,6 +94,20 @@ export function AdminScrapedArticlesTable({ articles, labels }: Props) {
         <TableBody>
           {articles.map((a) => (
             <TableRow key={a.id} className="hover:bg-muted/50">
+              <TableCell className="h-16 px-3">
+                {a.imageUrl ? (
+                  <div className="relative h-10 w-14 overflow-hidden rounded bg-muted">
+                    <Image
+                      src={a.imageUrl}
+                      alt={a.title}
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
+                ) : (
+                  <div className="h-10 w-14 rounded bg-muted" />
+                )}
+              </TableCell>
               <TableCell className="h-16 max-w-[22rem] px-4 text-start font-medium">
                 <div className="flex min-w-0 flex-col items-start gap-0.5">
                   <span className="block max-w-full truncate" title={a.title}>

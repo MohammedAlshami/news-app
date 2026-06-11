@@ -3,6 +3,7 @@ import type { Metadata } from "next"
 import { createSiteAdAction } from "@/app/admin/ads/actions"
 import { AdminAdsTable } from "@/components/admin-ads-table"
 import { AdminPagination } from "@/components/admin-pagination"
+import { AdminSearchBar } from "@/components/admin-search-bar"
 import { Button } from "@/components/ui/button"
 import { ADMIN_PAGE_SIZE, getAdminSiteAdListPage } from "@/lib/db-site-ads.server"
 import { ar } from "@/lib/ui-ar"
@@ -16,14 +17,15 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic"
 
 type PageProps = {
-  searchParams: Promise<{ saved?: string; page?: string }>
+  searchParams: Promise<{ saved?: string; page?: string; q?: string }>
 }
 
 export default async function AdminSiteAdsPage({ searchParams }: PageProps) {
   const sp = await searchParams
   const showSaved = sp?.saved === "1"
   const page = Math.max(1, Number(sp?.page ?? "1") || 1)
-  const { rows, total } = await getAdminSiteAdListPage({ page })
+  const q = sp?.q ?? ""
+  const { rows, total } = await getAdminSiteAdListPage({ page, q })
 
   return (
     <div className={cn("flex-1 p-4 md:p-6 lg:p-8")}>
@@ -34,9 +36,12 @@ export default async function AdminSiteAdsPage({ searchParams }: PageProps) {
             {ar.adminSiteAdsPageTitle}
           </h1>
         </div>
-        <form action={createSiteAdAction}>
-          <Button type="submit">{ar.adminSiteAdsAdd}</Button>
-        </form>
+        <div className="flex items-center gap-2">
+          <AdminSearchBar />
+          <form action={createSiteAdAction}>
+            <Button type="submit">{ar.adminSiteAdsAdd}</Button>
+          </form>
+        </div>
       </div>
 
       {showSaved ? (
@@ -74,8 +79,8 @@ export default async function AdminSiteAdsPage({ searchParams }: PageProps) {
         page={page}
         pageSize={ADMIN_PAGE_SIZE}
         total={total}
-        prevHref={page > 1 ? `/admin/ads?page=${page - 1}` : undefined}
-        nextHref={page * ADMIN_PAGE_SIZE < total ? `/admin/ads?page=${page + 1}` : undefined}
+        prevHref={page > 1 ? `/admin/ads?page=${page - 1}${q ? `&q=${q}` : ""}` : undefined}
+        nextHref={page * ADMIN_PAGE_SIZE < total ? `/admin/ads?page=${page + 1}${q ? `&q=${q}` : ""}` : undefined}
       />
     </div>
   )

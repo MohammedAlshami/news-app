@@ -470,6 +470,8 @@ export const ar = {
   adminSiteAdImageTooBig: "الصورة بحد أقصى 5 ميغابايت.",
   adminSiteAdImageType: "يُقبل فقط صورة (JPEG, PNG, WebP, GIF).",
 
+  adminSearchPlaceholder: "بحث…",
+
   /** البحث */
   searchMetaTitle: "البحث | أخبار",
   searchMetaDescription: "ابحث عن المقالات والأخبار في موقع أخبار.",

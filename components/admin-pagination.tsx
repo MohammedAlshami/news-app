@@ -1,12 +1,10 @@
 "use client"
 
 import Link from "next/link"
-import { useRouter } from "next/navigation"
 import { ChevronLeft, ChevronRight } from "lucide-react"
-import { useMemo, useState } from "react"
+import { useMemo } from "react"
 
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
 
 type Props = {
@@ -39,21 +37,11 @@ export function AdminPagination({
   nextHref,
   className,
 }: Props) {
-  const router = useRouter()
   const pageCount = Math.max(1, Math.ceil(total / pageSize))
-  const [draftPage, setDraftPage] = useState(String(page))
   const hrefBase = basePath ?? ""
 
   const pages = useMemo(() => visiblePages(page, pageCount), [page, pageCount])
   if (pageCount <= 1) return null
-
-  function goToPage(rawValue: string) {
-    const next = Number(rawValue)
-    if (!Number.isInteger(next)) return
-    const clamped = Math.min(pageCount, Math.max(1, next))
-    if (!hrefBase) return
-    router.push(buildHref(hrefBase, clamped))
-  }
 
   return (
     <div className={cn("flex flex-wrap items-center justify-between gap-3", className)}>
@@ -92,23 +80,6 @@ export function AdminPagination({
             </div>
           )
         })}
-        <div className="flex items-center gap-2">
-          <Input
-            value={draftPage}
-            onChange={(e) => setDraftPage(e.target.value)}
-            onBlur={() => goToPage(draftPage)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault()
-                goToPage(draftPage)
-              }
-            }}
-            key={page}
-            inputMode="numeric"
-            className="h-8 w-16 border-0 bg-transparent text-center shadow-none focus-visible:ring-0"
-            aria-label="رقم الصفحة"
-          />
-        </div>
       </div>
 
       <div className="flex items-center gap-2">

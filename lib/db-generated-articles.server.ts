@@ -1,6 +1,6 @@
 import "server-only"
 
-import { desc, eq, sql } from "drizzle-orm"
+import { desc, eq, like, or, sql } from "drizzle-orm"
 
 import { getDb } from "@/db/client"
 import { generatedArticles, scrapedNews, topics } from "@/db/schema"
@@ -69,19 +69,26 @@ function rowToListItem(
 export async function getAdminGeneratedArticlesPage(input: {
   page: number
   pageSize?: number
+  q?: string
 }): Promise<{ rows: GeneratedArticleListItem[]; total: number }> {
   const pageSize = input.pageSize ?? ADMIN_GENERATED_PAGE_SIZE
   const page = Math.max(1, input.page)
   const offset = (page - 1) * pageSize
   const db = getDb()
 
+  const filter = input.q
+    ? or(like(generatedArticles.title, `%${input.q}%`), like(generatedArticles.excerpt, `%${input.q}%`))
+    : undefined
+
   const [{ total }] = await db
     .select({ total: sql<number>`count(*)` })
     .from(generatedArticles)
+    .where(filter)
 
   const rows = await db
     .select()
     .from(generatedArticles)
+    .where(filter)
     .orderBy(desc(generatedArticles.createdAt))
     .limit(pageSize)
     .offset(offset)
@@ -224,19 +231,26 @@ export async function generateAndSaveArticleForTopic(topicId: string): Promise<{
 export async function getAdminTopicsPage(input: {
   page: number
   pageSize?: number
+  q?: string
 }): Promise<{ rows: typeof topics.$inferSelect[]; total: number }> {
   const pageSize = input.pageSize ?? ADMIN_GENERATED_PAGE_SIZE
   const page = Math.max(1, input.page)
   const offset = (page - 1) * pageSize
   const db = getDb()
 
+  const filter = input.q
+    ? like(topics.title, `%${input.q}%`)
+    : undefined
+
   const [{ total }] = await db
     .select({ total: sql<number>`count(*)` })
     .from(topics)
+    .where(filter)
 
   const rows = await db
     .select()
     .from(topics)
+    .where(filter)
     .orderBy(desc(topics.updatedAt))
     .limit(pageSize)
     .offset(offset)

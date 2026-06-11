@@ -1,6 +1,6 @@
 import "server-only"
 
-import { and, desc, eq, sql } from "drizzle-orm"
+import { and, desc, eq, like, sql } from "drizzle-orm"
 
 import { getDb } from "@/db/client"
 import { siteAds } from "@/db/schema"
@@ -107,14 +107,22 @@ export async function getActiveSiteAdsForArticle(): Promise<SiteAdPublic[]> {
 export async function getAdminSiteAdListPage(input: {
   page: number
   pageSize?: number
+  q?: string
 }): Promise<{ rows: AdminSiteAdListItem[]; total: number }> {
   const pageSize = input.pageSize ?? ADMIN_PAGE_SIZE
   const page = Math.max(1, input.page)
   const offset = (page - 1) * pageSize
-  const [{ total }] = await getDb()
+  const db = getDb()
+
+  const filter = input.q
+    ? like(siteAds.name, `%${input.q}%`)
+    : undefined
+
+  const [{ total }] = await db
     .select({ total: sql<number>`count(*)` })
     .from(siteAds)
-  const rows = await getDb()
+    .where(filter)
+  const rows = await db
     .select({
       id: siteAds.id,
       name: siteAds.name,
@@ -127,6 +135,7 @@ export async function getAdminSiteAdListPage(input: {
       createdAt: siteAds.createdAt,
     })
     .from(siteAds)
+    .where(filter)
     .orderBy(desc(siteAds.createdAt))
     .limit(pageSize)
     .offset(offset)

@@ -2,6 +2,7 @@
 
 import { AdminLogoutButton } from "@/components/admin-logout-button"
 import { Button } from "@/components/ui/button"
+import Image from "next/image"
 import {
   Sidebar,
   SidebarContent,
@@ -26,22 +27,8 @@ import {
   Users,
 } from "lucide-react"
 import Link from "next/link"
-import { Logo } from "@/components/sidebar-03/logo"
 import type { Route } from "./nav-main"
 import DashboardNavigation from "@/components/sidebar-03/nav-main"
-import { NotificationsPopover } from "@/components/sidebar-03/nav-notifications"
-import { TeamSwitcher } from "@/components/sidebar-03/team-switcher"
-
-const sampleNotifications = [
-  {
-    id: "1",
-    avatar: "",
-    fallback: "أ",
-    text: "مثال: لا توجد بيانات حقيقية هنا حتى الآن.",
-    time: "الآن",
-  },
-]
-
 const dashboardRoutes: Route[] = [
   {
     id: "home",
@@ -103,8 +90,6 @@ const dashboardRoutes: Route[] = [
   },
 ]
 
-const teams = [{ name: ar.newsBrand, logo: Logo, plan: ar.adminPanel }]
-
 function AdminSidebarControls() {
   const { state, toggleSidebar, isMobile } = useSidebar()
   const isCollapsed = state === "collapsed"
@@ -120,7 +105,6 @@ function AdminSidebarControls() {
       animate={{ opacity: 1 }}
       transition={{ duration: 0.4 }}
     >
-      <NotificationsPopover notifications={sampleNotifications} />
       {!isMobile && (
         <Button
           type="button"
@@ -162,14 +146,16 @@ export function DashboardSidebar() {
       >
         <Link
           href="/"
-          className="flex min-w-0 items-center gap-2 text-foreground"
+          className="flex min-w-0 items-center text-foreground"
         >
-          <Logo className="h-8 w-8 shrink-0" />
-          {!isCollapsed && (
-            <span className="min-w-0 truncate font-semibold text-foreground">
-              {ar.newsBrand}
-            </span>
-          )}
+          <Image
+            src="/logo-light.svg"
+            alt={ar.newsBrand}
+            width={160}
+            height={85}
+            className={cn("h-12 w-auto", isCollapsed ? "h-10" : "h-12")}
+            priority
+          />
         </Link>
 
         <AdminSidebarControls />
@@ -179,7 +165,6 @@ export function DashboardSidebar() {
       </SidebarContent>
       <SidebarFooter className="space-y-2 px-2">
         <AdminLogoutButton />
-        <TeamSwitcher teams={teams} />
       </SidebarFooter>
     </Sidebar>
   )

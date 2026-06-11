@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 
 import { AdminPagination } from "@/components/admin-pagination"
+import { AdminSearchBar } from "@/components/admin-search-bar"
 import { AdminTopicsTable } from "@/components/admin-topics-table"
 import { getAdminTopicsPage } from "@/lib/db-generated-articles.server"
 import { ADMIN_GENERATED_PAGE_SIZE } from "@/lib/db-generated-articles.server"
@@ -14,13 +15,14 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic"
 
 type PageProps = {
-  searchParams: Promise<{ page?: string }>
+  searchParams: Promise<{ page?: string; q?: string }>
 }
 
 export default async function AdminTopicsPage({ searchParams }: PageProps) {
   const sp = await searchParams
   const page = Math.max(1, Number(sp?.page ?? "1") || 1)
-  const { rows: topicRows, total } = await getAdminTopicsPage({ page })
+  const q = sp?.q ?? ""
+  const { rows: topicRows, total } = await getAdminTopicsPage({ page, q })
 
   return (
     <div className={cn("flex-1 p-4 md:p-6 lg:p-8")}>
@@ -32,6 +34,7 @@ export default async function AdminTopicsPage({ searchParams }: PageProps) {
             المواضيع المستخرجة من الأخبار المجمّعة بالذكاء الاصطناعي
           </p>
         </div>
+        <AdminSearchBar />
       </div>
 
       <AdminTopicsTable topics={topicRows} />
@@ -41,10 +44,10 @@ export default async function AdminTopicsPage({ searchParams }: PageProps) {
         page={page}
         pageSize={ADMIN_GENERATED_PAGE_SIZE}
         total={total}
-        prevHref={page > 1 ? `/admin/topics?page=${page - 1}` : undefined}
+        prevHref={page > 1 ? `/admin/topics?page=${page - 1}${q ? `&q=${q}` : ""}` : undefined}
         nextHref={
           page * ADMIN_GENERATED_PAGE_SIZE < total
-            ? `/admin/topics?page=${page + 1}`
+            ? `/admin/topics?page=${page + 1}${q ? `&q=${q}` : ""}`
             : undefined
         }
       />

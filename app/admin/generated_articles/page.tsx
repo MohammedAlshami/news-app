@@ -3,6 +3,7 @@ import type { Metadata } from "next"
 import { AdminPagination } from "@/components/admin-pagination"
 import { AdminGeneratedArticlesTable } from "@/components/admin-generated-articles-table"
 import { AdminGeneratedArticlesClient } from "@/components/admin-generated-articles-client"
+import { AdminSearchBar } from "@/components/admin-search-bar"
 import {
   ADMIN_GENERATED_PAGE_SIZE,
   getAdminGeneratedArticlesPage,
@@ -17,13 +18,14 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic"
 
 type PageProps = {
-  searchParams: Promise<{ page?: string }>
+  searchParams: Promise<{ page?: string; q?: string }>
 }
 
 export default async function AdminGeneratedArticlesPage({ searchParams }: PageProps) {
   const sp = await searchParams
   const page = Math.max(1, Number(sp?.page ?? "1") || 1)
-  const { rows, total } = await getAdminGeneratedArticlesPage({ page })
+  const q = sp?.q ?? ""
+  const { rows, total } = await getAdminGeneratedArticlesPage({ page, q })
 
   return (
     <div className={cn("flex-1 p-4 md:p-6 lg:p-8")}>
@@ -35,7 +37,10 @@ export default async function AdminGeneratedArticlesPage({ searchParams }: PageP
             مقالات أُنشئت تلقائياً بالذكاء الاصطناعي استناداً إلى المواضيع المستخرجة
           </p>
         </div>
-        <AdminGeneratedArticlesClient />
+        <div className="flex items-center gap-2">
+          <AdminSearchBar />
+          <AdminGeneratedArticlesClient />
+        </div>
       </div>
 
       <AdminGeneratedArticlesTable articles={rows} />
@@ -45,10 +50,10 @@ export default async function AdminGeneratedArticlesPage({ searchParams }: PageP
         page={page}
         pageSize={ADMIN_GENERATED_PAGE_SIZE}
         total={total}
-        prevHref={page > 1 ? `/admin/generated_articles?page=${page - 1}` : undefined}
+        prevHref={page > 1 ? `/admin/generated_articles?page=${page - 1}${q ? `&q=${q}` : ""}` : undefined}
         nextHref={
           page * ADMIN_GENERATED_PAGE_SIZE < total
-            ? `/admin/generated_articles?page=${page + 1}`
+            ? `/admin/generated_articles?page=${page + 1}${q ? `&q=${q}` : ""}`
             : undefined
         }
       />

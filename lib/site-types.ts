@@ -41,6 +41,7 @@ export type AdminArticleListItem = {
   isPublished: boolean
   isMemberOnly: boolean
   views: number
+  coverImageUrl: string | null
 }
 
 /** Admin list row — users. */

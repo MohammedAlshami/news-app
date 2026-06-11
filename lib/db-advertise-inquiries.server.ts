@@ -1,6 +1,6 @@
 import "server-only"
 
-import { desc, eq, sql } from "drizzle-orm"
+import { desc, eq, like, or, sql } from "drizzle-orm"
 
 import { getDb } from "@/db/client"
 import { advertiseInquiries } from "@/db/schema"
@@ -11,14 +11,26 @@ export const ADMIN_PAGE_SIZE = 10
 export async function getAdminAdvertiseInquiryListPage(input: {
   page: number
   pageSize?: number
+  q?: string
 }): Promise<{ rows: AdminAdvertiseInquiryListItem[]; total: number }> {
   const pageSize = input.pageSize ?? ADMIN_PAGE_SIZE
   const page = Math.max(1, input.page)
   const offset = (page - 1) * pageSize
-  const [{ total }] = await getDb()
+  const db = getDb()
+
+  const filter = input.q
+    ? or(
+        like(advertiseInquiries.name, `%${input.q}%`),
+        like(advertiseInquiries.email, `%${input.q}%`),
+        like(advertiseInquiries.message, `%${input.q}%`),
+      )
+    : undefined
+
+  const [{ total }] = await db
     .select({ total: sql<number>`count(*)` })
     .from(advertiseInquiries)
-  const rows = await getDb()
+    .where(filter)
+  const rows = await db
     .select({
       id: advertiseInquiries.id,
       name: advertiseInquiries.name,
@@ -28,6 +40,7 @@ export async function getAdminAdvertiseInquiryListPage(input: {
       createdAt: advertiseInquiries.createdAt,
     })
     .from(advertiseInquiries)
+    .where(filter)
     .orderBy(desc(advertiseInquiries.createdAt))
     .limit(pageSize)
     .offset(offset)
