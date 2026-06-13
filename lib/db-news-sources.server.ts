@@ -29,3 +29,41 @@ export async function setNewsSourceEnabled(key: string, enabled: boolean): Promi
     .set({ isEnabled: enabled })
     .where(eq(newsSources.key, key))
 }
+
+export async function getNewsSourceByKey(key: string): Promise<NewsSourceRow | undefined> {
+  const [row] = await getDb()
+    .select()
+    .from(newsSources)
+    .where(eq(newsSources.key, key))
+    .limit(1)
+  return row
+}
+
+export function parseMetadata(metadata: string): Record<string, unknown> {
+  try {
+    return JSON.parse(metadata)
+  } catch {
+    return {}
+  }
+}
+
+export function getLastScrapedAt(source: NewsSourceRow): Date | null {
+  const meta = parseMetadata(source.metadata)
+  const val = meta.lastScrapedAt
+  if (typeof val === "string" || typeof val === "number") {
+    const d = new Date(val)
+    if (!isNaN(d.getTime())) return d
+  }
+  return null
+}
+
+export async function updateLastScrapedAt(key: string, lastScrapedAt: string): Promise<void> {
+  const row = await getNewsSourceByKey(key)
+  if (!row) return
+  const meta = parseMetadata(row.metadata)
+  meta.lastScrapedAt = lastScrapedAt
+  await getDb()
+    .update(newsSources)
+    .set({ metadata: JSON.stringify(meta) })
+    .where(eq(newsSources.key, key))
+}

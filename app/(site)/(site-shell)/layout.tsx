@@ -1,6 +1,5 @@
 import Link from "next/link"
 
-import { AdPlaceholder } from "@/components/news-landing"
 import { SiteFooter } from "@/components/site-footer"
 import { SiteNavbar } from "@/components/site-navbar"
 import { SiteSubscribeBanner } from "@/components/site-subscribe-banner"

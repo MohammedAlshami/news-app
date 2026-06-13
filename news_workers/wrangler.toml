@@ -6,6 +6,10 @@ compatibility_flags = ["nodejs_compat"]
 [triggers]
 crons = ["0 * * * *"]
 
+[[services]]
+binding = "NEWS_SITE"
+service = "news-site"
+
 [[d1_databases]]
 binding = "DB"
 database_name = "news-site"

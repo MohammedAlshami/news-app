@@ -16,7 +16,7 @@ export function ArticleHighlights({ items }: Props) {
 
   return (
     <div
-      className="relative w-full overflow-hidden rounded-2xl px-6 py-5 sm:p-6"
+      className="relative mt-6 w-full overflow-hidden rounded-2xl px-6 py-5 sm:p-6"
       style={{
         background: "linear-gradient(135deg, #0d4a6e 0%, #0a6b8a 40%, #0e8fa8 70%, #1aa3b8 100%)",
       }}

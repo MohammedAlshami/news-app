@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 
 export default function AdvertisePage() {
   return (
-    <div className="flex-1 bg-[linear-gradient(180deg,#fff_0%,#fafafa_100%)]">
+    <div className="flex-1 bg-white">
       <div dir="rtl" lang="ar" className="mx-auto w-full max-w-[90rem] px-4 py-12 sm:px-6 md:px-10 md:py-16 lg:px-8 lg:py-20">
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-12 lg:gap-10">
           <div className="lg:col-span-5">
