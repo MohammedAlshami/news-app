@@ -52,14 +52,19 @@ export async function submitAdvertiseInquiryAction(
     return { ok: false, error: ar.advertiseErrorMessageLong }
   }
 
-  await getDb().insert(advertiseInquiries).values({
-    name,
-    email,
-    phone,
-    company,
-    message,
-    status: "new",
-  })
+  try {
+    await getDb().insert(advertiseInquiries).values({
+      name,
+      email,
+      phone,
+      company,
+      message,
+      status: "new",
+    })
+  } catch (err) {
+    console.error("Failed to insert advertise inquiry:", err)
+    return { ok: false, error: "تعذر حفظ الطلب حالياً. حاول مرة أخرى." }
+  }
 
   revalidatePath("/admin/advertise")
   return { ok: true }

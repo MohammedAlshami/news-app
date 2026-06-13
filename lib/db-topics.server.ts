@@ -1,6 +1,6 @@
 import "server-only"
 
-import { desc, gte, inArray, sql } from "drizzle-orm"
+import { desc, gte } from "drizzle-orm"
 
 import { getDb } from "@/db/client"
 import { scrapedNews, topics } from "@/db/schema"
@@ -98,27 +98,20 @@ export async function runTopicGrouping(windowMs = 24 * 60 * 60 * 1000): Promise<
       topicsCreated++
     }
 
-    const ids = group.articleIds
+    const ids = [...new Set(group.articleIds)]
     const BATCH = 50
 
-    // Assign topic_id to scraped_news rows in batches
+    // Assign topic_id to scraped_news rows — run directly against D1 API
+    const { rawD1Exec } = await import("@/lib/db-raw-d1")
     for (let i = 0; i < ids.length; i += BATCH) {
       const chunk = ids.slice(i, i + BATCH)
-      await db
-        .update(scrapedNews)
-        .set({ topicId })
-        .where(inArray(scrapedNews.id, chunk))
+      if (chunk.length === 0) continue
+      const idsList = chunk.map((id) => `'${id}'`).join(",")
+      await rawD1Exec(`UPDATE scraped_news SET topic_id = '${topicId}' WHERE id IN (${idsList})`)
     }
 
-    // Increment article_count by the number of articles assigned to this topic
-    // and stamp updatedAt
-    await db
-      .update(topics)
-      .set({
-        articleCount: sql`${topics.articleCount} + ${ids.length}`,
-        updatedAt: new Date(),
-      })
-      .where(inArray(topics.id, [topicId]))
+    // Increment article_count
+    await rawD1Exec(`UPDATE topics SET article_count = article_count + ${ids.length}, updated_at = ${Date.now()} WHERE id = '${topicId}'`)
   }
 
   return {

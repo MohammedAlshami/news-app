@@ -103,7 +103,11 @@ export async function groupArticlesByTopic(
 
   const userMessage = JSON.stringify({ articles: articlesPayload, existingTopics }, null, 2)
 
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), 30000)
+
   const res = await fetch(OPENROUTER_API_URL, {
+    signal: controller.signal,
     method: "POST",
     headers: {
       Authorization: `Bearer ${apiKey}`,
@@ -120,6 +124,8 @@ export async function groupArticlesByTopic(
       response_format: { type: "json_object" },
     }),
   })
+
+  clearTimeout(timeout)
 
   if (!res.ok) {
     const text = await res.text()

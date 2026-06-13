@@ -236,6 +236,22 @@ function parseCardsBySelector(
 }
 
 function parseRt(html: string): ScrapedNewsItem[] {
+  // Build a map of URL -> publishedAt from JSON-LD ItemList
+  const ldPubMap = new Map<string, string>()
+  const ldScript = html.match(/<script\b[^>]*type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/i)
+  if (ldScript) {
+    try {
+      const parsed = JSON.parse(ldScript[1])
+      const list = parsed?.itemListElement ?? parsed?.["@graph"]?.find((g: any) => g?.itemListElement)?.itemListElement
+      if (Array.isArray(list)) {
+        for (const entry of list) {
+          const url = entry?.url ?? entry?.["@id"]
+          if (url && entry?.datePublished) ldPubMap.set(normalizeUrl(url, "https://arabic.rt.com"), entry.datePublished)
+        }
+      }
+    } catch {}
+  }
+
   return parseCardsBySelector(
     html,
     /<article\b[^>]*class="[^"]*\bmain-article\b[^"]*"[^>]*>([\s\S]*?)<\/article>/gi,
@@ -256,7 +272,11 @@ function parseRt(html: string): ScrapedNewsItem[] {
           /<p\b[^>]*class="[^"]*\bmain-article__summary\b[^"]*"[^>]*>([\s\S]*?)<\/p>/i,
         ),
       )
-      const publishedAt = cleanText(firstMatch(block, /<time\b[^>]*datetime="([^"]+)"/i))
+      let publishedAt = cleanText(firstMatch(block, /<time\b[^>]*datetime="([^"]+)"/i))
+      if (!publishedAt && link) {
+        const normalizedLink = normalizeUrl(link, "https://arabic.rt.com")
+        publishedAt = ldPubMap.get(normalizedLink) ?? ""
+      }
       const imageUrl =
         firstMatch(block, /<img\b[^>]*data-src="([^"]+)"/i) ||
         firstMatch(block, /<img\b[^>]*src="([^"]+)"/i)
@@ -288,7 +308,7 @@ function parseIndependent(html: string): ScrapedNewsItem[] {
   })
 }
 
-async function fetchRtArticleContent(url: string): Promise<{ excerpt: string; content: string }> {
+async function fetchRtArticleContent(url: string): Promise<{ excerpt: string; publishedAt: string; content: string }> {
   const html = await fetch(url, {
     cache: "no-store",
     headers: {
@@ -297,6 +317,45 @@ async function fetchRtArticleContent(url: string): Promise<{ excerpt: string; co
       "accept-language": "ar,en;q=0.9",
     }
   }).then((r) => r.text())
+
+  // Extract publishedAt — try multiple strategies
+  let publishedAt = ""
+
+  // 1) <time datetime="...">
+  const timeMatch = html.match(/<time\b[^>]*datetime="([^"]+)"/i)
+  if (timeMatch) publishedAt = timeMatch[1]
+
+  // 2) JSON-LD datePublished
+  if (!publishedAt) {
+    const ldMatch = html.match(/<script\b[^>]*type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/i)
+    if (ldMatch) {
+      try {
+        const parsed = JSON.parse(ldMatch[1])
+        const article = Array.isArray(parsed?.["@graph"])
+          ? parsed["@graph"].find((g: any) => g?.["@type"]?.includes?.("NewsArticle"))
+          : parsed
+        if (article?.datePublished) publishedAt = article.datePublished
+      } catch {}
+    }
+  }
+
+  // 3) <meta property="article:published_time">
+  if (!publishedAt) {
+    const ptMatch = html.match(/<meta\b[^>]*property="article:published_time"[^>]*content="([^"]+)"/i)
+    if (ptMatch) publishedAt = ptMatch[1]
+  }
+
+  // 4) <meta name="pubdate" or "publishdate" or "dc.date">
+  if (!publishedAt) {
+    const metaMatch = html.match(/<meta\b[^>]*name="(?:pubdate|publishdate|dc\.date\w*)"[^>]*content="([^"]+)"/i)
+    if (metaMatch) publishedAt = metaMatch[1]
+  }
+
+  // 5) itemprop="datePublished"
+  if (!publishedAt) {
+    const itemMatch = html.match(/itemprop="datePublished"[^>]*content="([^"]+)"/i)
+    if (itemMatch) publishedAt = itemMatch[1]
+  }
 
   // Extract excerpt — the summary <p> inside the intro-text block
   let excerpt = ""
@@ -312,7 +371,7 @@ async function fetchRtArticleContent(url: string): Promise<{ excerpt: string; co
 
   // Extract body — everything inside editor-content div
   const editorMatch = html.match(/<div\b[^>]*class="[^"]*\beditor-content\b[^"]*"[^>]*>([\s\S]+)/i)
-  if (!editorMatch) return { excerpt, content: "" }
+  if (!editorMatch) return { excerpt, publishedAt, content: "" }
 
   let contentHtml = editorMatch[1]
   const cutoff = contentHtml.search(/<div\b[^>]*class="[^"]*\bmain-article__block--tags\b[^"]*"/i)
@@ -321,10 +380,10 @@ async function fetchRtArticleContent(url: string): Promise<{ excerpt: string; co
   contentHtml = contentHtml.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "")
   contentHtml = contentHtml.replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, "")
 
-  return { excerpt, content: htmlToTiptapJson(contentHtml) }
+  return { excerpt, publishedAt, content: htmlToTiptapJson(contentHtml) }
 }
 
-async function fetchIndependentArticleContent(url: string): Promise<string> {
+async function fetchIndependentArticleContent(url: string): Promise<{ content: string; publishedAt: string }> {
   try {
     const html = await fetch(url, {
       cache: "no-store",
@@ -334,6 +393,11 @@ async function fetchIndependentArticleContent(url: string): Promise<string> {
         "accept-language": "ar,en;q=0.9",
       }
     }).then((r) => r.text())
+
+    // Extract publishedAt from meta tag
+    let publishedAt = ""
+    const ptMatch = html.match(/<meta\b[^>]*property="article:published_time"[^>]*content="([^"]+)"/i)
+    if (ptMatch) publishedAt = ptMatch[1]
     
     // Try multiple selectors for Independent Arabia content
     let content = ""
@@ -354,16 +418,15 @@ async function fetchIndependentArticleContent(url: string): Promise<string> {
       if (match) content = match[1]
     }
     
-    if (!content) return ""
+    if (!content) return { content: "", publishedAt }
     
     // Clean up but preserve paragraph structure
     content = content.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "")
     content = content.replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, "")
     
-    // Convert to Tiptap JSON
-    return htmlToTiptapJson(content)
+    return { content: htmlToTiptapJson(content), publishedAt }
   } catch {
-    return ""
+    return { content: "", publishedAt: "" }
   }
 }
 
@@ -1622,10 +1685,11 @@ export class NewsScraper {
     const itemsWithContent = await Promise.all(
       items.slice(0, 5).map(async (item) => {
         if (this.source === "rt") {
-          const { excerpt, content } = await fetchRtArticleContent(item.url)
+          const { excerpt, publishedAt, content } = await fetchRtArticleContent(item.url)
           return {
             ...item,
             excerpt: excerpt || item.excerpt,
+            publishedAt: publishedAt || item.publishedAt,
             content,
           }
           } else if (this.source === "skynews") {
@@ -1698,9 +1762,39 @@ export class NewsScraper {
             publishedAt: publishedAt || item.publishedAt,
             content,
           }
+        } else if (this.source === "elwatan") {
+          const { title, excerpt, imageUrl, publishedAt, content } = await fetchElwatanArticleContent(item.url)
+          return {
+            ...item,
+            title: title || item.title,
+            excerpt: excerpt || item.excerpt,
+            imageUrl: imageUrl || item.imageUrl,
+            publishedAt: publishedAt || item.publishedAt,
+            content,
+          }
+        } else if (this.source === "alhurra") {
+          const { title, excerpt, imageUrl, publishedAt, content } = await fetchAlhurraArticleContent(item.url)
+          return {
+            ...item,
+            title: title || item.title,
+            excerpt: excerpt || item.excerpt,
+            imageUrl: imageUrl || item.imageUrl,
+            publishedAt: publishedAt || item.publishedAt,
+            content,
+          }
+        } else if (this.source === "aawsat") {
+          const { title, excerpt, imageUrl, publishedAt, content } = await fetchAawsatArticleContent(item.url)
+          return {
+            ...item,
+            title: title || item.title,
+            excerpt: excerpt || item.excerpt,
+            imageUrl: imageUrl || item.imageUrl,
+            publishedAt: publishedAt || item.publishedAt,
+            content,
+          }
         } else {
-          const content = await fetchIndependentArticleContent(item.url)
-          return { ...item, content }
+          const { content, publishedAt } = await fetchIndependentArticleContent(item.url)
+          return { ...item, content, publishedAt: publishedAt || item.publishedAt }
         }
       })
     )
