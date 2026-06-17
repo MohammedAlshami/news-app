@@ -4,7 +4,7 @@ compatibility_date = "2026-05-07"
 compatibility_flags = ["nodejs_compat"]
 
 [triggers]
-crons = ["0 * * * *"]
+crons = ["*/10 * * * *"]
 
 [[services]]
 binding = "NEWS_SITE"

@@ -3,12 +3,15 @@ const SOURCE_KEYS = [
   "elwatan", "alaraby", "alhurra", "aawsat", "shabiba", "addustour",
 ]
 
+function delay(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
 async function fetchSource(env: any, key: string): Promise<string> {
   const url = new URL(`https://internal/api/cron/scrape-source/${key}`)
   const res = await env.NEWS_SITE.fetch(url, {
     headers: { accept: "application/json", "user-agent": "news-cron-worker/1.0" },
   })
-  const body = await res.text()
   return `scrape/${key}: ${res.status}`
 }
 
@@ -21,29 +24,26 @@ async function fetchCron(env: any, path: string, label: string): Promise<string>
   return `${label}: ${res.status}`
 }
 
+async function processAllSources(env: any, staggerMs: number): Promise<string[]> {
+  const lines: string[] = []
+  for (const key of SOURCE_KEYS) {
+    const r = await fetchSource(env, key).catch((e) => `scrape/${key}: ${e}`)
+    lines.push(r)
+    await delay(staggerMs)
+  }
+  return lines
+}
+
 export default {
   async fetch(request: Request, env: any) {
     if (request.method !== "GET" && request.method !== "HEAD") {
       return new Response("Method Not Allowed", { status: 405 })
     }
 
-    const lines: string[] = []
-
-    const sourceResults = await Promise.allSettled(
-      SOURCE_KEYS.map((key) => fetchSource(env, key)),
-    )
-    lines.push(...sourceResults.map((r) =>
-      r.status === "fulfilled" ? r.value : `scrape: ${r.reason}`,
-    ))
-
-    const otherResults = await Promise.allSettled([
-      fetchCron(env, "/api/cron/group-pipeline", "group"),
-      fetchCron(env, "/api/cron/generate-pipeline?limit=10", "generate"),
-      fetchCron(env, "/api/cron/update-price-rates", "price-rates"),
-    ])
-    lines.push(...otherResults.map((r) =>
-      r.status === "fulfilled" ? r.value : `${r.reason}`,
-    ))
+    const lines = await processAllSources(env, 2000)
+    const write = await fetchCron(env, "/api/cron/write-pipeline", "write")
+    const price = await fetchCron(env, "/api/cron/update-price-rates", "price-rates")
+    lines.push(write, price)
 
     return new Response(lines.join("\n"), {
       status: 200,
@@ -52,22 +52,20 @@ export default {
   },
 
   async scheduled(_event: any, env: any) {
-    const sourceResults = await Promise.allSettled(
-      SOURCE_KEYS.map((key) => fetchSource(env, key)),
-    )
-    for (const r of sourceResults) {
-      if (r.status === "fulfilled") console.log(r.value)
-      else console.error(`scrape failed: ${r.reason}`)
+    const now = new Date()
+    const minute = now.getUTCMinutes()
+
+    // Scrape every hour on the hour
+    if (minute === 0) {
+      const lines = await processAllSources(env, 5000)
+      for (const line of lines) console.log(line)
     }
 
-    const otherResults = await Promise.allSettled([
-      fetchCron(env, "/api/cron/group-pipeline", "group"),
-      fetchCron(env, "/api/cron/generate-pipeline?limit=10", "generate"),
-      fetchCron(env, "/api/cron/update-price-rates", "price-rates"),
-    ])
-    for (const r of otherResults) {
-      if (r.status === "fulfilled") console.log(r.value)
-      else console.error(`Cron failed: ${r.reason}`)
-    }
+    // Write every 10 minutes
+    const write = await fetchCron(env, "/api/cron/write-pipeline", "write")
+    console.log(write)
+
+    const price = await fetchCron(env, "/api/cron/update-price-rates", "price-rates")
+    console.log(price)
   },
 }

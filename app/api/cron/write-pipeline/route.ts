@@ -1,4 +1,4 @@
-import { runTopicGrouping } from "@/lib/db-topics.server"
+import { runWriter } from "@/lib/writer"
 
 export const dynamic = "force-dynamic"
 
@@ -22,15 +22,21 @@ export async function GET(): Promise<Response> {
       }
 
       const abortTimeout = setTimeout(() => {
-        emit("error", { message: "Topic grouping timed out after 120s" })
+        emit("error", { message: "Write pipeline timed out after 120s" })
         emit("complete", { timedOut: true })
         done()
       }, 120000)
 
       try {
-        emit("grouping", { status: "started" })
-        const result = await runTopicGrouping()
-        emit("grouping", result ?? {})
+        emit("start", {})
+        const result = await runWriter()
+
+        if (result.action === "write" && result.article) {
+          emit("written", { genId: result.article.id, articleId: result.article.articleId, title: result.article.title })
+        } else {
+          emit("skipped", { reason: result.reason ?? "No topic worth writing about" })
+        }
+
         emit("complete", { result })
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err)

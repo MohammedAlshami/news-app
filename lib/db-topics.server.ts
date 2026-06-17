@@ -1,38 +1,28 @@
 import "server-only"
 
-import { desc, gte } from "drizzle-orm"
+import { desc, gte, like } from "drizzle-orm"
 
 import { getDb } from "@/db/client"
 import { scrapedNews, topics } from "@/db/schema"
-import {
-  groupArticlesByTopic,
-  type ArticleInput,
-  type ExistingTopic,
-} from "@/lib/topic-grouper"
+import { groupArticlesByTopic, type ArticleInput } from "@/lib/topic-grouper"
 
 export type TopicRow = typeof topics.$inferSelect
 
-/** Fetch all existing topics to pass as context to the AI grouper. */
-export async function getAllTopics(): Promise<ExistingTopic[]> {
-  const rows = await getDb()
+export async function getAllTopics() {
+  return getDb()
     .select({ id: topics.id, title: topics.title, articleCount: topics.articleCount })
     .from(topics)
     .orderBy(desc(topics.createdAt))
-  return rows
 }
 
-/**
- * Run topic grouping on all scraped_news rows inserted in the last `windowMs`
- * milliseconds that don't yet have a topic_id assigned.
- *
- * Steps:
- *  1. Load ungrouped articles from the recent window
- *  2. Load all existing topics for context
- *  3. Call the AI grouper
- *  4. Upsert new topics, update scraped_news rows, and increment article_count
- *
- * Returns a summary of what was created/updated.
- */
+async function searchTopics(query: string): Promise<{ id: string; title: string }[]> {
+  return getDb()
+    .select({ id: topics.id, title: topics.title })
+    .from(topics)
+    .where(like(topics.title, `%${query}%`))
+    .limit(10)
+}
+
 export async function runTopicGrouping(windowMs = 24 * 60 * 60 * 1000): Promise<{
   articlesProcessed: number
   topicsCreated: number
@@ -41,7 +31,6 @@ export async function runTopicGrouping(windowMs = 24 * 60 * 60 * 1000): Promise<
   const db = getDb()
   const since = new Date(Date.now() - windowMs)
 
-  // 1. Load ungrouped articles in the window
   const ungrouped = await db
     .select({
       id: scrapedNews.id,
@@ -58,10 +47,6 @@ export async function runTopicGrouping(windowMs = 24 * 60 * 60 * 1000): Promise<
     return { articlesProcessed: 0, topicsCreated: 0, topicsReused: 0 }
   }
 
-  // 2. Load existing topics for AI context
-  const existingTopics = await getAllTopics()
-
-  // 3. Call AI grouper
   const articles: ArticleInput[] = ungrouped.map((r) => ({
     id: r.id,
     title: r.title,
@@ -71,23 +56,20 @@ export async function runTopicGrouping(windowMs = 24 * 60 * 60 * 1000): Promise<
     publishedAt: r.publishedAt,
   }))
 
-  const { groups } = await groupArticlesByTopic(articles, existingTopics)
+  const { groups } = await groupArticlesByTopic(articles, searchTopics)
 
   let topicsCreated = 0
   let topicsReused = 0
 
-  // 4. Process each group
   for (const group of groups) {
     if (group.articleIds.length === 0) continue
 
     let topicId: string
 
     if (group.topicId) {
-      // Reuse existing topic
       topicId = group.topicId
       topicsReused++
     } else {
-      // Create new topic (article_count starts at 0, incremented below)
       const newId = crypto.randomUUID()
       await db.insert(topics).values({
         id: newId,
@@ -101,7 +83,6 @@ export async function runTopicGrouping(windowMs = 24 * 60 * 60 * 1000): Promise<
     const ids = [...new Set(group.articleIds)]
     const BATCH = 50
 
-    // Assign topic_id to scraped_news rows — run directly against D1 API
     const { rawD1Exec } = await import("@/lib/db-raw-d1")
     for (let i = 0; i < ids.length; i += BATCH) {
       const chunk = ids.slice(i, i + BATCH)
@@ -110,8 +91,9 @@ export async function runTopicGrouping(windowMs = 24 * 60 * 60 * 1000): Promise<
       await rawD1Exec(`UPDATE scraped_news SET topic_id = '${topicId}' WHERE id IN (${idsList})`)
     }
 
-    // Increment article_count
-    await rawD1Exec(`UPDATE topics SET article_count = article_count + ${ids.length}, updated_at = ${Date.now()} WHERE id = '${topicId}'`)
+    await rawD1Exec(
+      `UPDATE topics SET article_count = article_count + ${ids.length}, updated_at = ${Date.now()} WHERE id = '${topicId}'`,
+    )
   }
 
   return {
