@@ -13,6 +13,7 @@ export type ArticleInput = {
 export type TopicGroup = {
   topicId: string | null
   title: string
+  categoryId: string | null
   articleIds: string[]
 }
 
@@ -23,50 +24,43 @@ export type GroupingResult = {
 const SYSTEM_PROMPT = `
 You are a news topic clustering assistant. You receive a JSON object with:
 - "articles": array of { id, title, excerpt, category }
-- "existingTopics": array of { id, title } (may be empty on first call)
+- "existingTopics": array of { id, title }
+- "availableCategories": array of { id, name } — choose from these for each group
 
 Your job:
 1. Read titles and excerpts carefully.
 2. Group articles that cover the EXACT SAME specific real-world event or story.
-   - "Same event" means: same incident, same people, same location, same development.
-   - Articles about different events in the same country are NOT the same topic.
-   - A group with a single article is perfectly fine — many topics will have just one article.
-3. To find if a matching topic already exists, use the \`search_topics\` tool.
+3. For each group, pick the best matching category from availableCategories.
+4. To find if a matching topic already exists, use the \`search_topics\` tool.
    - Call it with Arabic keywords to search by.
-   - You may call it multiple times with different keywords to explore.
+   - You may call it multiple times with different keywords.
    - If you find an existing topic that matches, reuse its id.
    - If nothing matches, create a new topic (topicId: null).
-4. For new topics, generate a concise Arabic title (5–10 words) naming the specific event.
+5. For new topics, generate a concise Arabic title (5–10 words) naming the specific event.
+6. Every article must belong to exactly one group. Single-article groups are fine.
 
-Respond with valid JSON:
+Respond with valid JSON only:
 {
   "groups": [
     {
       "topicId": "<existing id or null>",
       "title": "<Arabic title — required when topicId is null>",
+      "categoryId": "<category id from availableCategories or null>",
       "articleIds": ["<id>", ...]
     }
   ]
 }
 `.trim()
 
-function truncate(text: string | null | undefined, maxChars = 400): string {
-  if (!text) return ""
-  return text.length > maxChars ? text.slice(0, maxChars) + "…" : text
-}
-
 const SEARCH_TOPICS_TOOL = {
   type: "function" as const,
   function: {
     name: "search_topics",
-    description: "Search existing topics by Arabic keyword. Call this multiple times with different keywords to find if a similar topic already exists.",
+    description: "Search existing topics by Arabic keyword to find if a similar topic already exists.",
     parameters: {
       type: "object",
       properties: {
-        query: {
-          type: "string",
-          description: "Arabic search keywords (e.g. 'مصر وبلجيكا', 'الاتفاق الإيراني', 'أسعار النفط')",
-        },
+        query: { type: "string", description: "Arabic search keywords" },
       },
       required: ["query"],
     },
@@ -76,11 +70,13 @@ const SEARCH_TOPICS_TOOL = {
 export async function groupArticlesByTopic(
   articles: ArticleInput[],
   searchTopics: (query: string) => Promise<{ id: string; title: string }[]>,
+  searchCategories: (query: string) => Promise<{ id: string; name: string }[]>,
 ): Promise<GroupingResult> {
   const apiKey = process.env.OPENROUTER_API_KEY
   if (!apiKey) throw new Error("OPENROUTER_API_KEY is not set")
-
   if (articles.length === 0) return { groups: [] }
+
+  const allCats = await searchCategories("")
 
   const articlesPayload = articles.map((a) => ({
     id: a.id,
@@ -93,12 +89,12 @@ export async function groupArticlesByTopic(
     { role: "system", content: SYSTEM_PROMPT },
     {
       role: "user",
-      content: JSON.stringify({ articles: articlesPayload, existingTopics: [] }, null, 2),
+      content: JSON.stringify({ articles: articlesPayload, existingTopics: [], availableCategories: allCats }, null, 2),
     },
   ]
 
   const controller = new AbortController()
-  const timeout = setTimeout(() => controller.abort(), 60000)
+  const timeout = setTimeout(() => controller.abort(), 180000)
 
   try {
     while (true) {
@@ -116,6 +112,7 @@ export async function groupArticlesByTopic(
           tools: [SEARCH_TOPICS_TOOL],
           tool_choice: "auto",
           temperature: 0.1,
+          response_format: { type: "json_object" },
         }),
       })
 
@@ -131,7 +128,6 @@ export async function groupArticlesByTopic(
       const msg = data.choices?.[0]?.message
       if (!msg) throw new Error("No response from OpenRouter")
 
-      // If the AI made tool calls, execute them and continue the loop
       if (msg.tool_calls && msg.tool_calls.length > 0) {
         messages.push({ role: "assistant", content: msg.content ?? "", tool_calls: msg.tool_calls as any })
 
@@ -147,10 +143,9 @@ export async function groupArticlesByTopic(
             })
           }
         }
-        continue // Loop back to let the AI process tool results
+        continue
       }
 
-      // No tool calls — this is the final answer
       const raw = msg.content ?? ""
       let parsed: GroupingResult
       try {
@@ -158,11 +153,9 @@ export async function groupArticlesByTopic(
       } catch {
         throw new Error(`Topic grouper returned invalid JSON: ${raw.slice(0, 300)}`)
       }
-
       if (!Array.isArray(parsed.groups)) {
         throw new Error(`Topic grouper response missing 'groups' array: ${raw.slice(0, 300)}`)
       }
-
       return parsed
     }
   } finally {
