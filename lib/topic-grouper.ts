@@ -22,30 +22,32 @@ export type GroupingResult = {
 }
 
 const SYSTEM_PROMPT = `
-You are a news topic clustering assistant. You receive a JSON object with:
-- "articles": array of { id, title, excerpt, category }
-- "existingTopics": array of { id, title }
-- "availableCategories": array of { id, name } — choose from these for each group
+You are a news categorization and topic clustering assistant.
 
-Your job:
-1. Read titles and excerpts carefully.
-2. Group articles that cover the EXACT SAME specific real-world event or story.
-3. For each group, pick the best matching category from availableCategories.
-4. To find if a matching topic already exists, use the \`search_topics\` tool.
-   - Call it with Arabic keywords to search by.
-   - You may call it multiple times with different keywords.
-   - If you find an existing topic that matches, reuse its id.
-   - If nothing matches, create a new topic (topicId: null).
-5. For new topics, generate a concise Arabic title (5–10 words) naming the specific event.
-6. Every article must belong to exactly one group. Single-article groups are fine.
+You receive:
+- "articles": array of { id, title, excerpt, content, category }
+- "availableCategories": array of { id, name } — pick from these
+
+Your job in order:
+1. Read the title, excerpt, and FULL content of each article carefully.
+2. For EACH article, assign it to the best matching category from availableCategories.
+   - Use the FULL content to understand what the article is really about.
+   - Group articles into their assigned categories first.
+3. Within each category, group articles that cover the EXACT SAME specific event.
+   - A group with a single article is perfectly fine.
+   - Prefer more specific groups over broad ones.
+4. For each group, use the \`search_topics\` tool to check if a matching topic already exists.
+   - Call it with different Arabic keywords.
+   - If found, reuse its id and categoryId.
+   - If not found, create a new topic.
 
 Respond with valid JSON only:
 {
   "groups": [
     {
       "topicId": "<existing id or null>",
-      "title": "<Arabic title — required when topicId is null>",
-      "categoryId": "<category id from availableCategories or null>",
+      "title": "<Arabic title for new topics>",
+      "categoryId": "<category id from availableCategories>",
       "articleIds": ["<id>", ...]
     }
   ]
@@ -60,7 +62,7 @@ const SEARCH_TOPICS_TOOL = {
     parameters: {
       type: "object",
       properties: {
-        query: { type: "string", description: "Arabic search keywords" },
+        query: { type: "string", description: "Arabic keywords" },
       },
       required: ["query"],
     },
@@ -82,6 +84,7 @@ export async function groupArticlesByTopic(
     id: a.id,
     title: a.title,
     excerpt: a.excerpt ?? "",
+    content: (a.content ?? "").slice(0, 1000),
     category: a.category,
   }))
 
@@ -89,7 +92,7 @@ export async function groupArticlesByTopic(
     { role: "system", content: SYSTEM_PROMPT },
     {
       role: "user",
-      content: JSON.stringify({ articles: articlesPayload, existingTopics: [], availableCategories: allCats }, null, 2),
+      content: JSON.stringify({ articles: articlesPayload, availableCategories: allCats }, null, 2),
     },
   ]
 
