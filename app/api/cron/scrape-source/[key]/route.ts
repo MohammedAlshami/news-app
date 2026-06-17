@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { getNewsSourceByKey, getLastScrapedAt, updateLastScrapedAt } from "@/lib/db-news-sources.server"
 import { saveScrapeResult, insertScrapedNewsRows } from "@/lib/db-scraped-news.server"
 import { createNewsScraper, getSupportedCategories, type ScraperSourceKey } from "@/lib/news-scraper"
+import { runTopicGrouping } from "@/lib/db-topics.server"
 
 export const dynamic = "force-dynamic"
 
@@ -67,6 +68,16 @@ export async function GET(
   const nowIso = now.toISOString()
   await updateLastScrapedAt(key, nowIso)
 
+  // Run topic grouping if new articles were scraped
+  let topicsGrouped = null
+  if (totalInserted > 0) {
+    try {
+      topicsGrouped = await runTopicGrouping()
+    } catch (err) {
+      console.error(`Topic grouping after ${key}:`, err)
+    }
+  }
+
   return NextResponse.json({
     ok: true,
     source: key,
@@ -74,5 +85,6 @@ export async function GET(
     previousScrape: lastScrapedAt?.toISOString() ?? null,
     results,
     totalInserted,
+    topicsGrouped,
   })
 }
