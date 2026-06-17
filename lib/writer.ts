@@ -203,11 +203,12 @@ async function writeArticle(
   const now = new Date()
   const categoryId = topic?.categoryId ?? null
 
-  // Download cover image and upload to R2
-  let r2Url = coverImageUrl ?? null
-  if (r2Url && !r2Url.includes("r2.dev")) {
-    const uploaded = await uploadImageToR2(r2Url, articleId)
-    if (uploaded) r2Url = uploaded
+  // Download cover image and upload to R2; fall back to original URL
+  let imageUrl = coverImageUrl ?? null
+  if (imageUrl && !imageUrl.includes("r2.dev")) {
+    const uploaded = await uploadImageToR2(imageUrl, articleId)
+    if (uploaded) imageUrl = uploaded
+    // If R2 upload failed, keep the original URL as fallback
   }
 
   await db.insert(generatedArticles).values({
@@ -215,8 +216,8 @@ async function writeArticle(
     title,
     excerpt,
     body,
-    coverImageUrl: r2Url,
-    imageUrls: JSON.stringify(r2Url ? [r2Url] : []),
+    coverImageUrl: imageUrl,
+    imageUrls: JSON.stringify(imageUrl ? [imageUrl] : []),
     topicId,
     sourceArticleIds: JSON.stringify(sourceIds),
     isPublished: true,
@@ -228,7 +229,7 @@ async function writeArticle(
     title,
     excerpt,
     body,
-    coverImageUrl: r2Url,
+    coverImageUrl: imageUrl,
     categoryId,
     isPublished: true,
     views: 0,
