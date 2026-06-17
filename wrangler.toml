@@ -27,3 +27,5 @@ remote = true
 [[r2_buckets]]
 binding = "MEDIA"
 bucket_name = "news"
+
+

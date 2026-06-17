@@ -1,6 +1,6 @@
 import "server-only"
 
-import { desc, gte, like } from "drizzle-orm"
+import { desc, gte } from "drizzle-orm"
 
 import { getDb } from "@/db/client"
 import { categories, scrapedNews, topics } from "@/db/schema"
@@ -15,18 +15,28 @@ export async function getAllTopics() {
     .orderBy(desc(topics.createdAt))
 }
 
+function escapeLike(s: string): string {
+  return s.replace(/'/g, "''").replace(/[%_]/g, " ").slice(0, 100)
+}
+
 async function searchTopics(query: string): Promise<{ id: string; title: string }[]> {
-  return getDb()
-    .select({ id: topics.id, title: topics.title })
-    .from(topics)
-    .where(like(topics.title, `%${query}%`))
-    .limit(10)
+  const { rawD1Query } = await import("@/lib/db-raw-d1")
+  try {
+    const result = await rawD1Query(`SELECT id, title FROM topics WHERE title LIKE '%${escapeLike(query)}%' LIMIT 10`)
+    return (result?.rows ?? []).map((r: unknown[]) => ({ id: r[0] as string, title: r[1] as string }))
+  } catch {
+    return []
+  }
 }
 
 async function searchCategories(query: string): Promise<{ id: string; name: string }[]> {
   const { rawD1Query } = await import("@/lib/db-raw-d1")
-  const result = await rawD1Query(`SELECT id, name FROM categories WHERE name LIKE '%${query.replace(/'/g, "''")}%' LIMIT 5`)
-  return (result?.rows ?? []).map((r: unknown[]) => ({ id: r[0] as string, name: r[1] as string }))
+  try {
+    const result = await rawD1Query(`SELECT id, name FROM categories WHERE name LIKE '%${escapeLike(query)}%' LIMIT 5`)
+    return (result?.rows ?? []).map((r: unknown[]) => ({ id: r[0] as string, name: r[1] as string }))
+  } catch {
+    return []
+  }
 }
 
 export async function runTopicGrouping(windowMs = 24 * 60 * 60 * 1000): Promise<{
