@@ -1,6 +1,7 @@
 import { getDb } from "@/db/client"
 import { articles, generatedArticles, scrapedNews, topics } from "@/db/schema"
 import { like, eq, desc, sql } from "drizzle-orm"
+import { putR2Object } from "@/lib/r2.server"
 
 const OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions"
 const MODEL = process.env.OPENROUTER_MODEL ?? "openai/gpt-4o-mini"
@@ -157,6 +158,22 @@ async function getPreviousArticles(topicId: string) {
   return rows
 }
 
+async function uploadImageToR2(url: string, articleId: string): Promise<string | null> {
+  if (!url || !url.startsWith("http")) return null
+  try {
+    const res = await fetch(url, { signal: AbortSignal.timeout(10000) })
+    if (!res.ok) return null
+    const buffer = Buffer.from(await res.arrayBuffer())
+    const contentType = res.headers.get("content-type") || "image/jpeg"
+    const ext = contentType.split("/")[1] || "jpg"
+    const key = `articles/${articleId}/cover.${ext}`
+    const r2Url = await putR2Object({ key, body: buffer, contentType })
+    return r2Url
+  } catch {
+    return null
+  }
+}
+
 async function writeArticle(
   topicId: string,
   title: string,
@@ -166,6 +183,13 @@ async function writeArticle(
   coverImageUrl?: string,
 ) {
   const db = getDb()
+
+  // Get the topic's categoryId
+  const [topic] = await db
+    .select({ categoryId: topics.categoryId })
+    .from(topics)
+    .where(eq(topics.id, topicId))
+    .limit(1)
   const body = JSON.stringify({
     type: "doc",
     content: paragraphs.map((text) => ({
@@ -175,29 +199,37 @@ async function writeArticle(
   })
 
   const genId = crypto.randomUUID()
+  const articleId = crypto.randomUUID()
   const now = new Date()
+  const categoryId = topic?.categoryId ?? null
+
+  // Download cover image and upload to R2
+  let r2Url = coverImageUrl ?? null
+  if (r2Url && !r2Url.includes("r2.dev")) {
+    const uploaded = await uploadImageToR2(r2Url, articleId)
+    if (uploaded) r2Url = uploaded
+  }
 
   await db.insert(generatedArticles).values({
     id: genId,
     title,
     excerpt,
     body,
-    coverImageUrl: coverImageUrl ?? null,
-    imageUrls: JSON.stringify(coverImageUrl ? [coverImageUrl] : []),
+    coverImageUrl: r2Url,
+    imageUrls: JSON.stringify(r2Url ? [r2Url] : []),
     topicId,
     sourceArticleIds: JSON.stringify(sourceIds),
     isPublished: true,
   })
 
   // Auto-publish to main articles table
-  const articleId = crypto.randomUUID()
   await db.insert(articles).values({
     id: articleId,
     title,
     excerpt,
     body,
-    coverImageUrl: coverImageUrl ?? null,
-    categoryId: null,
+    coverImageUrl: r2Url,
+    categoryId,
     isPublished: true,
     views: 0,
     createdAt: now,

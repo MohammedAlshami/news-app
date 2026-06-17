@@ -68,14 +68,14 @@ export async function GET(
   const nowIso = now.toISOString()
   await updateLastScrapedAt(key, nowIso)
 
-  // Run topic grouping if new articles were scraped
+  // Run topic grouping on any ungrouped articles
   let topicsGrouped = null
-  if (totalInserted > 0) {
-    try {
-      topicsGrouped = await runTopicGrouping()
-    } catch (err) {
-      console.error(`Topic grouping after ${key}:`, err)
-    }
+  let topicError: string | null = null
+  try {
+    topicsGrouped = await runTopicGrouping()
+  } catch (err) {
+    topicError = err instanceof Error ? err.message : String(err)
+    console.error(`Topic grouping after ${key}:`, topicError)
   }
 
   return NextResponse.json({
@@ -86,5 +86,6 @@ export async function GET(
     results,
     totalInserted,
     topicsGrouped,
+    topicError,
   })
 }

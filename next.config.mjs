@@ -28,6 +28,15 @@ const nextConfig = {
       /** Covers BBC iChef (e.g. imported article covers from BBC export). */
       { protocol: "https", hostname: "**.bbci.co.uk", port: "", pathname: "/**" },
       { protocol: "https", hostname: "mf.b37mrtl.ru", port: "", pathname: "/**" },
+      { protocol: "https", hostname: "img.youm7.com", port: "", pathname: "/**" },
+      { protocol: "https", hostname: "**.youm7.com", port: "", pathname: "/**" },
+      { protocol: "https", hostname: "aawsat.com", port: "", pathname: "/**" },
+      { protocol: "https", hostname: "**.aawsat.com", port: "", pathname: "/**" },
+      { protocol: "https", hostname: "alquds.com", port: "", pathname: "/**" },
+      { protocol: "https", hostname: "**.alquds.com", port: "", pathname: "/**" },
+      { protocol: "https", hostname: "aajeg.com", port: "", pathname: "/**" },
+      { protocol: "https", hostname: "elwatannews.com", port: "", pathname: "/**" },
+      { protocol: "https", hostname: "skynewsarabia.com", port: "", pathname: "/**" },
     ],
   },
 }

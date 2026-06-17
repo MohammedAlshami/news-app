@@ -3,7 +3,7 @@ import "server-only"
 import { desc, gte, like } from "drizzle-orm"
 
 import { getDb } from "@/db/client"
-import { scrapedNews, topics } from "@/db/schema"
+import { categories, scrapedNews, topics } from "@/db/schema"
 import { groupArticlesByTopic, type ArticleInput } from "@/lib/topic-grouper"
 
 export type TopicRow = typeof topics.$inferSelect
@@ -21,6 +21,12 @@ async function searchTopics(query: string): Promise<{ id: string; title: string 
     .from(topics)
     .where(like(topics.title, `%${query}%`))
     .limit(10)
+}
+
+async function searchCategories(query: string): Promise<{ id: string; name: string }[]> {
+  const { rawD1Query } = await import("@/lib/db-raw-d1")
+  const result = await rawD1Query(`SELECT id, name FROM categories WHERE name LIKE '%${query.replace(/'/g, "''")}%' LIMIT 5`)
+  return (result?.rows ?? []).map((r: unknown[]) => ({ id: r[0] as string, name: r[1] as string }))
 }
 
 export async function runTopicGrouping(windowMs = 24 * 60 * 60 * 1000): Promise<{
@@ -56,7 +62,7 @@ export async function runTopicGrouping(windowMs = 24 * 60 * 60 * 1000): Promise<
     publishedAt: r.publishedAt,
   }))
 
-  const { groups } = await groupArticlesByTopic(articles, searchTopics)
+  const { groups } = await groupArticlesByTopic(articles, searchTopics, searchCategories)
 
   let topicsCreated = 0
   let topicsReused = 0
@@ -74,6 +80,7 @@ export async function runTopicGrouping(windowMs = 24 * 60 * 60 * 1000): Promise<
       await db.insert(topics).values({
         id: newId,
         title: group.title,
+        categoryId: group.categoryId,
         articleCount: 0,
       })
       topicId = newId

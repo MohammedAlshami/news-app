@@ -48,7 +48,7 @@ function toFeedArticle(r: {
   }
 }
 
-async function getArticlesByCategory(
+export async function getArticlesByCategory(
   slug: string,
   limit: number,
 ): Promise<FeedArticle[]> {
@@ -56,15 +56,7 @@ async function getArticlesByCategory(
   if (!categoryId) return []
 
   const rows = await getDb()
-    .select({
-      id: articles.id,
-      title: articles.title,
-      excerpt: articles.excerpt,
-      createdAt: articles.createdAt,
-      categoryId: articles.categoryId,
-      coverImageUrl: articles.coverImageUrl,
-      isMemberOnly: articles.isMemberOnly,
-    })
+    .select(cols)
     .from(articles)
     .where(
       sql`${articles.isPublished} = 1 AND ${articles.categoryId} = ${categoryId}`,
