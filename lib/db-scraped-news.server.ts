@@ -40,6 +40,9 @@ export async function insertScrapedNewsRows(input: {
     (item, idx, arr) => arr.findIndex((i) => i.url === item.url) === idx,
   )
 
+  // Skip any item without an image — no fallback images allowed
+  const withImages = uniqueItems.filter((item) => !!item.imageUrl?.trim())
+
   // Fetch all existing URLs for this source in one query to avoid N round-trips
   const existingRows = await db
     .select({ url: scrapedNews.url })
@@ -49,7 +52,7 @@ export async function insertScrapedNewsRows(input: {
   const existingUrls = new Set(existingRows.map((r) => r.url))
 
   // Filter out anything already in the DB
-  const newItems = uniqueItems.filter((item) => !existingUrls.has(item.url))
+  const newItems = withImages.filter((item) => !existingUrls.has(item.url))
 
   if (newItems.length === 0) return 0
 

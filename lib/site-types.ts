@@ -16,6 +16,8 @@ export type FeedArticle = {
   /** Hero image for cards (absolute URL or `/uploads/...`). */
   coverImageUrl?: string | null
   isMemberOnly: boolean
+  /** JSON array of bullet-point highlights. */
+  highlights?: string[]
 }
 
 /** Alias for components that imported `Article` for feed/list usage. */

@@ -37,6 +37,8 @@ const nextConfig = {
       { protocol: "https", hostname: "aajeg.com", port: "", pathname: "/**" },
       { protocol: "https", hostname: "elwatannews.com", port: "", pathname: "/**" },
       { protocol: "https", hostname: "skynewsarabia.com", port: "", pathname: "/**" },
+      { protocol: "https", hostname: "www.aajae.co", port: "", pathname: "/**" },
+      { protocol: "https", hostname: "**.aajae.co", port: "", pathname: "/**" },
     ],
   },
 }

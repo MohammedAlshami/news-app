@@ -19,38 +19,52 @@ export type TopicGroup = {
 
 export type GroupingResult = {
   groups: TopicGroup[]
+  skippedArticleIds: string[]
 }
 
 const SYSTEM_PROMPT = `
-You are a news categorization and topic clustering assistant.
+You are a strict news categorization and topic clustering assistant. Your accuracy MUST be 100%. If you are not absolutely certain, SKIP the article entirely.
 
 You receive:
 - "articles": array of { id, title, excerpt, content, category }
-- "availableCategories": array of { id, name } — pick from these
+- "availableCategories": array of { id, name } — pick ONLY from these
 
-Your job in order:
-1. Read the title, excerpt, and FULL content of each article carefully.
-2. For EACH article, assign it to the best matching category from availableCategories.
-   - Use the FULL content to understand what the article is really about.
-   - Group articles into their assigned categories first.
-3. Within each category, group articles that cover the EXACT SAME specific event.
-   - A group with a single article is perfectly fine.
-   - Prefer more specific groups over broad ones.
-4. For each group, use the \`search_topics\` tool to check if a matching topic already exists.
-   - Call it with different Arabic keywords.
-   - If found, reuse its id and categoryId.
-   - If not found, create a new topic.
+RULES — follow EXACTLY:
+1. Read title + excerpt + content of EACH article carefully.
+2. Assign each article to exactly ONE category from availableCategories based on MAIN topic:
+   - الاقتصاد: economy, business, finance, markets, trade, currencies, stocks
+   - رياضة: sports, football, tournaments, athletics, matches
+   - تكنولوجيا: technology, AI, gadgets, software, hardware, cybersecurity
+   - سياسة: politics, diplomacy, elections, government, international relations
+   - صحة: health, medicine, diseases, nutrition, fitness, medical research
+   - ثقافة وفنون: culture, arts, cinema, music, literature, theater, exhibitions
+   - علوم: science, space, physics, biology, chemistry, scientific research
+   - بيئة: environment, climate, weather, nature, pollution, conservation
+3. If NOT 100% sure which category → put articleId in "skippedArticleIds".
+   - Do not guess. Zero tolerance for miscategorization.
+4. Group articles of the EXACT SAME specific event together.
+   - Different articles about different aspects of gold prices → SAME group.
+   - Different reports about the same football match → SAME group.
+   - Two articles about "gold prices" and "dollar exchange rate" → DIFFERENT groups if distinct.
+   - If unsure whether articles cover the same event → put them in SEPARATE groups.
+5. For each group, use search_topics tool to check if a matching topic already exists.
+   - Call with 3 different Arabic keyword variations to maximize chance of finding it.
+   - If found → reuse its id and categoryId.
+   - If not found → create a new topic with a specific Arabic title (not generic).
+6. Keep groups SMALL and SPECIFIC. A group with a single article is fine.
+   - Do NOT merge articles that cover different specific events.
 
-Respond with valid JSON only:
+Return valid JSON:
 {
   "groups": [
     {
-      "topicId": "<existing id or null>",
-      "title": "<Arabic title for new topics>",
+      "topicId": "<existing topic id or null>",
+      "title": "<specific Arabic title for new topics>",
       "categoryId": "<category id from availableCategories>",
       "articleIds": ["<id>", ...]
     }
-  ]
+  ],
+  "skippedArticleIds": ["<id>", ...]
 }
 `.trim()
 
@@ -76,7 +90,7 @@ export async function groupArticlesByTopic(
 ): Promise<GroupingResult> {
   const apiKey = process.env.OPENROUTER_API_KEY
   if (!apiKey) throw new Error("OPENROUTER_API_KEY is not set")
-  if (articles.length === 0) return { groups: [] }
+  if (articles.length === 0) return { groups: [], skippedArticleIds: [] }
 
   const allCats = await searchCategories("")
 

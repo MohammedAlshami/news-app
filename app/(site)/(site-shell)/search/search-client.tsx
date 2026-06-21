@@ -9,9 +9,6 @@ import { formatArticleDate } from "@/lib/format-date"
 import { getArticlePath } from "@/lib/site-routes"
 import { ar } from "@/lib/ui-ar"
 
-const FALLBACK_COVER =
-  "https://pub-22db16bb70fb414aafa322450d8bf3c1.r2.dev/landing/0f8e1a7b62c7f5cc2a650b40d8cd2168.jpg"
-
 type Article = {
   id: string
   title: string
@@ -97,7 +94,8 @@ export default function SearchClient({ articles, initialQuery }: Props) {
           ) : (
             <div className="mx-auto max-w-3xl space-y-3">
               {filtered.map((article) => {
-                const imgSrc = article.coverImageUrl?.trim() || FALLBACK_COVER
+                const imgSrc = article.coverImageUrl?.trim()
+                if (!imgSrc) return null
                 return (
                   <Link
                     key={article.id}

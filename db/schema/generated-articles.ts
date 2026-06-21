@@ -13,8 +13,12 @@ export const generatedArticles = sqliteTable("generated_articles", {
   excerpt: text("excerpt").notNull().default(""),
   body: text("body").notNull(),
   coverImageUrl: text("cover_image_url"),
+  /** Original source URL before R2 upload — for dedup detection. */
+  originalCoverImageUrl: text("original_cover_image_url"),
   /** Additional image URLs collected from source articles (JSON array string) */
   imageUrls: text("image_urls").notNull().default("[]"),
+  /** JSON array of 3-5 bullet-point highlights for this article. */
+  highlights: text("highlights").notNull().default("[]"),
   /** FK → topics.id — the topic this article was generated from */
   topicId: text("topic_id").references(() => topics.id, { onDelete: "set null" }),
   /** IDs of the scraped_news rows used as sources (JSON array string) */

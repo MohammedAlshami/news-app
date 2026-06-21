@@ -19,9 +19,6 @@ type Props = {
   articles: Article[]
 }
 
-const FALLBACK_COVER =
-  "https://pub-22db16bb70fb414aafa322450d8bf3c1.r2.dev/landing/0f8e1a7b62c7f5cc2a650b40d8cd2168.jpg"
-
 export function RecommendedArticles({ articles }: Props) {
   if (articles.length === 0) return null
 
@@ -36,7 +33,8 @@ export function RecommendedArticles({ articles }: Props) {
       </h2>
       <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
         {articles.map((article) => {
-          const imgSrc = article.coverImageUrl?.trim() || FALLBACK_COVER
+          const imgSrc = article.coverImageUrl?.trim()
+          if (!imgSrc) return null
           return (
             <Link
               key={article.id}

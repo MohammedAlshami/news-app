@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils"
 type StoryCardProps = {
   title: string
   excerpt: string
-  image: string
+  image: string | null
   category: string
   href?: string
   className?: string
@@ -24,13 +24,15 @@ export function StoryCard({
 }: StoryCardProps) {
   return (
     <Link href={href} className={cn("group cursor-pointer", className)}>
-      <div className="relative aspect-video w-full overflow-hidden rounded-2xl bg-gray-100">
-        <img
-          src={image}
-          alt={title}
-          className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-105"
-        />
-      </div>
+      {image ? (
+        <div className="relative aspect-video w-full overflow-hidden rounded-2xl bg-gray-100">
+          <img
+            src={image}
+            alt={title}
+            className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-105"
+          />
+        </div>
+      ) : null}
       <span className="mt-4 block text-xs font-bold uppercase tracking-wider text-red-600">
         {category}
       </span>
@@ -45,7 +47,7 @@ export function StoryCard({
 type StoryListItemProps = {
   title: string
   category: string
-  image: string
+  image: string | null
   href?: string
   time: string
   compact?: boolean
@@ -67,11 +69,13 @@ export function StoryListItem({
         !compact && "border-t pt-6",
       )}
     >
+      {image ? (
         <img
           src={image}
           alt={title}
           className="h-24 w-24 shrink-0 rounded-lg object-cover"
         />
+      ) : null}
       <div>
         <span className="text-xs font-bold text-red-600">{category}</span>
         <h3 className="line-clamp-2 text-lg font-bold leading-snug transition group-hover:text-red-600">

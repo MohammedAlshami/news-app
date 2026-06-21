@@ -7,7 +7,7 @@ const OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions"
 const MODEL = process.env.OPENROUTER_MODEL ?? "openai/gpt-4o-mini"
 
 const SYSTEM_PROMPT = `
-You are an Arabic news journalist. Your job is to decide what to write about and write one article per run.
+You are a strict Arabic news journalist. You write ONLY one article per run. You MUST be 100% accurate.
 
 You have these tools:
 
@@ -25,30 +25,33 @@ You have these tools:
 5. get_previous_articles(topicId) — returns the titles and excerpts of previously generated
    articles for this topic, so you don't repeat what's already been covered.
 
-6. write_article(topicId, title, excerpt, paragraphs[], sourceIds[], coverImageUrl) —
+6. write_article(topicId, title, excerpt, highlights[], paragraphs[], sourceIds[], coverImageUrl) —
    Save the article. paragraphs is an array of Arabic strings, each is one paragraph.
+   highlights is an array of 3-5 bullet-point Arabic strings.
    sourceIds are the scraped article IDs you used as sources.
-   coverImageUrl is optional.
+   coverImageUrl is REQUIRED — must come from a source article with an image.
 
-Decision rules:
-- Search topics first. Look for topics with scraped articles.
-- If a topic has 0 generated articles → good candidate, write the first article.
-- If a topic has generated articles → check get_previous_articles to see what was covered.
-  Then check if there are NEW sources (scraped articles not used before) with new developments.
-- Only write about topics that have enough material (at least 2 source articles).
-- Write ONE article per run. If nothing worth writing → respond with { action: "skip", reason: "..." }.
+STRICT RULES — follow EXACTLY:
+- ONLY write about topics that have scraped articles WITH images.
+- If NO source has an imageUrl → SKIP the topic entirely.
+- If a topic has generated articles → check get_previous_articles.
+  Compare titles carefully. If ANY existing article covers the SAME story → SKIP.
+  Only write if there are genuinely NEW developments (new facts, new sources).
+- NEVER write a second article about the same match, same price movement, same event.
+- At least 2 source articles with content required.
+- coverImageUrl is REQUIRED — never generate without one.
+- Write ONE article per run. If nothing → respond with { action: "skip", reason: "..." }.
 
 Article quality rules:
-- Title: concise Arabic headline, 8-15 words
+- Title: concise Arabic headline, 8-15 words, MUST differ from previous titles
 - Excerpt: 2-3 sentence summary, 40-80 words
+- Highlights: 3-5 bullet points, 10-25 words each
 - Paragraphs: at least 4, each 50-120 words
 - Write in Modern Standard Arabic (فصحى)
 - Be objective and informative
-- Synthesize multiple sources, don't just repeat one
-- For follow-ups: focus on NEW developments only, don't repeat old content
 
 Response format when writing:
-{ "action": "write", "topicId": "...", "title": "...", "excerpt": "...", "paragraphs": ["...", ...], "sourceIds": ["...", ...], "coverImageUrl": "..." }
+{ "action": "write", "topicId": "...", "title": "...", "excerpt": "...", "highlights": ["...", ...], "paragraphs": ["...", ...], "sourceIds": ["...", ...], "coverImageUrl": "..." }
 
 Response format when skipping:
 { "action": "skip", "reason": "..." }
@@ -181,8 +184,32 @@ async function writeArticle(
   paragraphs: string[],
   sourceIds: string[],
   coverImageUrl?: string,
+  highlights?: string[],
 ) {
   const db = getDb()
+
+  // Require a cover image — no fallback allowed
+  if (!coverImageUrl) {
+    throw new Error(`Cannot write article "${title}" without a cover image`)
+  }
+
+  // Check for duplicate: does an article with very similar title already exist?
+  const existing = await db
+    .select({ id: articles.id, title: articles.title })
+    .from(articles)
+    .limit(5)
+  for (const e of existing) {
+    const t1 = e.title.replace(/\s/g, "")
+    const t2 = title.replace(/\s/g, "")
+    let common = 0
+    for (let i = 0; i < Math.min(t1.length, t2.length); i++) {
+      if (t1[i] === t2[i]) common++
+    }
+    const similarity = common / Math.max(t1.length, t2.length)
+    if (similarity > 0.6) {
+      throw new Error(`Duplicate article detected: "${title}" is too similar to existing "${e.title}" (${Math.round(similarity * 100)}% match)`)
+    }
+  }
 
   // Get the topic's categoryId
   const [topic] = await db
@@ -202,13 +229,13 @@ async function writeArticle(
   const articleId = crypto.randomUUID()
   const now = new Date()
   const categoryId = topic?.categoryId ?? null
+  const originalUrl = coverImageUrl
 
-  // Download cover image and upload to R2; fall back to original URL
-  let imageUrl = coverImageUrl ?? null
+  // Download cover image and upload to R2
+  let imageUrl = coverImageUrl
   if (imageUrl && !imageUrl.includes("r2.dev")) {
     const uploaded = await uploadImageToR2(imageUrl, articleId)
     if (uploaded) imageUrl = uploaded
-    // If R2 upload failed, keep the original URL as fallback
   }
 
   await db.insert(generatedArticles).values({
@@ -217,7 +244,9 @@ async function writeArticle(
     excerpt,
     body,
     coverImageUrl: imageUrl,
+    originalCoverImageUrl: originalUrl,
     imageUrls: JSON.stringify(imageUrl ? [imageUrl] : []),
+    highlights: JSON.stringify(highlights ?? []),
     topicId,
     sourceArticleIds: JSON.stringify(sourceIds),
     isPublished: true,
@@ -230,6 +259,8 @@ async function writeArticle(
     excerpt,
     body,
     coverImageUrl: imageUrl,
+    originalCoverImageUrl: originalUrl,
+    highlights: JSON.stringify(highlights ?? []),
     categoryId,
     isPublished: true,
     views: 0,
@@ -327,13 +358,14 @@ const TOOLS = [
         type: "object",
         properties: {
           topicId: { type: "string", description: "The topic ID" },
-          title: { type: "string", description: "Arabic headline, 8-15 words" },
+          title: { type: "string", description: "Arabic headline, 8-15 words, must be unique" },
           excerpt: { type: "string", description: "2-3 sentence summary, 40-80 words" },
+          highlights: { type: "array", items: { type: "string" }, description: "3-5 bullet-point highlights, 10-25 words each" },
           paragraphs: { type: "array", items: { type: "string" }, description: "Array of paragraphs, at least 4, each 50-120 words" },
           sourceIds: { type: "array", items: { type: "string" }, description: "Scraped article IDs used as sources" },
-          coverImageUrl: { type: "string", description: "Optional cover image URL from one of the sources" },
+          coverImageUrl: { type: "string", description: "REQUIRED — cover image URL from a source article" },
         },
-        required: ["topicId", "title", "excerpt", "paragraphs", "sourceIds"],
+        required: ["topicId", "title", "excerpt", "highlights", "paragraphs", "sourceIds", "coverImageUrl"],
       },
     },
   },
@@ -434,6 +466,7 @@ export async function runWriter(): Promise<WriterResult> {
               args.paragraphs,
               args.sourceIds,
               args.coverImageUrl,
+              args.highlights,
             )
             return { action: "write", article }
           }
@@ -455,6 +488,7 @@ export async function runWriter(): Promise<WriterResult> {
             parsed.paragraphs,
             parsed.sourceIds,
             parsed.coverImageUrl,
+            parsed.highlights,
           )
           return { action: "write", article }
         }
