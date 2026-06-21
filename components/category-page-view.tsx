@@ -22,9 +22,6 @@ type CategoryPageViewProps = {
   ads?: SiteAdPublic[]
 }
 
-const FALLBACK_COVER =
-  "https://pub-22db16bb70fb414aafa322450d8bf3c1.r2.dev/landing/0f8e1a7b62c7f5cc2a650b40d8cd2168.jpg"
-
 function labelForArticle(article: Article, categoryNameById: Record<string, string>) {
   const id = article.categoryIds[0]
   if (!id) return ar.uncategorized
@@ -42,7 +39,7 @@ function CategoryArticleRow({
   alternate: boolean
   isSubscribed: boolean
 }) {
-  const imgSrc = article.coverImageUrl?.trim() || FALLBACK_COVER
+  const imgSrc = article.coverImageUrl?.trim()
   const label = labelForArticle(article, categoryNameById)
 
   return (
@@ -55,13 +52,15 @@ function CategoryArticleRow({
         alternate && "md:flex-row-reverse",
       )}
     >
-      <div className="relative aspect-[16/10] w-full shrink-0 overflow-hidden rounded-3xl bg-neutral-100 md:w-[min(100%,380px)] md:max-w-[42%]">
-        <img
-          src={imgSrc}
-          alt=""
-          className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.02]"
-        />
-      </div>
+      {imgSrc ? (
+        <div className="relative aspect-[16/10] w-full shrink-0 overflow-hidden rounded-3xl bg-neutral-100 md:w-[min(100%,380px)] md:max-w-[42%]">
+          <img
+            src={imgSrc}
+            alt=""
+            className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.02]"
+          />
+        </div>
+      ) : null}
       <div className="flex min-w-0 flex-1 flex-col justify-center text-right">
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-neutral-500">
           <span className="rounded-full bg-neutral-100 px-3 py-0.5 text-[11px] font-bold uppercase tracking-[0.1em] text-indigo-800">

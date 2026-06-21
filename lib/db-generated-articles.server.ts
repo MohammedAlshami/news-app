@@ -14,6 +14,7 @@ export type GeneratedArticleListItem = {
   excerpt: string
   coverImageUrl: string | null
   imageUrls: string[]
+  highlights: string[]
   topicId: string | null
   topicTitle: string | null
   sourceArticleIds: string[]
@@ -56,6 +57,7 @@ function rowToListItem(
     excerpt: r.excerpt,
     coverImageUrl: r.coverImageUrl,
     imageUrls: parseJsonArray(r.imageUrls),
+    highlights: parseJsonArray(r.highlights),
     topicId: r.topicId,
     topicTitle,
     sourceArticleIds: parseJsonArray(r.sourceArticleIds),
@@ -212,7 +214,9 @@ export async function generateAndSaveArticleForTopic(topicId: string): Promise<{
     excerpt: generated.excerpt,
     body: generated.body,
     coverImageUrl: generated.coverImageUrl,
+    originalCoverImageUrl: generated.originalCoverImageUrl,
     imageUrls: JSON.stringify(generated.imageUrls),
+    highlights: JSON.stringify(generated.highlights),
     topicId,
     sourceArticleIds: JSON.stringify(generated.sourceArticleIds),
     isPublished: false,

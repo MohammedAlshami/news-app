@@ -21,6 +21,12 @@ export const articles = sqliteTable("articles", {
    * Hero/banner image (URL path e.g. `/uploads/articles/{id}/cover.jpg`).
    */
   coverImageUrl: text("cover_image_url"),
+  /** Original source URL before R2 upload — for dedup detection. */
+  originalCoverImageUrl: text("original_cover_image_url"),
+  /** SHA256 hash of the cover image — for dedup detection. */
+  coverImageHash: text("cover_image_hash"),
+  /** JSON array of 3-5 bullet-point highlights for this article. */
+  highlights: text("highlights").notNull().default("[]"),
   createdAt: integer("created_at", { mode: "timestamp_ms" })
     .notNull()
     .default(sql`(unixepoch() * 1000)`),

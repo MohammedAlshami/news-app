@@ -68,7 +68,7 @@ async function generateArticleForTopic(topicId: string): Promise<{ title: string
     body: JSON.stringify({
       model: "openai/gpt-4o-mini",
       messages: [
-        { role: "system", content: "Write a comprehensive Arabic news article. Respond JSON: { title, excerpt, paragraphs[] }" },
+        { role: "system", content: "Write a comprehensive Arabic news article. Respond JSON: { title, excerpt, highlights[], paragraphs[] } where highlights is 3-5 bullet points." },
         { role: "user", content: JSON.stringify({ topic: topic.title, sources }) },
       ],
       temperature: 0.6,
@@ -78,16 +78,23 @@ async function generateArticleForTopic(topicId: string): Promise<{ title: string
 
   const data = await res.json() as any
   const raw = data.choices?.[0]?.message?.content ?? "{}"
-  const parsed = JSON.parse(raw) as { title: string; excerpt: string; paragraphs: string[] }
+  const parsed = JSON.parse(raw) as { title: string; excerpt: string; paragraphs: string[]; highlights?: string[] }
+
+  // Require at least one source with image
+  const imageSource = sourceRows.find((r) => r.imageUrl)
+  if (!imageSource) {
+    console.log(`  SKIP (no image): ${topic.title}`)
+    return null
+  }
 
   const body = JSON.stringify({
     type: "doc",
     content: (parsed.paragraphs ?? []).map((t: string) => ({ type: "paragraph", content: [{ type: "text", text: t }] })),
   })
 
-  const imgSrc = sourceRows.find((r) => r.imageUrl)?.imageUrl ?? null
+  const imgSrc = imageSource.imageUrl!
   let r2Url = imgSrc
-  if (imgSrc && !imgSrc.includes("r2.dev")) {
+  if (!imgSrc.includes("r2.dev")) {
     try {
       const ir = await fetch(imgSrc, { signal: AbortSignal.timeout(8000) })
       if (ir.ok) {
@@ -97,23 +104,28 @@ async function generateArticleForTopic(topicId: string): Promise<{ title: string
         const key = `articles/${crypto.randomUUID()}/cover.${ext}`
         r2Url = await putR2Object({ key, body: buf, contentType: ct })
       }
-    } catch { /* ignore */ }
+    } catch { /* ignore upload failure — keep original URL */ }
   }
 
   const genId = crypto.randomUUID()
   const articleId = crypto.randomUUID()
   const now = new Date()
+  const highlights = Array.isArray(parsed.highlights) ? parsed.highlights.slice(0, 5) : []
 
   await db.insert(generatedArticles).values({
     id: genId, title: parsed.title, excerpt: parsed.excerpt ?? "", body,
-    coverImageUrl: r2Url, imageUrls: JSON.stringify(r2Url ? [r2Url] : []),
+    coverImageUrl: r2Url, originalCoverImageUrl: imgSrc,
+    imageUrls: JSON.stringify(r2Url ? [r2Url] : []),
+    highlights: JSON.stringify(highlights),
     topicId, sourceArticleIds: JSON.stringify(sourceRows.map((r) => r.id)),
     isPublished: true,
   })
 
   await db.insert(articles).values({
     id: articleId, title: parsed.title, excerpt: parsed.excerpt ?? "", body,
-    coverImageUrl: r2Url, categoryId: topic.categoryId,
+    coverImageUrl: r2Url, originalCoverImageUrl: imgSrc,
+    highlights: JSON.stringify(highlights),
+    categoryId: topic.categoryId,
     isPublished: true, views: 0, createdAt: now, updatedAt: now,
   })
 

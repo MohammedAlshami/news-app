@@ -121,15 +121,17 @@ export default async function NewsArticlePage({ params }: PageProps) {
                 title={article.title}
                 excerpt={article.excerpt}
               >
-                <ArticleHighlights
-                  items={[
-                    "مختبرات محلية تطلق نموذجاً لغوياً كبيراً (LLM) متخصصاً في المجالات التقنية بالعربية",
-                    "النموذج يدعم فهم المصطلحات التقنية العربية والتعامل مع اللهجات في السياقات المتخصصة",
-                    "تم تدريبه على مجموعة ضخمة من البيانات العربية شملت كتباً وأوراقاً بحثية ووثائق تقنية",
-                    "التطبيقات تشمل الترجمة التقنية، شرح الأكواد، وتحليل المستندات الفنية بالعربية",
-                    "سيتم إتاحة النموذج مجاناً للباحثين والمطورين عبر API مفتوح",
-                  ]}
-                />
+                {(() => {
+                  let highlights: string[] = []
+                  try {
+                    if (article.highlights) {
+                      highlights = JSON.parse(article.highlights)
+                    }
+                  } catch {}
+                  return highlights.length > 0 ? (
+                    <ArticleHighlights items={highlights} />
+                  ) : null
+                })()}
                 <NewsArticleView
                   adSlot={adSlot}
                 >
@@ -150,7 +152,8 @@ export default async function NewsArticlePage({ params }: PageProps) {
                 <h3 className="mb-4 text-right text-lg font-bold text-neutral-900">{"مقالات مقترحة"}</h3>
                 <div className="space-y-4">
                   {sidebarRecs.map((a) => {
-                    const imgSrc = a.coverImageUrl?.trim() || "https://pub-22db16bb70fb414aafa322450d8bf3c1.r2.dev/landing/0f8e1a7b62c7f5cc2a650b40d8cd2168.jpg"
+                    const imgSrc = a.coverImageUrl?.trim()
+                    if (!imgSrc) return null
                     return (
                       <Link
                         key={a.id}

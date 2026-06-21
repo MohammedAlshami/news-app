@@ -59,7 +59,7 @@ export async function getArticlesByCategory(
     .select(cols)
     .from(articles)
     .where(
-      sql`${articles.isPublished} = 1 AND ${articles.categoryId} = ${categoryId}`,
+      sql`${articles.isPublished} = 1 AND ${articles.categoryId} = ${categoryId} AND ${articles.coverImageUrl} IS NOT NULL AND ${articles.coverImageUrl} != ''`,
     )
     .orderBy(desc(articles.updatedAt))
     .limit(limit)
@@ -80,7 +80,7 @@ export async function getHeroArticles(): Promise<FeedArticle[]> {
   const rows = await getDb()
     .select(cols)
     .from(articles)
-    .where(eq(articles.isPublished, true))
+    .where(sql`${articles.isPublished} = 1 AND ${articles.coverImageUrl} IS NOT NULL AND ${articles.coverImageUrl} != ''`)
     .orderBy(desc(articles.updatedAt))
     .limit(3)
   return rows.map(toFeedArticle)

@@ -23,11 +23,8 @@ type Props = {
   categories: SiteCategory[]
 }
 
-const fallbackImage =
-  "https://pub-22db16bb70fb414aafa322450d8bf3c1.r2.dev/landing/0f8e1a7b62c7f5cc2a650b40d8cd2168.jpg"
-
-function getImage(article: Article) {
-  return (article as Article & { coverImageUrl?: string | null }).coverImageUrl ?? fallbackImage
+function getImage(article: Article): string | null {
+  return (article as Article & { coverImageUrl?: string | null }).coverImageUrl ?? null
 }
 
 function getCategoryLabel(article: Article, categories: SiteCategory[]) {
@@ -130,10 +127,10 @@ function SectionVariant({
         <SectionHeader title={section.title} accentClassName={accentClassName} href={section.href} />
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
           <div className="lg:col-span-2">
-            {section.articles[0] ? (
+            {section.articles[0] && getImage(section.articles[0]) ? (
               <Link href={`/news/${section.articles[0].id}`} className="group relative block overflow-hidden rounded-2xl">
                 <img
-                  src={getImage(section.articles[0])}
+                  src={getImage(section.articles[0])!}
                   alt={section.articles[0].title}
                   className="h-[360px] w-full object-cover transition duration-500 group-hover:scale-105"
                 />
@@ -221,13 +218,17 @@ export async function HomeLandingView({
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           <div className="group relative overflow-hidden rounded-2xl lg:col-span-2">
             <Link href={hero ? `/news/${hero.id}` : "#"} className="block">
-              <img
-                src={hero ? getImage(hero) : fallbackImage}
-                alt={mainHero.title}
-                className="h-[500px] w-full object-cover transition duration-500 group-hover:scale-105"
-              />
+              {hero && getImage(hero) ? (
+                <img
+                  src={getImage(hero)!}
+                  alt={mainHero.title}
+                  className="h-[500px] w-full object-cover transition duration-500 group-hover:scale-105"
+                />
+              ) : null}
             </Link>
+            {hero ? (
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+            ) : null}
             <div className="absolute bottom-0 right-0 max-w-[86%] bg-white p-6 shadow-2xl md:max-w-[62%] md:p-10">
               <div className="mb-5 flex flex-wrap gap-4 text-xs font-bold uppercase tracking-widest text-red-600">
                 <span className="inline-flex items-center gap-2">

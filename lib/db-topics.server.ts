@@ -43,6 +43,7 @@ export async function runTopicGrouping(windowMs = 24 * 60 * 60 * 1000): Promise<
   articlesProcessed: number
   topicsCreated: number
   topicsReused: number
+  articlesSkipped: number
 }> {
   const db = getDb()
   const since = new Date(Date.now() - windowMs)
@@ -60,7 +61,7 @@ export async function runTopicGrouping(windowMs = 24 * 60 * 60 * 1000): Promise<
     .where(gte(scrapedNews.scrapedAt, since))
 
   if (ungrouped.length === 0) {
-    return { articlesProcessed: 0, topicsCreated: 0, topicsReused: 0 }
+    return { articlesProcessed: 0, topicsCreated: 0, topicsReused: 0, articlesSkipped: 0 }
   }
 
   const articles: ArticleInput[] = ungrouped.map((r) => ({
@@ -72,7 +73,7 @@ export async function runTopicGrouping(windowMs = 24 * 60 * 60 * 1000): Promise<
     publishedAt: r.publishedAt,
   }))
 
-  const { groups } = await groupArticlesByTopic(articles, searchTopics, searchCategories)
+  const { groups, skippedArticleIds } = await groupArticlesByTopic(articles, searchTopics, searchCategories)
 
   let topicsCreated = 0
   let topicsReused = 0
@@ -117,5 +118,6 @@ export async function runTopicGrouping(windowMs = 24 * 60 * 60 * 1000): Promise<
     articlesProcessed: ungrouped.length,
     topicsCreated,
     topicsReused,
+    articlesSkipped: skippedArticleIds.length,
   }
 }
