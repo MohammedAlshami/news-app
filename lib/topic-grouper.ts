@@ -1,5 +1,5 @@
 const OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions"
-const GROUPER_MODEL = "openai/gpt-5-nano"
+const GROUPER_MODEL = "openai/gpt-4o-mini"
 
 export type ArticleInput = {
   id: string
@@ -23,15 +23,15 @@ export type GroupingResult = {
 }
 
 const SYSTEM_PROMPT = `
-You are a strict news categorization and topic clustering assistant. Your accuracy MUST be 100%. If you are not absolutely certain, SKIP the article entirely.
+You are a news categorization and topic clustering assistant. Your job is to accurately categorize and group articles. Be confident but not reckless.
 
 You receive:
 - "articles": array of { id, title, excerpt, content, category }
-- "availableCategories": array of { id, name } — pick ONLY from these
+- "availableCategories": array of { id, name }
 
-RULES — follow EXACTLY:
+RULES:
 1. Read title + excerpt + content of EACH article carefully.
-2. Assign each article to exactly ONE category from availableCategories based on MAIN topic:
+2. Assign each article to the BEST matching category from availableCategories:
    - الاقتصاد: economy, business, finance, markets, trade, currencies, stocks
    - رياضة: sports, football, tournaments, athletics, matches
    - تكنولوجيا: technology, AI, gadgets, software, hardware, cybersecurity
@@ -40,26 +40,23 @@ RULES — follow EXACTLY:
    - ثقافة وفنون: culture, arts, cinema, music, literature, theater, exhibitions
    - علوم: science, space, physics, biology, chemistry, scientific research
    - بيئة: environment, climate, weather, nature, pollution, conservation
-3. If NOT 100% sure which category → put articleId in "skippedArticleIds".
-   - Do not guess. Zero tolerance for miscategorization.
-4. Group articles of the EXACT SAME specific event together.
-   - Different articles about different aspects of gold prices → SAME group.
-   - Different reports about the same football match → SAME group.
-   - Two articles about "gold prices" and "dollar exchange rate" → DIFFERENT groups if distinct.
-   - If unsure whether articles cover the same event → put them in SEPARATE groups.
-5. For each group, use search_topics tool to check if a matching topic already exists.
-   - Call with 3 different Arabic keyword variations to maximize chance of finding it.
+3. If you truly CANNOT determine the category (article is generic or has no clear topic), put it in skippedArticleIds.
+   - But if there IS a clear main topic, assign it confidently — don't skip unnecessarily.
+4. Group articles covering the EXACT SAME specific event together.
+   - Different aspects of gold prices → SAME group
+   - Same football match from different sources → SAME group
+   - Different events → DIFFERENT groups
+5. For each group, use search_topics tool with Arabic keywords to check for existing topics.
    - If found → reuse its id and categoryId.
-   - If not found → create a new topic with a specific Arabic title (not generic).
-6. Keep groups SMALL and SPECIFIC. A group with a single article is fine.
-   - Do NOT merge articles that cover different specific events.
+   - If not found → create a new topic with a specific Arabic title.
+6. A group with a single article is perfectly fine.
 
 Return valid JSON:
 {
   "groups": [
     {
       "topicId": "<existing topic id or null>",
-      "title": "<specific Arabic title for new topics>",
+      "title": "<specific Arabic title>",
       "categoryId": "<category id from availableCategories>",
       "articleIds": ["<id>", ...]
     }
