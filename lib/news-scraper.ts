@@ -1683,7 +1683,7 @@ export class NewsScraper {
     
     // Fetch content for each article to get full text + images
     const itemsWithContent = await Promise.all(
-      items.slice(0, 3).map(async (item) => {
+      items.slice(0, 5).map(async (item) => {
         if (this.source === "rt") {
           const { excerpt, publishedAt, content } = await fetchRtArticleContent(item.url)
           return {
