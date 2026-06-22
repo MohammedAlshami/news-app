@@ -12,21 +12,23 @@ async function q(sql) {
   return j.result?.[0]?.results?.rows ?? []
 }
 
-console.log("--- Scraped news by source category ---")
-const byCat = await q("SELECT category, COUNT(*) as cnt FROM scraped_news GROUP BY category ORDER BY cnt DESC")
-for (const r of byCat) console.log(`  ${String(r[0]).padEnd(20)} ${r[1]}`)
+console.log("--- Articles by site category ---")
+const arts = await q(`SELECT c.name, COUNT(*) as cnt FROM articles LEFT JOIN categories c ON articles.category_id = c.id GROUP BY articles.category_id ORDER BY cnt DESC`)
+for (const r of arts) console.log(`  ${String(r[0] || "(uncategorized)").padEnd(20)} ${r[1]}`)
 
-const total = await q("SELECT COUNT(*) as c FROM scraped_news")
-console.log(`\nTotal scraped: ${total[0]?.[0] ?? 0}`)
-
-console.log("\n--- Topics by site category ---")
-const topics = await q("SELECT COALESCE(c.name, '(uncategorized)') as cat, COUNT(*) as cnt FROM topics LEFT JOIN categories c ON topics.category_id = c.id GROUP BY topics.category_id ORDER BY cnt DESC")
-for (const r of topics) console.log(`  ${String(r[0]).padEnd(20)} ${r[1]}`)
-
-console.log("\n--- Site categories ---")
-const cats = await q("SELECT id, name FROM categories")
-for (const c of cats) console.log(`  ${String(c[0]).slice(0,8)}... ${c[1]}`)
+const total = await q("SELECT COUNT(*) as c FROM articles")
+console.log(`\nTotal published: ${total[0]?.[0] ?? 0}`)
 
 const gen = await q("SELECT COUNT(*) as c FROM generated_articles")
-const pub = await q("SELECT COUNT(*) as c FROM articles")
-console.log(`\nGenerated: ${gen[0]?.[0] ?? 0}, Published: ${pub[0]?.[0] ?? 0}`)
+console.log(`Total generated: ${gen[0]?.[0] ?? 0}`)
+
+const scraped = await q("SELECT COUNT(*) as c FROM scraped_news")
+console.log(`Total scraped: ${scraped[0]?.[0] ?? 0}`)
+
+console.log("\n--- Sample generated article titles ---")
+const titles = await q("SELECT title FROM generated_articles LIMIT 10")
+for (const t of titles) console.log(`  ${String(t[0]).slice(0, 80)}`)
+
+console.log("\n--- Sample article titles ---")
+const pubTitles = await q("SELECT title FROM articles LIMIT 10")
+for (const t of pubTitles) console.log(`  ${String(t[0]).slice(0, 80)}`)

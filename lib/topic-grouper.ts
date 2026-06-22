@@ -22,157 +22,275 @@ export type GroupingResult = {
   skippedArticleIds: string[]
 }
 
-const SYSTEM_PROMPT = `
-You are a news categorization and topic clustering assistant. Your job is to accurately categorize and group articles. Be confident but not reckless.
+/**
+ * Map from scraper source categories to site category IDs.
+ * Unambiguous categories are hard-coded — no AI needed.
+ * Categories marked as "mixed" may contain articles from multiple site categories.
+ */
+const SOURCE_TO_SITE_CATEGORY: Record<string, string | "mixed"> = {
+  business: "economy",
+  economy: "economy",
+  finance: "economy",
+  sport: "sports",
+  sports: "sports",
+  tech: "technology",
+  technology: "technology",
+  politics: "politics",
+  health: "health",
+  culture: "culture",
+  arts: "culture",
+  art: "culture",
+  science: "science",
+  environment: "environment",
+  climate: "environment",
+  middle_east: "mixed",
+  world: "mixed",
+  news: "mixed",
+  arab: "mixed",
+  "arab-world": "mixed",
+  arab_and_world: "mixed",
+  varieties: "mixed",
+  misc: "mixed",
+  egypt: "mixed",
+  "news-egypt": "mixed",
+  "news-gulf": "mixed",
+  "news-iraq": "mixed",
+  "news-palestine": "mixed",
+  palestine: "mixed",
+  local: "mixed",
+  accidents: "mixed",
+  russia: "politics",
+  press: "politics",
+  guide: "mixed",
+  features: "mixed",
+  docfilms: "culture",
+  prg: "mixed",
+  satelites: "science",
+  opinions: "mixed",
+  lifestyle: "mixed",
+  event: "mixed",
+}
 
-You receive:
-- "articles": array of { id, title, excerpt, content, category }
-- "availableCategories": array of { id, name }
+/** Reverse lookup: site slug → category id (populated from DB at runtime). */
+let slugToId: Record<string, string> = {}
 
-RULES:
-1. Read title + excerpt + content of EACH article carefully.
-2. Assign each article to the BEST matching category from availableCategories:
-   - الاقتصاد: economy, business, finance, markets, trade, currencies, stocks
-   - رياضة: sports, football, tournaments, athletics, matches
-   - تكنولوجيا: technology, AI, gadgets, software, hardware, cybersecurity
-   - سياسة: politics, diplomacy, elections, government, international relations
-   - صحة: health, medicine, diseases, nutrition, fitness, medical research
-   - ثقافة وفنون: culture, arts, cinema, music, literature, theater, exhibitions
-   - علوم: science, space, physics, biology, chemistry, scientific research
-   - بيئة: environment, climate, weather, nature, pollution, conservation
-3. If you truly CANNOT determine the category (article is generic or has no clear topic), put it in skippedArticleIds.
-   - But if there IS a clear main topic, assign it confidently — don't skip unnecessarily.
-4. Group articles covering the EXACT SAME specific event together.
-   - Different aspects of gold prices → SAME group
-   - Same football match from different sources → SAME group
-   - Different events → DIFFERENT groups
-5. For each group, use search_topics tool with Arabic keywords to check for existing topics.
-   - If found → reuse its id and categoryId.
-   - If not found → create a new topic with a specific Arabic title.
-6. A group with a single article is perfectly fine.
+async function getCategoryMap(
+  searchCategories: (query: string) => Promise<{ id: string; name: string; slug: string }[]>,
+): Promise<Record<string, string>> {
+  if (Object.keys(slugToId).length > 0) return slugToId
+  const all = await searchCategories("")
+  slugToId = {}
+  for (const c of all) {
+    slugToId[c.slug] = c.id
+  }
+  return slugToId
+}
+
+const CLASSIFY_PROMPT = `
+You are a news classifier. Given an article's title and excerpt, determine its category.
+Choose ONLY from the available categories. Respond with just the category slug name.
+
+Categories:
+- economy: business, finance, markets, trade
+- sports: sports, athletics, matches, tournaments
+- technology: tech, AI, gadgets, software
+- politics: politics, diplomacy, government, international
+- health: health, medicine, diseases, nutrition
+- culture: arts, cinema, music, literature, theater
+- science: science, space, research
+- environment: environment, climate, weather, nature
+
+Respond with ONLY the category slug (one word), nothing else.
+`
+
+const GROUP_PROMPT = `
+You are a news topic clustering assistant. You receive articles that are ALL from the same category.
+
+Your ONLY job: group articles that cover the EXACT SAME specific event together.
+
+Rules:
+- Same football match from different sources → SAME group
+- Different reports about the same political development → SAME group
+- Different gold price reports on different days → DIFFERENT groups
+- A single article that has no related articles → its own group (single article is fine)
+- If you cannot tell if two articles cover the same event → put them in SEPARATE groups
+
+For each group, give it a specific Arabic title (5-10 words).
 
 Return valid JSON:
 {
   "groups": [
     {
-      "topicId": "<existing topic id or null>",
       "title": "<specific Arabic title>",
-      "categoryId": "<category id from availableCategories>",
       "articleIds": ["<id>", ...]
     }
-  ],
-  "skippedArticleIds": ["<id>", ...]
+  ]
 }
-`.trim()
+`
 
-const SEARCH_TOPICS_TOOL = {
-  type: "function" as const,
-  function: {
-    name: "search_topics",
-    description: "Search existing topics by Arabic keyword to find if a similar topic already exists.",
-    parameters: {
-      type: "object",
-      properties: {
-        query: { type: "string", description: "Arabic keywords" },
-      },
-      required: ["query"],
+async function classifyArticle(
+  apiKey: string,
+  title: string,
+  excerpt: string,
+): Promise<string> {
+  const text = [title, excerpt].filter(Boolean).join(" — ").slice(0, 1000)
+  if (!text.trim()) return "mixed"
+
+  const res = await fetch(OPENROUTER_API_URL, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
     },
-  },
+    body: JSON.stringify({
+      model: GROUPER_MODEL,
+      messages: [
+        { role: "system", content: CLASSIFY_PROMPT },
+        { role: "user", content: text },
+      ],
+      temperature: 0.1,
+      max_tokens: 20,
+    }),
+    signal: AbortSignal.timeout(15000),
+  })
+
+  if (!res.ok) return "mixed"
+  const data = await res.json()
+  const slug = (data.choices?.[0]?.message?.content ?? "").trim().toLowerCase()
+  return slug || "mixed"
+}
+
+async function groupArticles(
+  apiKey: string,
+  articles: { id: string; title: string; excerpt: string }[],
+): Promise<{ title: string; articleIds: string[] }[]> {
+  if (articles.length === 0) return []
+  if (articles.length === 1) {
+    return [{ title: articles[0].title.slice(0, 100), articleIds: [articles[0].id] }]
+  }
+
+  const payload = articles.map(a => ({
+    id: a.id,
+    title: a.title,
+    excerpt: (a.excerpt || "").slice(0, 300),
+  }))
+
+  const res = await fetch(OPENROUTER_API_URL, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: GROUPER_MODEL,
+      messages: [
+        { role: "system", content: GROUP_PROMPT },
+        { role: "user", content: JSON.stringify({ articles: payload }) },
+      ],
+      temperature: 0.1,
+      response_format: { type: "json_object" },
+    }),
+    signal: AbortSignal.timeout(60000),
+  })
+
+  if (!res.ok) {
+    const text = await res.text()
+    throw new Error(`Grouping failed: ${res.status} ${text.slice(0, 200)}`)
+  }
+
+  const data = await res.json()
+  const raw = data.choices?.[0]?.message?.content ?? "{}"
+  const parsed = JSON.parse(raw) as { groups?: { title: string; articleIds: string[] }[] }
+  return parsed.groups ?? []
 }
 
 export async function groupArticlesByTopic(
   articles: ArticleInput[],
   searchTopics: (query: string) => Promise<{ id: string; title: string }[]>,
-  searchCategories: (query: string) => Promise<{ id: string; name: string }[]>,
+  searchCategories: (query: string) => Promise<{ id: string; name: string; slug: string }[]>,
 ): Promise<GroupingResult> {
   const apiKey = process.env.OPENROUTER_API_KEY
   if (!apiKey) throw new Error("OPENROUTER_API_KEY is not set")
   if (articles.length === 0) return { groups: [], skippedArticleIds: [] }
 
-  const allCats = await searchCategories("")
+  const catMap = await getCategoryMap(searchCategories)
+  const skippedArticleIds: string[] = []
 
-  const articlesPayload = articles.map((a) => ({
-    id: a.id,
-    title: a.title,
-    excerpt: a.excerpt ?? "",
-    content: (a.content ?? "").slice(0, 1000),
-    category: a.category,
-  }))
+  // Step 1: Group articles by their source category
+  const bySourceCategory: Record<string, ArticleInput[]> = {}
+  for (const a of articles) {
+    const key = a.category?.toLowerCase().trim() || "misc"
+    if (!bySourceCategory[key]) bySourceCategory[key] = []
+    bySourceCategory[key].push(a)
+  }
 
-  const messages: any[] = [
-    { role: "system", content: SYSTEM_PROMPT },
-    {
-      role: "user",
-      content: JSON.stringify({ articles: articlesPayload, availableCategories: allCats }, null, 2),
-    },
-  ]
+  const allGroups: TopicGroup[] = []
 
-  const controller = new AbortController()
-  const timeout = setTimeout(() => controller.abort(), 180000)
+  // Step 2: Process each source category
+  for (const [sourceCat, catArticles] of Object.entries(bySourceCategory)) {
+    if (catArticles.length === 0) continue
 
-  try {
-    while (true) {
-      const res = await fetch(OPENROUTER_API_URL, {
-        signal: controller.signal,
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-          "x-title": "News Topic Grouper",
-        },
-        body: JSON.stringify({
-          model: GROUPER_MODEL,
-          messages,
-          tools: [SEARCH_TOPICS_TOOL],
-          tool_choice: "auto",
-          temperature: 0.1,
-          response_format: { type: "json_object" },
-        }),
-      })
+    // Determine site category slug
+    let siteSlug = SOURCE_TO_SITE_CATEGORY[sourceCat] ?? "mixed"
 
-      if (!res.ok) {
-        const text = await res.text()
-        throw new Error(`OpenRouter request failed: ${res.status} ${text}`)
+    // For mixed categories, classify each article individually
+    if (siteSlug === "mixed") {
+      // Group by AI classification
+      const bySiteSlug: Record<string, ArticleInput[]> = {}
+      for (const a of catArticles) {
+        const slug = await classifyArticle(apiKey, a.title, a.excerpt ?? "")
+        const key = slug && catMap[slug] ? slug : "mixed"
+        if (!bySiteSlug[key]) bySiteSlug[key] = []
+        bySiteSlug[key].push(a)
       }
 
-      const data = (await res.json()) as {
-        choices?: { message?: { content?: string; tool_calls?: any[] } }[]
-      }
-
-      const msg = data.choices?.[0]?.message
-      if (!msg) throw new Error("No response from OpenRouter")
-
-      if (msg.tool_calls && msg.tool_calls.length > 0) {
-        messages.push({ role: "assistant", content: msg.content ?? "", tool_calls: msg.tool_calls as any })
-
-        for (const tc of msg.tool_calls) {
-          if (tc.function.name === "search_topics") {
-            const args = JSON.parse(tc.function.arguments)
-            const results = await searchTopics(args.query)
-            messages.push({
-              role: "tool",
-              tool_call_id: tc.id,
-              name: "search_topics",
-              content: JSON.stringify(results.length > 0 ? results : { message: "No matching topics found." }),
-            })
-          }
+      // Process each resulting sub-group
+      for (const [subSlug, subArticles] of Object.entries(bySiteSlug)) {
+        const categoryId = catMap[subSlug] ?? null
+        if (!categoryId) {
+          skippedArticleIds.push(...subArticles.map(a => a.id))
+          continue
         }
+
+        const groups = await groupArticles(apiKey, subArticles.map(a => ({
+          id: a.id,
+          title: a.title,
+          excerpt: a.excerpt ?? "",
+        })))
+
+        for (const g of groups) {
+          allGroups.push({
+            topicId: null,
+            title: g.title,
+            categoryId,
+            articleIds: g.articleIds,
+          })
+        }
+      }
+    } else {
+      // Unambiguous source category — site category is pre-determined
+      const categoryId = catMap[siteSlug]
+      if (!categoryId) {
+        skippedArticleIds.push(...catArticles.map(a => a.id))
         continue
       }
 
-      const raw = msg.content ?? ""
-      let parsed: GroupingResult
-      try {
-        parsed = JSON.parse(raw) as GroupingResult
-      } catch {
-        throw new Error(`Topic grouper returned invalid JSON: ${raw.slice(0, 300)}`)
+      const groups = await groupArticles(apiKey, catArticles.map(a => ({
+        id: a.id,
+        title: a.title,
+        excerpt: a.excerpt ?? "",
+      })))
+
+      for (const g of groups) {
+        allGroups.push({
+          topicId: null,
+          title: g.title,
+          categoryId,
+          articleIds: g.articleIds,
+        })
       }
-      if (!Array.isArray(parsed.groups)) {
-        throw new Error(`Topic grouper response missing 'groups' array: ${raw.slice(0, 300)}`)
-      }
-      return parsed
     }
-  } finally {
-    clearTimeout(timeout)
   }
+
+  return { groups: allGroups, skippedArticleIds }
 }

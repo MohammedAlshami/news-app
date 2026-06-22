@@ -29,11 +29,11 @@ async function searchTopics(query: string): Promise<{ id: string; title: string 
   }
 }
 
-async function searchCategories(query: string): Promise<{ id: string; name: string }[]> {
+async function searchCategories(query: string): Promise<{ id: string; name: string; slug: string }[]> {
   const { rawD1Query } = await import("@/lib/db-raw-d1")
   try {
-    const result = await rawD1Query(`SELECT id, name FROM categories WHERE name LIKE '%${escapeLike(query)}%' LIMIT 5`)
-    return (result?.rows ?? []).map((r: unknown[]) => ({ id: r[0] as string, name: r[1] as string }))
+    const result = await rawD1Query(`SELECT id, name, slug FROM categories WHERE name LIKE '%${escapeLike(query)}%' OR slug LIKE '%${escapeLike(query)}%' LIMIT 10`)
+    return (result?.rows ?? []).map((r: unknown[]) => ({ id: r[0] as string, name: r[1] as string, slug: r[2] as string }))
   } catch {
     return []
   }
