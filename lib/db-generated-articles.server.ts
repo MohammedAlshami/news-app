@@ -174,6 +174,16 @@ export async function generateAndSaveArticleForTopic(topicId: string): Promise<{
 }> {
   const db = getDb()
 
+  // Guard: skip if this topic already has a generated article
+  const existing = await db
+    .select({ id: generatedArticles.id })
+    .from(generatedArticles)
+    .where(eq(generatedArticles.topicId, topicId))
+    .limit(1)
+  if (existing.length > 0) {
+    throw new Error(`Topic ${topicId} already has a generated article`)
+  }
+
   // Load topic
   const [topic] = await db
     .select()
