@@ -11,7 +11,7 @@ function event(name: string, data: Record<string, unknown>) {
 export async function GET(request: Request): Promise<Response> {
   const url = new URL(request.url)
   const targetLimit = Math.max(1, Number(url.searchParams.get("limit")) || 2)
-  const timeoutMs = Math.max(30000, Math.min(180000, targetLimit * 500))
+  const timeoutMs = Math.max(60000, Math.min(600000, targetLimit * 2000))
 
   const stream = new ReadableStream({
     async start(controller) {
