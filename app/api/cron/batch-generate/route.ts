@@ -52,6 +52,17 @@ async function classifyAllTopics(): Promise<number> {
 async function generateArticleForTopic(topicId: string): Promise<{ title: string } | null> {
   const db = getDb()
 
+  // Guard: skip if this topic already has a generated article
+  const existing = await db
+    .select({ id: generatedArticles.id })
+    .from(generatedArticles)
+    .where(eq(generatedArticles.topicId, topicId))
+    .limit(1)
+  if (existing.length > 0) {
+    console.log(`SKIP (already generated): topic ${topicId}`)
+    return null
+  }
+
   const [topic] = await db.select().from(topics).where(eq(topics.id, topicId)).limit(1)
   if (!topic) return null
 
