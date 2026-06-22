@@ -108,7 +108,7 @@ export function AiPromptDock({ editor: providedEditor, articleId }: AiPromptDock
     return (
       <button
         onClick={() => setIsExpanded(true)}
-        className="fixed bottom-6 left-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-white text-foreground shadow-lg transition-all hover:scale-110 hover:shadow-xl dark:bg-white dark:text-foreground"
+        className="absolute bottom-6 right-6 z-50 flex h-10 w-10 items-center justify-center rounded-full bg-white text-foreground transition-all hover:scale-110 dark:bg-white dark:text-foreground"
         aria-label="Open AI assistant"
       >
         <Sparkles className="h-6 w-6" />

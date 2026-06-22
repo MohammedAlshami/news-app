@@ -457,7 +457,7 @@ export function CreateArticleForm({
 
       {autosaveLabel ? (
         <div
-          className="rounded-2xl border border-border bg-card/70 px-4 py-2 text-xs text-muted-foreground shadow-sm"
+          className="fixed bottom-4 left-4 z-50 rounded-full border border-border bg-card/70 px-3 py-1.5 text-xs text-muted-foreground shadow-sm"
           role="status"
           aria-live="polite"
         >
