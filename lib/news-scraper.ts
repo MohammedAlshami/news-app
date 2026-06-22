@@ -294,21 +294,75 @@ function parseRt(html: string): ScrapedNewsItem[] {
 }
 
 function parseIndependent(html: string): ScrapedNewsItem[] {
-  const urls = [...html.matchAll(/"url"\s*:\s*"(https:\/\/www\.independentarabia\.com\/node\/[^"]+)"/g)].map(
-    (m) => m[1],
+  // Parse JSON-LD ItemList for full article data including images
+  const jsonLdMatch = html.match(
+    /<script type="application\/ld\+json">[\s\S]*?"@type"\s*:\s*"ItemList"[\s\S]*?<\/script>/i,
   )
-  return urls.slice(0, 20).map((url) => {
-    const slug = decodeURIComponent(url.split("/").pop() ?? url)
-    return {
-      title: cleanText(slug.replace(/-/g, " ")),
+
+  // Parse headline news section for large hero articles
+  const headlineCards: ScrapedNewsItem[] = []
+  const headlineRegex = /<a\b[^>]*class="[^"]*\bcard-hero__link\b[^"]*"[^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/gi
+  let m: RegExpExecArray | null
+  while ((m = headlineRegex.exec(html)) !== null) {
+    const url = m[1].startsWith("http") ? m[1] : `https://www.independentarabia.com${m[1]}`
+    const titleMatch = m[2].match(/<h2\b[^>]*class="[^"]*\bcard-hero__title\b[^"]*"[^>]*>([\s\S]*?)<\/h2>/i)
+    const imgMatch = m[2].match(/<img\b[^>]*src="([^"]+)"/i)
+    headlineCards.push({
+      title: titleMatch ? cleanText(titleMatch[1]) : "",
       url,
       excerpt: "",
-      rawJson: { url, slug },
+      imageUrl: imgMatch ? imgMatch[1] : undefined,
+      rawJson: { source: "headline" },
+    })
+  }
+
+  // Parse normal article cards from JSON-LD
+  const urls: string[] = []
+  const urlRegex = /"url"\s*:\s*"(https:\/\/www\.independentarabia\.com\/node\/[^"]+)"/g
+  while ((m = urlRegex.exec(html)) !== null) {
+    urls.push(m[1])
+  }
+
+  // Also try parsing standard article cards
+  const cardRegex = /<article\b[^>]*class="[^"]*\bcard\b[^"]*"[^>]*>([\s\S]*?)<\/article>/gi
+  const cardItems: ScrapedNewsItem[] = []
+  while ((m = cardRegex.exec(html)) !== null) {
+    const card = m[1]
+    const linkMatch = card.match(/<a\b[^>]*href="([^"]+)"/i)
+    const titleMatch = card.match(/<h3\b[^>]*class="[^"]*\bcard__title\b[^"]*"[^>]*>([\s\S]*?)<\/h3>/i)
+    const imgMatch = card.match(/<img\b[^>]*src="([^"]+)"/i)
+    if (linkMatch && titleMatch) {
+      const url = linkMatch[1].startsWith("http") ? linkMatch[1] : `https://www.independentarabia.com${linkMatch[1]}`
+      cardItems.push({
+        title: cleanText(titleMatch[1]),
+        url,
+        excerpt: "",
+        imageUrl: imgMatch ? imgMatch[1] : undefined,
+        rawJson: { source: "card" },
+      })
     }
-  })
+  }
+
+  const items = [...headlineCards, ...cardItems]
+
+  // Also add URLs from JSON-LD that weren't found in the cards
+  const foundUrls = new Set(items.map(i => i.url))
+  for (const u of urls) {
+    if (!foundUrls.has(u)) {
+      const slug = decodeURIComponent(u.split("/").pop() ?? u)
+      items.push({
+        title: cleanText(slug.replace(/-/g, " ")),
+        url: u,
+        excerpt: "",
+        rawJson: { url: u, slug },
+      })
+    }
+  }
+
+  return items.slice(0, 20)
 }
 
-async function fetchRtArticleContent(url: string): Promise<{ excerpt: string; publishedAt: string; content: string }> {
+async function fetchRtArticleContent(url: string): Promise<{ excerpt: string; imageUrl: string; publishedAt: string; content: string }> {
   const html = await fetch(url, {
     cache: "no-store",
     headers: {
@@ -318,46 +372,46 @@ async function fetchRtArticleContent(url: string): Promise<{ excerpt: string; pu
     }
   }).then((r) => r.text())
 
-  // Extract publishedAt — try multiple strategies
+  let imageUrl = ""
   let publishedAt = ""
 
-  // 1) <time datetime="...">
-  const timeMatch = html.match(/<time\b[^>]*datetime="([^"]+)"/i)
-  if (timeMatch) publishedAt = timeMatch[1]
-
-  // 2) JSON-LD datePublished
-  if (!publishedAt) {
-    const ldMatch = html.match(/<script\b[^>]*type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/i)
-    if (ldMatch) {
-      try {
-        const parsed = JSON.parse(ldMatch[1])
-        const article = Array.isArray(parsed?.["@graph"])
-          ? parsed["@graph"].find((g: any) => g?.["@type"]?.includes?.("NewsArticle"))
-          : parsed
-        if (article?.datePublished) publishedAt = article.datePublished
-      } catch {}
-    }
+  // Extract imageUrl from JSON-LD or OG meta
+  const ldMatch = html.match(/<script\b[^>]*type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/i)
+  if (ldMatch) {
+    try {
+      const parsed = JSON.parse(ldMatch[1])
+      const article = Array.isArray(parsed?.["@graph"])
+        ? parsed["@graph"].find((g: any) => g?.["@type"]?.includes?.("NewsArticle"))
+        : parsed
+      if (article?.datePublished) publishedAt = article.datePublished
+      if (article?.image?.url) imageUrl = article.image.url
+      else if (article?.image && typeof article.image === "string") imageUrl = article.image
+    } catch {}
+  }
+  if (!imageUrl) {
+    const ogImage = html.match(/<meta\b[^>]*property="og:image"[^>]*content="([^"]+)"/i)
+    if (ogImage) imageUrl = ogImage[1]
   }
 
-  // 3) <meta property="article:published_time">
+  // Extract publishedAt — try multiple strategies
+  if (!publishedAt) {
+    const timeMatch = html.match(/<time\b[^>]*datetime="([^"]+)"/i)
+    if (timeMatch) publishedAt = timeMatch[1]
+  }
   if (!publishedAt) {
     const ptMatch = html.match(/<meta\b[^>]*property="article:published_time"[^>]*content="([^"]+)"/i)
     if (ptMatch) publishedAt = ptMatch[1]
   }
-
-  // 4) <meta name="pubdate" or "publishdate" or "dc.date">
   if (!publishedAt) {
     const metaMatch = html.match(/<meta\b[^>]*name="(?:pubdate|publishdate|dc\.date\w*)"[^>]*content="([^"]+)"/i)
     if (metaMatch) publishedAt = metaMatch[1]
   }
-
-  // 5) itemprop="datePublished"
   if (!publishedAt) {
     const itemMatch = html.match(/itemprop="datePublished"[^>]*content="([^"]+)"/i)
     if (itemMatch) publishedAt = itemMatch[1]
   }
 
-  // Extract excerpt — the summary <p> inside the intro-text block
+  // Extract excerpt
   let excerpt = ""
   const introBlock = html.match(/<div\b[^>]*class="[^"]*\bmain-article__intro-text\b[^"]*"[^>]*>([\s\S]*?)<\/div>/i)
   if (introBlock) {
@@ -369,9 +423,9 @@ async function fetchRtArticleContent(url: string): Promise<{ excerpt: string; pu
     if (summaryDiv) excerpt = cleanText(summaryDiv[1])
   }
 
-  // Extract body — everything inside editor-content div
+  // Extract body
   const editorMatch = html.match(/<div\b[^>]*class="[^"]*\beditor-content\b[^"]*"[^>]*>([\s\S]+)/i)
-  if (!editorMatch) return { excerpt, publishedAt, content: "" }
+  if (!editorMatch) return { excerpt, imageUrl, publishedAt, content: "" }
 
   let contentHtml = editorMatch[1]
   const cutoff = contentHtml.search(/<div\b[^>]*class="[^"]*\bmain-article__block--tags\b[^"]*"/i)
@@ -380,10 +434,10 @@ async function fetchRtArticleContent(url: string): Promise<{ excerpt: string; pu
   contentHtml = contentHtml.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "")
   contentHtml = contentHtml.replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, "")
 
-  return { excerpt, publishedAt, content: htmlToTiptapJson(contentHtml) }
+  return { excerpt, imageUrl, publishedAt, content: htmlToTiptapJson(contentHtml) }
 }
 
-async function fetchIndependentArticleContent(url: string): Promise<{ content: string; publishedAt: string }> {
+async function fetchIndependentArticleContent(url: string): Promise<{ title: string; excerpt: string; imageUrl: string; publishedAt: string; content: string }> {
   try {
     const html = await fetch(url, {
       cache: "no-store",
@@ -394,12 +448,46 @@ async function fetchIndependentArticleContent(url: string): Promise<{ content: s
       }
     }).then((r) => r.text())
 
-    // Extract publishedAt from meta tag
+    let title = ""
+    let excerpt = ""
+    let imageUrl = ""
     let publishedAt = ""
-    const ptMatch = html.match(/<meta\b[^>]*property="article:published_time"[^>]*content="([^"]+)"/i)
-    if (ptMatch) publishedAt = ptMatch[1]
+
+    // Extract from JSON-LD first
+    const ldMatch = html.match(/<script\b[^>]*type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/i)
+    if (ldMatch) {
+      try {
+        const parsed = JSON.parse(ldMatch[1])
+        const article = Array.isArray(parsed?.["@graph"])
+          ? parsed["@graph"].find((g: any) => g?.["@type"]?.includes?.("NewsArticle"))
+          : parsed
+        if (article?.headline) title = cleanText(article.headline)
+        if (article?.description) excerpt = cleanText(article.description)
+        if (article?.datePublished) publishedAt = article.datePublished
+        if (article?.image?.url) imageUrl = article.image.url
+        else if (article?.image && typeof article.image === "string") imageUrl = article.image
+      } catch {}
+    }
+
+    // Fallback to meta tags
+    if (!title) {
+      const ogTitle = html.match(/<meta\b[^>]*property="og:title"[^>]*content="([^"]+)"/i)
+      if (ogTitle) title = cleanText(ogTitle[1])
+    }
+    if (!excerpt) {
+      const metaDesc = html.match(/<meta\b[^>]*name="description"[^>]*content="([^"]+)"/i)
+      if (metaDesc) excerpt = cleanText(metaDesc[1])
+    }
+    if (!publishedAt) {
+      const ptMatch = html.match(/<meta\b[^>]*property="article:published_time"[^>]*content="([^"]+)"/i)
+      if (ptMatch) publishedAt = ptMatch[1]
+    }
+    if (!imageUrl) {
+      const ogImage = html.match(/<meta\b[^>]*property="og:image"[^>]*content="([^"]+)"/i)
+      if (ogImage) imageUrl = ogImage[1]
+    }
     
-    // Try multiple selectors for Independent Arabia content
+    // Extract article body
     let content = ""
     
     // Try field--name-body class
@@ -418,15 +506,15 @@ async function fetchIndependentArticleContent(url: string): Promise<{ content: s
       if (match) content = match[1]
     }
     
-    if (!content) return { content: "", publishedAt }
+    if (content) {
+      content = content.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "")
+      content = content.replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, "")
+      content = htmlToTiptapJson(content)
+    }
     
-    // Clean up but preserve paragraph structure
-    content = content.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "")
-    content = content.replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, "")
-    
-    return { content: htmlToTiptapJson(content), publishedAt }
+    return { title, excerpt, imageUrl, publishedAt, content }
   } catch {
-    return { content: "", publishedAt: "" }
+    return { title: "", excerpt: "", imageUrl: "", publishedAt: "", content: "" }
   }
 }
 
@@ -1685,10 +1773,11 @@ export class NewsScraper {
     const itemsWithContent = await Promise.all(
       items.slice(0, 5).map(async (item) => {
         if (this.source === "rt") {
-          const { excerpt, publishedAt, content } = await fetchRtArticleContent(item.url)
+          const { excerpt, imageUrl, publishedAt, content } = await fetchRtArticleContent(item.url)
           return {
             ...item,
             excerpt: excerpt || item.excerpt,
+            imageUrl: imageUrl || item.imageUrl,
             publishedAt: publishedAt || item.publishedAt,
             content,
           }
@@ -1793,8 +1882,15 @@ export class NewsScraper {
             content,
           }
         } else {
-          const { content, publishedAt } = await fetchIndependentArticleContent(item.url)
-          return { ...item, content, publishedAt: publishedAt || item.publishedAt }
+          const { title, excerpt, imageUrl, publishedAt, content } = await fetchIndependentArticleContent(item.url)
+          return {
+            ...item,
+            title: title || item.title,
+            excerpt: excerpt || item.excerpt,
+            imageUrl: imageUrl || item.imageUrl,
+            publishedAt: publishedAt || item.publishedAt,
+            content,
+          }
         }
       })
     )
