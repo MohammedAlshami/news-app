@@ -153,7 +153,7 @@ function EditorContentArea({
   ])
 
   return (
-    <>
+    <div className="relative">
       <EditorContent
         editor={editor}
         role="presentation"
@@ -164,7 +164,7 @@ function EditorContentArea({
       <SlashDropdownMenu config={slashMenuConfig} />
       <DragContextMenu />
       <NotionToolbarFloating />
-    </>
+    </div>
   )
 }
 

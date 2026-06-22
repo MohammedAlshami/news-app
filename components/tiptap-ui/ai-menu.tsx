@@ -90,7 +90,7 @@ export function AiMenuContent({
   const tiptapAiPromptInputRef = useRef<HTMLDivElement | null>(null)
 
   const closeAiMenu = useCallback(() => {
-    if (!editor) return
+    if (!editor || !editor.commands) return
     reset()
     store?.hideAll()
     editor.commands.resetUiState()

@@ -135,7 +135,7 @@ export function AiPromptInputToolbar({
     <Toolbar
       variant="floating"
       data-plain="true"
-      className="tiptap-ai-prompt-input-toolbar"
+      className="tiptap-ai-prompt-input-toolbar justify-end"
       style={{ display: showPlaceholder ? "none" : "flex" }}
     >
       <ToolbarGroup>
