@@ -141,7 +141,7 @@ export async function GET(): Promise<Response> {
       const emit = (n: string, d: Record<string, unknown>) => { if (!finished) controller.enqueue(encoder.encode(event(n, d))) }
       const done = () => { if (!finished) { finished = true; controller.close() } }
 
-      const timeout = setTimeout(() => { emit("error", { message: "Timed out" }); emit("complete", { timedOut: true }); done() }, 300000)
+      const timeout = setTimeout(() => { emit("error", { message: "Timed out" }); emit("complete", { timedOut: true }); done() }, 600000)
 
       try {
         emit("classify", { status: "started" })
