@@ -79,7 +79,7 @@ async function generateArticleForTopic(topicId: string): Promise<{ title: string
     body: JSON.stringify({
       model: "openai/gpt-4o-mini",
       messages: [
-        { role: "system", content: "Write a comprehensive Arabic news article. Respond JSON: { title, excerpt, highlights[], paragraphs[] } where highlights is 3-5 bullet points." },
+        { role: "system", content: "Write a comprehensive Arabic news article. Respond JSON: { title, excerpt, highlights[], paragraphs[] } where highlights is 3-5 bullet points. CRITICAL: Do NOT include any 'أبرز النقاط', 'ملخص', bullet lists, or summary sections inside the paragraphs — only flowing prose. Highlights go ONLY in the highlights field." },
         { role: "user", content: JSON.stringify({ topic: topic.title, sources }) },
       ],
       temperature: 0.6,
@@ -98,9 +98,18 @@ async function generateArticleForTopic(topicId: string): Promise<{ title: string
     return null
   }
 
+  // Strip any embedded highlight/summary sections from paragraphs
+  const cleanParagraphs = (parsed.paragraphs ?? []).filter((p: string) => {
+    const trimmed = p.trim()
+    if (/^أبرز النقاط/.test(trimmed)) return false
+    if (/^ملخص/.test(trimmed)) return false
+    if (/^الخلاصة/.test(trimmed)) return false
+    return true
+  })
+
   const body = JSON.stringify({
     type: "doc",
-    content: (parsed.paragraphs ?? []).map((t: string) => ({ type: "paragraph", content: [{ type: "text", text: t }] })),
+    content: cleanParagraphs.map((t: string) => ({ type: "paragraph", content: [{ type: "text", text: t }] })),
   })
 
   const imgSrc = imageSource.imageUrl!

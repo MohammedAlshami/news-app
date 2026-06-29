@@ -46,7 +46,7 @@ Article quality rules:
 - Title: concise Arabic headline, 8-15 words, MUST differ from previous titles
 - Excerpt: 2-3 sentence summary, 40-80 words
 - Highlights: 3-5 bullet points, 10-25 words each
-- Paragraphs: at least 4, each 50-120 words
+- Paragraphs: at least 4, each 50-120 words. Paragraphs must contain ONLY flowing prose — do NOT include any "أبرز النقاط", "ملخص", "الخلاصة", bullet lists, or summary sections inside paragraphs.
 - Write in Modern Standard Arabic (فصحى)
 - Be objective and informative
 

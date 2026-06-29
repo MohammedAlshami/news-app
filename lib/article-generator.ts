@@ -45,6 +45,8 @@ Your job:
 4. Attribute information to sources naturally within the text.
 5. Generate 3-5 bullet-point highlights that summarize the most important takeaways.
 
+IMPORTANT: The "paragraphs" array must contain ONLY flowing prose paragraphs. Do NOT include any "أبرز النقاط", "ملخص", "الخلاصة", bullet lists, numbered lists, or summary sections inside the paragraphs. These will be displayed separately from the article body.
+
 Respond with ONLY valid JSON matching this exact shape — no markdown, no explanation:
 {
   "title": "<concise Arabic headline, 8-15 words>",
@@ -137,10 +139,19 @@ export async function generateArticleFromSources(
     throw new Error(`Cannot generate article without any source images for topic: ${topic}`)
   }
 
+  // Strip any embedded highlight/summary sections from paragraphs
+  const paragraphs = parsed.paragraphs.filter((p) => {
+    const trimmed = p.trim()
+    if (/^أبرز النقاط/.test(trimmed)) return false
+    if (/^ملخص/.test(trimmed)) return false
+    if (/^الخلاصة/.test(trimmed)) return false
+    return true
+  })
+
   // Build Tiptap JSON body from paragraphs
   const body = JSON.stringify({
     type: "doc",
-    content: parsed.paragraphs.map((text) => ({
+    content: paragraphs.map((text) => ({
       type: "paragraph",
       content: [{ type: "text", text }],
     })),
