@@ -45,9 +45,9 @@ import { getArticleTiptapExtensions } from "@/lib/tiptap-article-extensions"
 import { cn } from "@/lib/utils"
 import { TIPTAP_AI_APP_ID, TIPTAP_AI_TOKEN } from "@/lib/tiptap-collab-utils"
 import {
-  createEditorOpenRouterCompletionResolver,
-  createEditorOpenRouterStreamResolver,
-} from "@/lib/editor-inline-openrouter"
+  createEditorOpenCodeCompletionResolver,
+  createEditorOpenCodeStreamResolver,
+} from "@/lib/editor-inline-opencode"
 import type { SlashMenuConfig } from "@/components/tiptap-ui/use-slash-dropdown-menu"
 
 // --- Styles ---
@@ -252,8 +252,8 @@ export function SimpleEditor({
           autocompletion: false,
           showDecorations: true,
           hideDecorationsOnStreamEnd: false,
-          aiStreamResolver: createEditorOpenRouterStreamResolver(),
-          aiCompletionResolver: createEditorOpenRouterCompletionResolver(),
+          aiStreamResolver: createEditorOpenCodeStreamResolver(),
+          aiCompletionResolver: createEditorOpenCodeCompletionResolver(),
           onLoading: (context) => {
             context.editor.commands.aiGenerationSetIsLoading(true)
             context.editor.commands.aiGenerationHasMessage(false)

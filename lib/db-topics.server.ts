@@ -92,6 +92,8 @@ export async function runTopicGrouping(windowMs = 24 * 60 * 60 * 1000): Promise<
         id: newId,
         title: group.title,
         categoryId: group.categoryId,
+        parentId: group.parentId ?? null,
+        type: group.parentId ? "event" : "persistent",
         articleCount: 0,
       })
       topicId = newId

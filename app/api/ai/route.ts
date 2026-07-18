@@ -1,15 +1,13 @@
 import { NextResponse } from "next/server"
+import { OPENCODE_GO_URL, OPENCODE_GO_MODEL, OPENCODE_GO_KEY } from "@/lib/opencode-go"
 
-const OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions"
-const OPENROUTER_MODEL = process.env.OPENROUTER_MODEL || "openai/gpt-4o-mini"
-const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY || ""
 const INLINE_EDITOR_SYSTEM_PROMPT =
   "You are an inline Arabic news editor inside a rich-text editor. Return only the text to insert. Do not use markdown fences, headings, or commentary."
 
 export async function POST(request: Request) {
-  if (!OPENROUTER_API_KEY) {
+  if (!OPENCODE_GO_KEY) {
     return NextResponse.json(
-      { error: "OpenRouter is not configured." },
+      { error: "OpenCode Go is not configured." },
       { status: 500 },
     )
   }
@@ -45,15 +43,14 @@ export async function POST(request: Request) {
     },
   ]
 
-  const upstream = await fetch(OPENROUTER_API_URL, {
+  const upstream = await fetch(OPENCODE_GO_URL, {
     method: "POST",
     headers: {
-      authorization: `Bearer ${OPENROUTER_API_KEY}`,
+      authorization: `Bearer ${OPENCODE_GO_KEY}`,
       "content-type": "application/json",
-      "x-title": "News Admin AI",
     },
     body: JSON.stringify({
-      model: OPENROUTER_MODEL,
+      model: OPENCODE_GO_MODEL,
       messages,
       stream: true,
       temperature: 0.7,

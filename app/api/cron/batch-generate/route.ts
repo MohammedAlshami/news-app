@@ -1,9 +1,12 @@
 import { getDb } from "@/db/client"
 import { articles, categories, generatedArticles, scrapedNews, topics } from "@/db/schema"
 import { eq, isNull, sql } from "drizzle-orm"
-import { putR2Object } from "@/lib/r2.server"
+import { OPENCODE_GO_URL, OPENCODE_GO_MODEL, OPENCODE_GO_KEY } from "@/lib/opencode-go"
+import { uploadCoverWithDedup } from "@/lib/upload-image-dedup.server"
 
 export const dynamic = "force-dynamic"
+
+const CONCURRENCY = 3
 
 function event(name: string, data: Record<string, unknown>) {
   return `event: ${name}\ndata: ${JSON.stringify(data)}\n\n`
@@ -19,13 +22,11 @@ async function classifyAllTopics(): Promise<number> {
 
   if (unclassified.length === 0) return 0
 
-  const apiKey = process.env.OPENROUTER_API_KEY
-
-  const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+  const res = await fetch(OPENCODE_GO_URL, {
     method: "POST",
-    headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+    headers: { Authorization: `Bearer ${OPENCODE_GO_KEY}`, "Content-Type": "application/json" },
     body: JSON.stringify({
-      model: "openai/gpt-4o-mini",
+      model: OPENCODE_GO_MODEL,
       messages: [
         { role: "system", content: `Assign each topic to the best category. Respond JSON: { "assignments": [{ "topicId": "...", "categoryId": "..." }] }` },
         { role: "user", content: JSON.stringify({ categories: allCats, topics: unclassified }) },
@@ -52,14 +53,12 @@ async function classifyAllTopics(): Promise<number> {
 async function generateArticleForTopic(topicId: string): Promise<{ title: string } | null> {
   const db = getDb()
 
-  // Guard: skip if this topic already has a generated article
   const existing = await db
     .select({ id: generatedArticles.id })
     .from(generatedArticles)
     .where(eq(generatedArticles.topicId, topicId))
     .limit(1)
   if (existing.length > 0) {
-    console.log(`SKIP (already generated): topic ${topicId}`)
     return null
   }
 
@@ -71,13 +70,17 @@ async function generateArticleForTopic(topicId: string): Promise<{ title: string
 
   const sources = sourceRows.map((r) => ({ id: r.id, title: r.title, content: r.content }))
 
-  const apiKey = process.env.OPENROUTER_API_KEY
+  const imageSource = sourceRows.find((r) => r.imageUrl)
+  if (!imageSource) {
+    console.log(`  SKIP (no image): ${topic.title}`)
+    return null
+  }
 
-  const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+  const res = await fetch(OPENCODE_GO_URL, {
     method: "POST",
-    headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+    headers: { Authorization: `Bearer ${OPENCODE_GO_KEY}`, "Content-Type": "application/json" },
     body: JSON.stringify({
-      model: "openai/gpt-4o-mini",
+      model: OPENCODE_GO_MODEL,
       messages: [
         { role: "system", content: "Write a comprehensive Arabic news article. Respond JSON: { title, excerpt, highlights[], paragraphs[] } where highlights is 3-5 bullet points. CRITICAL: Do NOT include any 'أبرز النقاط', 'ملخص', bullet lists, or summary sections inside the paragraphs — only flowing prose. Highlights go ONLY in the highlights field." },
         { role: "user", content: JSON.stringify({ topic: topic.title, sources }) },
@@ -91,14 +94,6 @@ async function generateArticleForTopic(topicId: string): Promise<{ title: string
   const raw = data.choices?.[0]?.message?.content ?? "{}"
   const parsed = JSON.parse(raw) as { title: string; excerpt: string; paragraphs: string[]; highlights?: string[] }
 
-  // Require at least one source with image
-  const imageSource = sourceRows.find((r) => r.imageUrl)
-  if (!imageSource) {
-    console.log(`  SKIP (no image): ${topic.title}`)
-    return null
-  }
-
-  // Strip any embedded highlight/summary sections from paragraphs
   const cleanParagraphs = (parsed.paragraphs ?? []).filter((p: string) => {
     const trimmed = p.trim()
     if (/^أبرز النقاط/.test(trimmed)) return false
@@ -113,19 +108,7 @@ async function generateArticleForTopic(topicId: string): Promise<{ title: string
   })
 
   const imgSrc = imageSource.imageUrl!
-  let r2Url = imgSrc
-  if (!imgSrc.includes("r2.dev")) {
-    try {
-      const ir = await fetch(imgSrc, { signal: AbortSignal.timeout(8000) })
-      if (ir.ok) {
-        const buf = Buffer.from(await ir.arrayBuffer())
-        const ct = ir.headers.get("content-type") ?? "image/jpeg"
-        const ext = ct.split("/")[1] ?? "jpg"
-        const key = `articles/${crypto.randomUUID()}/cover.${ext}`
-        r2Url = await putR2Object({ key, body: buf, contentType: ct })
-      }
-    } catch { /* ignore upload failure — keep original URL */ }
-  }
+  const r2Url = await uploadCoverWithDedup(imgSrc, topicId)
 
   const genId = crypto.randomUUID()
   const articleId = crypto.randomUUID()
@@ -178,14 +161,27 @@ export async function GET(): Promise<Response> {
         emit("generate", { total: unprocessed.length })
         let generated = 0
 
-        for (const topic of unprocessed) {
-          emit("generating", { topic: topic.title })
-          try {
-            const r = await generateArticleForTopic(topic.id)
-            if (r) { generated++; emit("generated", { title: r.title }) }
-            else { emit("skipped", { topic: topic.title }) }
-          } catch (err: any) {
-            emit("error", { topic: topic.title, message: err.message })
+        for (let i = 0; i < unprocessed.length; i += CONCURRENCY) {
+          const chunk = unprocessed.slice(i, i + CONCURRENCY)
+          const results = await Promise.allSettled(
+            chunk.map(async (topic) => {
+              emit("generating", { topic: topic.title })
+              const r = await generateArticleForTopic(topic.id)
+              return { topic, result: r }
+            }),
+          )
+
+          for (const r of results) {
+            if (r.status === "fulfilled") {
+              if (r.value.result) {
+                generated++
+                emit("generated", { title: r.value.result.title })
+              } else {
+                emit("skipped", { topic: r.value.topic.title })
+              }
+            } else {
+              emit("error", { message: r.reason?.message ?? "Unknown error" })
+            }
           }
         }
 
