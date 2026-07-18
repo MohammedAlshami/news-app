@@ -41,9 +41,10 @@ export default {
     }
 
     const lines = await processAllSources(env, 2000)
+    const gen = await fetchCron(env, "/api/cron/batch-generate", "batch-gen")
     const write = await fetchCron(env, "/api/cron/write-pipeline", "write")
     const price = await fetchCron(env, "/api/cron/update-price-rates", "price-rates")
-    lines.push(write, price)
+    lines.push(gen, write, price)
 
     return new Response(lines.join("\n"), {
       status: 200,
@@ -55,16 +56,17 @@ export default {
     const now = new Date()
     const minute = now.getUTCMinutes()
 
-    // Scrape every hour on the hour
+    // Scrape every hour on the hour, then batch-generate
     if (minute === 0) {
       const lines = await processAllSources(env, 5000)
       for (const line of lines) console.log(line)
+      const gen = await fetchCron(env, "/api/cron/batch-generate", "batch-gen")
+      console.log(gen)
     }
 
-    // Write every 10 minutes
+    // Write & price every 10 minutes
     const write = await fetchCron(env, "/api/cron/write-pipeline", "write")
     console.log(write)
-
     const price = await fetchCron(env, "/api/cron/update-price-rates", "price-rates")
     console.log(price)
   },
