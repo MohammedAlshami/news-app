@@ -3,6 +3,7 @@ import { articles, categories, generatedArticles, scrapedNews, topics } from "@/
 import { eq, isNull, sql } from "drizzle-orm"
 import { OPENCODE_GO_URL, OPENCODE_GO_MODEL, OPENCODE_GO_KEY } from "@/lib/opencode-go"
 import { uploadCoverWithDedup } from "@/lib/upload-image-dedup.server"
+import { isDuplicateTitle } from "@/lib/article-dedup.server"
 
 export const dynamic = "force-dynamic"
 
@@ -93,6 +94,11 @@ async function generateArticleForTopic(topicId: string): Promise<{ title: string
   const data = await res.json() as any
   const raw = data.choices?.[0]?.message?.content ?? "{}"
   const parsed = JSON.parse(raw) as { title: string; excerpt: string; paragraphs: string[]; highlights?: string[] }
+
+  if (parsed.title && await isDuplicateTitle(parsed.title)) {
+    console.log(`  SKIP (duplicate title): ${parsed.title}`)
+    return null
+  }
 
   const cleanParagraphs = (parsed.paragraphs ?? []).filter((p: string) => {
     const trimmed = p.trim()

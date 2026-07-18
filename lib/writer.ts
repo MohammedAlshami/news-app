@@ -3,6 +3,7 @@ import { articles, generatedArticles, scrapedNews, topics } from "@/db/schema"
 import { desc, eq, sql } from "drizzle-orm"
 import { OPENCODE_GO_URL, OPENCODE_GO_MODEL, OPENCODE_GO_KEY } from "@/lib/opencode-go"
 import { uploadCoverWithDedup } from "@/lib/upload-image-dedup.server"
+import { isDuplicateTitle } from "@/lib/article-dedup.server"
 
 const WRITE_PROMPT = `
 You are a professional Arabic news journalist. Write a comprehensive news article.
@@ -100,6 +101,11 @@ export async function runWriter(): Promise<WriterResult> {
     const result = await generateSingle(candidate, withContent, previous)
     if (!result || result.action === "skip") continue
     if (!result.title || !result.excerpt || !result.paragraphs) continue
+
+    if (await isDuplicateTitle(result.title)) {
+      console.log(`  SKIP (duplicate title): ${result.title}`)
+      continue
+    }
 
     const r2Url = await uploadCoverWithDedup(coverImageUrl, candidate.id)
 
