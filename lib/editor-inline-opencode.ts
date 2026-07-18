@@ -120,15 +120,9 @@ export function createEditorOpenCodeStreamResolver() {
     const prompt = instructionForAction(action, text, textOptions)
     try {
       return await fetchInlineEditorStream(prompt, aborter?.signal)
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error)
+    } catch {
       return new ReadableStream<Uint8Array>({
         start(controller) {
-          controller.enqueue(
-            new TextEncoder().encode(
-              JSON.stringify({ error: { status: 500, message } }),
-            ),
-          )
           controller.close()
         },
       })
@@ -154,13 +148,12 @@ export function createEditorOpenCodeCompletionResolver() {
       })
 
       if (!response.ok) {
-        const errorText = await response.text().catch(() => "")
-        throw new Error(errorText || `AI request failed with ${response.status}`)
+        return ""
       }
 
       return await response.text()
     } catch {
-      return null
+      return ""
     }
   }
 }

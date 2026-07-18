@@ -6,10 +6,7 @@ const INLINE_EDITOR_SYSTEM_PROMPT =
 
 export async function POST(request: Request) {
   if (!OPENCODE_GO_KEY) {
-    return NextResponse.json(
-      { error: "OpenCode Go is not configured." },
-      { status: 500 },
-    )
+    return new NextResponse("AI is not configured.", { status: 500 })
   }
 
   const body = await request.json().catch(() => null)
@@ -20,7 +17,7 @@ export async function POST(request: Request) {
   const editorInline = body?.editorInline === true
 
   if (!prompt.trim()) {
-    return NextResponse.json({ error: "Prompt is required." }, { status: 400 })
+    return new NextResponse("Prompt is required.", { status: 400 })
   }
 
   const messages = [
@@ -64,10 +61,7 @@ export async function POST(request: Request) {
   })
 
   if (!upstream.ok || !upstream.body) {
-    return NextResponse.json(
-      { error: "AI generation failed." },
-      { status: 502 },
-    )
+    return new NextResponse("AI generation failed.", { status: 502 })
   }
 
   const stream = new ReadableStream({
