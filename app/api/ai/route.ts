@@ -2,7 +2,7 @@ import { NextResponse } from "next/server"
 import { OPENCODE_GO_URL, OPENCODE_GO_MODEL, OPENCODE_GO_KEY } from "@/lib/opencode-go"
 
 const INLINE_EDITOR_SYSTEM_PROMPT =
-  "You are an inline Arabic news editor. Do exactly what the user asks and nothing else. Respond with ONLY the requested text. No introductory phrases, no explanations, no commentary, no markdown, no bullet points, no headings."
+  "You are an Arabic news editor assistant. Follow the user's instruction and return only the requested text. No markdown, no headings, no bullet points."
 
 export async function POST(request: Request) {
   if (!OPENCODE_GO_KEY) {
@@ -46,9 +46,6 @@ export async function POST(request: Request) {
     temperature: editorInline ? 0.3 : 0.7,
   }
 
-  if (editorInline) {
-    bodyJson.max_tokens = 150
-  }
   bodyJson.stream = true
 
   const upstream = await fetch(OPENCODE_GO_URL, {
@@ -64,6 +61,8 @@ export async function POST(request: Request) {
     return new NextResponse("AI generation failed.", { status: 502 })
   }
 
+  let emitted = false
+
   const stream = new ReadableStream({
     async start(controller) {
       const reader = upstream.body!.getReader()
@@ -73,6 +72,9 @@ export async function POST(request: Request) {
       const pump = async (): Promise<void> => {
         const { value, done } = await reader.read()
         if (done) {
+          if (!emitted) {
+            controller.enqueue(new TextEncoder().encode(" "))
+          }
           controller.close()
           return
         }
@@ -93,6 +95,7 @@ export async function POST(request: Request) {
             const json = JSON.parse(payload)
             const token = json?.choices?.[0]?.delta?.content ?? ""
             if (token) {
+              emitted = true
               controller.enqueue(new TextEncoder().encode(token))
             }
           } catch {
