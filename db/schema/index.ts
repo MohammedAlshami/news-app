@@ -22,6 +22,7 @@ export {
   type ScrapedNews,
 } from "./scraped-news"
 export { topics, type NewTopic, type Topic } from "./topics"
+export { images, type Image, type NewImage } from "./images"
 export { users, type NewUser, type User } from "./users"
 export {
   siteAds,

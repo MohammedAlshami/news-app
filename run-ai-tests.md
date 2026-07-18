@@ -48,7 +48,7 @@ npx playwright test tests/article-editor-ai.spec.ts --headed
    - ✓ Article title and excerpt are captured
    - ✓ Context is included in AI prompts
 
-6. **AI Streaming** (Note: Requires OpenRouter API key)
+6. **AI Streaming** (Note: Requires OpenCode Go API key)
    - ✓ AI output streams directly to editor
    - ✓ No accept/reject buttons needed
    - ✓ Content appears immediately
@@ -88,5 +88,5 @@ If you prefer to test manually:
 ## Troubleshooting
 
 - If tests fail with "Timeout", increase timeout in test or check if dev server is running
-- If AI streaming doesn't work, check OPENROUTER_API_KEY in .env.local
+- If AI streaming doesn't work, check OPENCODE_GO_KEY in .env.local
 - If login fails, verify admin credentials in database

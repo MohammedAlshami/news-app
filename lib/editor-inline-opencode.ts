@@ -115,7 +115,7 @@ async function fetchInlineEditorStream(prompt: string, signal?: AbortSignal) {
   return response.body
 }
 
-export function createEditorOpenRouterStreamResolver() {
+export function createEditorOpenCodeStreamResolver() {
   return async ({ action, text, textOptions, aborter }: AiTextResolverOptions) => {
     const prompt = instructionForAction(action, text, textOptions)
     try {
@@ -136,7 +136,7 @@ export function createEditorOpenRouterStreamResolver() {
   }
 }
 
-export function createEditorOpenRouterCompletionResolver() {
+export function createEditorOpenCodeCompletionResolver() {
   return async ({ action, text, textOptions, aborter }: AiTextResolverOptions) => {
     const prompt = instructionForAction(action, text, textOptions)
     try {

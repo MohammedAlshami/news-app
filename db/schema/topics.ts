@@ -7,6 +7,11 @@ export const topics = sqliteTable("topics", {
   title: text("title").notNull(),
   articleCount: integer("article_count").notNull().default(0),
   categoryId: text("category_id").references(() => categories.id, { onDelete: "set null" }),
+  parentId: text("parent_id"),
+  type: text("type", { enum: ["persistent", "event"] }).notNull().default("event"),
+  isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
+  startDate: text("start_date"),
+  endDate: text("end_date"),
   createdAt: integer("created_at", { mode: "timestamp_ms" })
     .notNull()
     .default(sql`(unixepoch() * 1000)`),

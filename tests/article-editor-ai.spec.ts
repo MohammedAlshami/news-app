@@ -238,7 +238,7 @@ test.describe('Article Editor - AI Streaming', () => {
     const editorContent = await page.locator('.ProseMirror').textContent()
     console.log('Editor content after AI:', editorContent)
     
-    // Note: This test is skipped because it requires OpenRouter API key
+    // Note: This test is skipped because it requires OpenCode Go API key
     console.log('✅ AI streaming test structure is correct (skipped - requires API key)')
   })
 })

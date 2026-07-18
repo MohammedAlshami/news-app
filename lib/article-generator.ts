@@ -1,11 +1,4 @@
-/**
- * Uses OpenRouter (OpenAI-compatible) to generate a full Arabic news article
- * from a set of scraped source articles belonging to a single topic.
- *
- * Returns a structured JSON object with title, excerpt, and body (Tiptap JSON).
- */
-
-const OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions"
+import { OPENCODE_GO_URL, OPENCODE_GO_MODEL, OPENCODE_GO_KEY } from "@/lib/opencode-go"
 
 export type SourceArticleInput = {
   id: string
@@ -67,11 +60,8 @@ export async function generateArticleFromSources(
   topic: string,
   sources: SourceArticleInput[],
 ): Promise<GeneratedArticleOutput> {
-  const apiKey = process.env.OPENROUTER_API_KEY
-  const model = process.env.OPENROUTER_MODEL ?? "openai/gpt-4o-mini"
-
-  if (!apiKey) {
-    throw new Error("OPENROUTER_API_KEY is not set.")
+  if (!OPENCODE_GO_KEY) {
+    throw new Error("OPENCODE_GO_KEY is not set.")
   }
 
   if (sources.length === 0) {
@@ -90,15 +80,14 @@ export async function generateArticleFromSources(
     })),
   })
 
-  const res = await fetch(OPENROUTER_API_URL, {
+  const res = await fetch(OPENCODE_GO_URL, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${apiKey}`,
+      Authorization: `Bearer ${OPENCODE_GO_KEY}`,
       "Content-Type": "application/json",
-      "x-title": "News Article Generator",
     },
     body: JSON.stringify({
-      model,
+      model: OPENCODE_GO_MODEL,
       messages: [
         { role: "system", content: SYSTEM_PROMPT },
         { role: "user", content: userMessage },
@@ -110,7 +99,7 @@ export async function generateArticleFromSources(
 
   if (!res.ok) {
     const text = await res.text()
-    throw new Error(`OpenRouter article generation failed: ${res.status} ${text}`)
+    throw new Error(`OpenCode Go article generation failed: ${res.status} ${text}`)
   }
 
   const data = (await res.json()) as {
