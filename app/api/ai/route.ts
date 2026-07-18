@@ -51,10 +51,8 @@ export async function POST(request: Request) {
 
   if (editorInline) {
     bodyJson.max_tokens = 150
-    bodyJson.stream = false
-  } else {
-    bodyJson.stream = true
   }
+  bodyJson.stream = true
 
   const upstream = await fetch(OPENCODE_GO_URL, {
     method: "POST",
@@ -65,26 +63,11 @@ export async function POST(request: Request) {
     body: JSON.stringify(bodyJson),
   })
 
-  if (!upstream.ok) {
+  if (!upstream.ok || !upstream.body) {
     return NextResponse.json(
       { error: "AI generation failed." },
       { status: 502 },
     )
-  }
-
-  if (editorInline) {
-    const data = await upstream.json() as any
-    const text = data?.choices?.[0]?.message?.content ?? ""
-    return new NextResponse(text, {
-      headers: {
-        "content-type": "text/plain; charset=utf-8",
-        "cache-control": "no-store",
-      },
-    })
-  }
-
-  if (!upstream.body) {
-    return NextResponse.json({ error: "AI generation failed." }, { status: 502 })
   }
 
   const stream = new ReadableStream({
