@@ -5,6 +5,7 @@ import { and, desc, eq, like, sql } from "drizzle-orm"
 import { getDb } from "@/db/client"
 import { articles } from "@/db/schema"
 import { ALL_CATEGORIES_ID, parseShortId } from "@/lib/site-routes"
+import { getCategoryByPageId } from "@/lib/db-categories.server"
 import type { FeedArticle } from "@/lib/site-types"
 
 const cache = new Map<string, { data: unknown; expiry: number }>()
@@ -152,6 +153,13 @@ export async function getFeedArticlesByPageId(
   }
 
   /** `/category/all`: every published article, any category (or uncategorized). */
+  let categoryIdFilter: string | undefined
+
+  if (pageId !== ALL_CATEGORIES_ID) {
+    const cat = await getCategoryByPageId(pageId)
+    if (cat) categoryIdFilter = cat.id
+  }
+
   const base =
     pageId === ALL_CATEGORIES_ID
       ? db
@@ -163,7 +171,12 @@ export async function getFeedArticlesByPageId(
           .select(cols)
           .from(articles)
           .where(
-            and(eq(articles.isPublished, true), eq(articles.categoryId, pageId)),
+            and(
+              eq(articles.isPublished, true),
+              categoryIdFilter
+                ? eq(articles.categoryId, categoryIdFilter)
+                : eq(articles.categoryId, pageId),
+            ),
           )
           .orderBy(desc(articles.updatedAt))
 
