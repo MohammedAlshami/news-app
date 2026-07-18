@@ -2,7 +2,7 @@ import { NextResponse } from "next/server"
 import { OPENCODE_GO_URL, OPENCODE_GO_MODEL, OPENCODE_GO_KEY } from "@/lib/opencode-go"
 
 const INLINE_EDITOR_SYSTEM_PROMPT =
-  "You are an inline Arabic news editor inside a rich-text editor. Return only the text to insert. Do not use markdown fences, headings, or commentary."
+  "You are an inline Arabic news editor. Do exactly what the user asks and nothing else. Respond with ONLY the requested text. No introductory phrases, no explanations, no commentary, no markdown, no bullet points, no headings."
 
 export async function POST(request: Request) {
   if (!OPENCODE_GO_KEY) {
@@ -43,18 +43,25 @@ export async function POST(request: Request) {
     },
   ]
 
+  const bodyJson: Record<string, unknown> = {
+    model: OPENCODE_GO_MODEL,
+    messages,
+    temperature: editorInline ? 0.3 : 0.7,
+  }
+
+  if (editorInline) {
+    bodyJson.max_tokens = 200
+  }
+
+  bodyJson.stream = true
+
   const upstream = await fetch(OPENCODE_GO_URL, {
     method: "POST",
     headers: {
       authorization: `Bearer ${OPENCODE_GO_KEY}`,
       "content-type": "application/json",
     },
-    body: JSON.stringify({
-      model: OPENCODE_GO_MODEL,
-      messages,
-      stream: true,
-      temperature: 0.7,
-    }),
+    body: JSON.stringify(bodyJson),
   })
 
   if (!upstream.ok || !upstream.body) {
