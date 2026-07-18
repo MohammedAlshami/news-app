@@ -75,6 +75,10 @@ export async function runTopicGrouping(windowMs = 24 * 60 * 60 * 1000): Promise<
 
   const { groups, skippedArticleIds } = await groupArticlesByTopic(articles, searchTopics, searchCategories)
 
+  const allExistingTopics = await db
+    .select({ id: topics.id, title: topics.title })
+    .from(topics)
+
   let topicsCreated = 0
   let topicsReused = 0
 
@@ -87,17 +91,24 @@ export async function runTopicGrouping(windowMs = 24 * 60 * 60 * 1000): Promise<
       topicId = group.topicId
       topicsReused++
     } else {
-      const newId = crypto.randomUUID()
-      await db.insert(topics).values({
-        id: newId,
-        title: group.title,
-        categoryId: group.categoryId,
-        parentId: group.parentId ?? null,
-        type: group.parentId ? "event" : "persistent",
-        articleCount: 0,
-      })
-      topicId = newId
-      topicsCreated++
+      const { findMatchingTopic } = await import("@/lib/article-dedup.server")
+      const match = await findMatchingTopic(group.title, allExistingTopics)
+      if (match) {
+        topicId = match.id
+        topicsReused++
+      } else {
+        const newId = crypto.randomUUID()
+        await db.insert(topics).values({
+          id: newId,
+          title: group.title,
+          categoryId: group.categoryId,
+          parentId: group.parentId ?? null,
+          type: group.parentId ? "event" : "persistent",
+          articleCount: 0,
+        })
+        topicId = newId
+        topicsCreated++
+      }
     }
 
     const ids = [...new Set(group.articleIds)]
