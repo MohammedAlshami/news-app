@@ -17,8 +17,8 @@ function instructionForAction(
 ): string {
   const wantsHtml = textOptions?.format === "rich-text"
   const formatHint = wantsHtml
-    ? "Return valid HTML only. No markdown fences, headings, or commentary."
-    : "Return plain text only. No markdown fences or commentary."
+    ? "أعد HTML فقط. بدون markdown أو عناوين أو تعليقات."
+    : "أرد نصاً عادياً فقط. بدون markdown أو تعليقات."
   const tone = textOptions?.tone
   const language = textOptions?.language
   const customText = textOptions?.text?.trim()
@@ -27,67 +27,68 @@ function instructionForAction(
   let task = ""
   switch (action) {
     case "extend":
-      task = "Expand the selected text with useful detail while preserving meaning."
+      task = "وسع النص المحدد مع الحفاظ على المعنى."
       break
     case "shorten":
-      task = "Shorten the selected text while preserving meaning."
+      task = "اختصر النص المحدد مع الحفاظ على المعنى."
       break
     case "simplify":
-      task = "Rewrite the text in clearer, simpler language."
+      task = "أعد كتابة النص بلغة أبسط وأوضح."
       break
     case "summarize":
-      task = "Summarize the selected text concisely."
+      task = "لخص النص المحدد باختصار."
       break
     case "complete":
     case "autocomplete":
-      task = "Continue naturally from the current context."
+      task = "أكمل الكتابة بشكل طبيعي من السياق الحالي."
       break
     case "emojify":
-      task = "Add tasteful emojis without overdoing it."
+      task = "أضف رموزاً تعبيرية مناسبة بدون إفراط."
       break
     case "fix-spelling-and-grammar":
-      task = "Fix spelling and grammar only."
+      task = "صحح الإملاء والنحو فقط."
       break
     case "rephrase":
-      task = "Rephrase the text for clarity while preserving meaning."
+      task = "أعد صياغة النص بوضوح مع الحفاظ على المعنى."
       break
     case "adjust-tone":
       task = tone
-        ? `Rewrite the text in a ${tone} tone.`
-        : "Rewrite the text in the requested tone."
+        ? `أعد كتابة النص بنبرة ${tone}.`
+        : "أعد كتابة النص بالنبرة المطلوبة."
       break
     case "translate":
       task = language
-        ? `Translate the text to ${language}.`
-        : "Translate the text to the requested language."
+        ? `ترجم النص إلى ${language}.`
+        : "ترجم النص إلى اللغة المطلوبة."
       break
     case "prompt":
       task = customText
-        ? `Follow this instruction: ${customText}`
-        : "Improve the selected text according to the user's instruction."
+        ? `اتبع هذا التعليمات: ${customText}`
+        : "حسن النص المحدد حسب طلب المستخدم."
       break
     default:
-      task = `Apply the ${action} instruction to the text.`
+      task = `طبق التعليمات ${action} على النص.`
       break
   }
 
   const sections = [
-    "You are an inline Arabic news editor inside a rich-text editor.",
-    "Return only the text to insert.",
+    "أنت محرر أخبار عربي داخل محرر نصوص غني.",
+    "أعد النص المراد إدراجه فقط باللغة العربية الفصحى.",
+    "يجب أن تكون الكتابة بالعربية الفصحى فقط. لا تستخدم أي كلمات إنجليزية.",
     formatHint,
-    `Instruction: ${task}`,
+    `التعليمة: ${task}`,
   ]
 
   if (tone) {
-    sections.push(`Tone: ${tone}`)
+    sections.push(`النبرة: ${tone}`)
   }
 
   if (language) {
-    sections.push(`Language: ${language}`)
+    sections.push(`اللغة: ${language}`)
   }
 
   if (selection) {
-    sections.push(`Selected text:\n${selection}`)
+    sections.push(`النص المحدد:\n${selection}`)
   }
 
   return sections.join("\n\n")

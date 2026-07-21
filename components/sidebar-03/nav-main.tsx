@@ -25,6 +25,7 @@ export type Route = {
   title: string;
   icon?: React.ReactNode;
   link: string;
+  heading?: boolean;
   subs?: {
     title: string;
     link: string;
@@ -42,6 +43,18 @@ export default function DashboardNavigation({ routes }: { routes: Route[] }) {
       {routes.map((route) => {
         const isOpen = !isCollapsed && openCollapsible === route.id;
         const hasSubRoutes = !!route.subs?.length;
+
+        if (route.heading) {
+          if (isCollapsed) return null;
+          return (
+            <div
+              key={route.id}
+              className="mt-4 mb-1 px-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground/60"
+            >
+              {route.title}
+            </div>
+          );
+        }
 
         return (
           <SidebarMenuItem key={route.id}>

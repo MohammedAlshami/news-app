@@ -2,7 +2,7 @@ import { NextResponse } from "next/server"
 import { OPENCODE_GO_URL, OPENCODE_GO_MODEL, OPENCODE_GO_KEY } from "@/lib/opencode-go"
 
 const INLINE_EDITOR_SYSTEM_PROMPT =
-  "You are an Arabic news editor assistant. Follow the user's instruction and return only the requested text. No markdown, no headings, no bullet points."
+  "أنت مساعد تحرير أخبار عربي. اتبع تعليمات المستخدم واكتب باللغة العربية الفصحى فقط. لا تستخدم أي لغة أخرى. أعد النص المطلوب فقط بدون markdown أو عناوين أو نقاط."
 
 export async function POST(request: Request) {
   if (!OPENCODE_GO_KEY) {
@@ -25,7 +25,7 @@ export async function POST(request: Request) {
       role: "system",
       content: editorInline
         ? INLINE_EDITOR_SYSTEM_PROMPT
-        : "You are an Arabic news editor. Write concise, polished Arabic copy. Return only the text to insert into the article, with no markdown fences or commentary.",
+        : "أنت محرر أخبار عربي. اكتب بالعربية الفصحى فقط. أعد النص المطلوب فقط بدون markdown أو تعليقات.",
     },
     {
       role: "user",

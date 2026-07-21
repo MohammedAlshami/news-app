@@ -29,3 +29,8 @@ export {
   type NewSiteAd,
   type SiteAd,
 } from "./site-ads"
+export {
+  financeRevenue,
+  type FinanceRevenue,
+  type NewFinanceRevenue,
+} from "./finance"
