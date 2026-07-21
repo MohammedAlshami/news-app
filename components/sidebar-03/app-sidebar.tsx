@@ -16,6 +16,7 @@ import { motion } from "framer-motion"
 import {
   BookOpen,
   Database,
+  DollarSign,
   Home,
   Images,
   Megaphone,
@@ -43,6 +44,12 @@ const dashboardRoutes: Route[] = [
     link: "/admin/articles",
   },
   {
+    id: "outputs-heading",
+    title: "المخرجات",
+    heading: true,
+    link: "",
+  },
+  {
     id: "admin-scraped-articles",
     title: "المقالات المستخرجة",
     icon: <Database className="size-4" />,
@@ -65,6 +72,18 @@ const dashboardRoutes: Route[] = [
     title: "مصادر الأخبار",
     icon: <Radio className="size-4" />,
     link: "/admin/news-sources",
+  },
+  {
+    id: "analytics-heading",
+    title: "التحليلات",
+    heading: true,
+    link: "",
+  },
+  {
+    id: "admin-finance",
+    title: "المالية",
+    icon: <DollarSign className="size-4" />,
+    link: "/admin/finance",
   },
   {
     id: "admin-advertise",

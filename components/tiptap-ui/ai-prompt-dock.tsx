@@ -1,10 +1,9 @@
 "use client"
 
 import { useCallback, useEffect, useRef, useState } from "react"
-import { Sparkles } from "lucide-react"
+import { Sparkles, Loader2 } from "lucide-react"
 
 import { AiMenuInputTextarea } from "@/components/tiptap-ui/ai-menu-input"
-import { getContextAndInsertAt } from "@/components/tiptap-ui/ai-menu-utils"
 import { cn } from "@/lib/utils"
 
 import "@/components/tiptap-ui/ai-prompt-dock.scss"
@@ -18,90 +17,98 @@ export function AiPromptDock({ editor: providedEditor, articleId }: AiPromptDock
   const editor = providedEditor
   const [tone, setTone] = useState<string | null>(null)
   const [isExpanded, setIsExpanded] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const [articleContext, setArticleContext] = useState<string>("")
-  const selectionSnapshotRef = useRef<{
-    hasSelection: boolean
-    context: string
-  }>({
-    hasSelection: false,
-    context: "",
-  })
 
-  // Fetch article context when component mounts
   useEffect(() => {
     if (articleId) {
-      // Get the article title and excerpt from the form
       const titleInput = document.querySelector<HTMLInputElement>('input[name="title"]')
       const excerptTextarea = document.querySelector<HTMLTextAreaElement>('textarea[name="excerpt"]')
-      
       const title = titleInput?.value || ""
       const excerpt = excerptTextarea?.value || ""
-      
       if (title || excerpt) {
         setArticleContext(`Article Title: ${title}\nArticle Excerpt: ${excerpt}`)
       }
     }
   }, [articleId])
 
-  useEffect(() => {
-    if (!editor) return
 
-    const updateSnapshot = () => {
-      const { context } = getContextAndInsertAt(editor)
-      selectionSnapshotRef.current = {
-        hasSelection: !editor.state.selection.empty,
-        context: context || "",
-      }
-    }
-
-    updateSnapshot()
-    editor.on("selectionUpdate", updateSnapshot)
-
-    return () => {
-      editor.off("selectionUpdate", updateSnapshot)
-    }
-  }, [editor])
 
   const handleSubmit = useCallback(
-    (prompt: string) => {
+    async (prompt: string) => {
       if (!editor || !prompt.trim()) return
+      setError(null)
+      setIsLoading(true)
 
-      const snapshot = selectionSnapshotRef.current
+      // Build prompt with full article context
       let promptWithContext = prompt
-      
-      // Add article context if available
+      const fullText = editor.state.doc.textBetween(0, editor.state.doc.content.size, "\n", "\n")
+      if (fullText.trim()) {
+        promptWithContext = `Article content:\n${fullText}\n\nUser request: ${prompt}`
+      }
       if (articleContext) {
         promptWithContext = `${articleContext}\n\n${promptWithContext}`
       }
-      
-      // Add selection context
-      if (snapshot.context) {
-        promptWithContext = `${snapshot.context}\n\n${promptWithContext}`
+      if (tone) {
+        promptWithContext = `${promptWithContext}\n\nTone: ${tone}`
       }
-      
-      const hasSelection = snapshot.hasSelection
 
-      // Don't set needs commit - let it stream directly
-      editor.commands.aiGenerationSetIsSelection(false)
-      editor.commands.aiGenerationShow()
-
-      editor
-        .chain()
-        .focus()
-        .aiTextPrompt({
-          text: promptWithContext,
-          insert: true,
-          stream: true,
-          tone: tone || undefined,
-          format: "rich-text",
+      try {
+        const response = await fetch("/api/ai", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            editorInline: true,
+            mode: "write",
+            prompt: promptWithContext,
+          }),
         })
-        .run()
+        if (!response.ok) {
+          setError("فشل الاتصال بالذكاء الاصطناعي")
+          return
+        }
+
+        const text = await response.text()
+        if (!text.trim()) {
+          setError("لم يتم الحصول على رد من الذكاء الاصطناعي")
+          return
+        }
+
+        const html = text
+          .trim()
+          .split(/\n{2,}/)
+          .map(
+            (p) =>
+              `<p>${p
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/\n/g, "<br>")}</p>`,
+          )
+          .join("")
+
+        // Replace entire document content
+        const { doc } = editor.state
+        const from = 1
+        const to = doc.content.size - 1
+        if (from < to) {
+          editor.chain().focus().deleteRange({ from, to }).insertContent(html).run()
+        } else {
+          editor.chain().focus().insertContent(html).run()
+        }
+      } catch (err) {
+        setError("حدث خطأ أثناء الاتصال بالذكاء الاصطناعي")
+      } finally {
+        setIsLoading(false)
+      }
     },
-    [editor, tone, articleContext]
+    [editor, tone, articleContext],
   )
 
   const handleClose = useCallback(() => {
     setIsExpanded(false)
+    setError(null)
   }, [])
 
   if (!isExpanded) {
@@ -118,13 +125,31 @@ export function AiPromptDock({ editor: providedEditor, articleId }: AiPromptDock
 
   return (
     <div className={cn("tiptap-ai-prompt-dock", isExpanded && "expanded")}>
-      <AiMenuInputTextarea
-        showPlaceholder={false}
-        placeholder="اطلب من الذكاء الاصطناعي التحرير أو التحسين أو المتابعة..."
-        onInputSubmit={handleSubmit}
-        onToneChange={(value) => setTone(value)}
-        onClose={handleClose}
-      />
+      {isLoading ? (
+        <div className="flex items-center gap-3 p-4 text-muted-foreground">
+          <Loader2 className="h-5 w-5 animate-spin" />
+          <span>الذكاء الاصطناعي يكتب...</span>
+        </div>
+      ) : error ? (
+        <div className="p-4">
+          <p className="text-sm text-red-500 mb-2">{error}</p>
+          <AiMenuInputTextarea
+            showPlaceholder={false}
+            placeholder="اطلب من الذكاء الاصطناعي التحرير أو التحسين أو المتابعة..."
+            onInputSubmit={handleSubmit}
+            onToneChange={(value) => setTone(value)}
+            onClose={handleClose}
+          />
+        </div>
+      ) : (
+        <AiMenuInputTextarea
+          showPlaceholder={false}
+          placeholder="اطلب من الذكاء الاصطناعي التحرير أو التحسين أو المتابعة..."
+          onInputSubmit={handleSubmit}
+          onToneChange={(value) => setTone(value)}
+          onClose={handleClose}
+        />
+      )}
     </div>
   )
 }

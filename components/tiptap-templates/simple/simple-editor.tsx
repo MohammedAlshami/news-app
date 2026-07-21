@@ -255,17 +255,24 @@ export function SimpleEditor({
           aiStreamResolver: createEditorOpenCodeStreamResolver(),
           aiCompletionResolver: createEditorOpenCodeCompletionResolver(),
           onLoading: (context) => {
-            context.editor.commands.aiGenerationSetIsLoading(true)
-            context.editor.commands.aiGenerationHasMessage(false)
+            if (!context.editor) return
+            try { context.editor.commands.aiGenerationSetIsLoading(true) } catch {}
+            try { context.editor.commands.aiGenerationHasMessage(false) } catch {}
           },
           onChunk: (context) => {
-            context.editor.commands.aiGenerationSetIsLoading(true)
-            context.editor.commands.aiGenerationHasMessage(true)
+            if (!context.editor) return
+            try { context.editor.commands.aiGenerationSetIsLoading(true) } catch {}
+            try { context.editor.commands.aiGenerationHasMessage(true) } catch {}
           },
           onSuccess: (context) => {
+            if (!context.editor) return
             const hasMessage = !!context.response
-            context.editor.commands.aiGenerationSetIsLoading(false)
-            context.editor.commands.aiGenerationHasMessage(hasMessage)
+            try { context.editor.commands.aiGenerationSetIsLoading(false) } catch {}
+            try { context.editor.commands.aiGenerationHasMessage(hasMessage) } catch {}
+            if (hasMessage) {
+              try { context.editor.chain().aiAccept().run() } catch {}
+              try { context.editor.commands.resetUiState() } catch {}
+            }
           },
         }),
       ],

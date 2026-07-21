@@ -48,50 +48,35 @@ export const UiState = Extension.create<UiState>({
   name: "uiState",
 
   addStorage() {
-    return {
-      uiState: { ...defaultUiState },
-    }
+    return { ...defaultUiState }
   },
 
   addCommands() {
-    const createBooleanSetter =
-      (key: keyof UiState) => (value: boolean) => () => {
+    const setAndNotify =
+      (key: keyof UiState, value: boolean) => () => {
         this.storage[key] = value
+        try { setTimeout(() => (this.editor as any).emit("uiStateChanged")) } catch {}
         return true
       }
 
-    const createToggle = (key: keyof UiState, value: boolean) => () => () => {
-      this.storage[key] = value
-      return true
-    }
-
     return {
-      // AI Generation commands
-      aiGenerationSetIsSelection: createBooleanSetter(
-        "aiGenerationIsSelection"
-      ),
-      aiGenerationSetIsLoading: createBooleanSetter("aiGenerationIsLoading"),
-      aiGenerationHasMessage: createBooleanSetter("aiGenerationHasMessage"),
-      aiGenerationShow: createToggle("aiGenerationActive", true),
-      aiGenerationHide: createToggle("aiGenerationActive", false),
+      aiGenerationSetIsSelection: (value: boolean) => setAndNotify("aiGenerationIsSelection", value),
+      aiGenerationSetIsLoading: (value: boolean) => setAndNotify("aiGenerationIsLoading", value),
+      aiGenerationHasMessage: (value: boolean) => setAndNotify("aiGenerationHasMessage", value),
+      aiGenerationShow: () => setAndNotify("aiGenerationActive", true),
+      aiGenerationHide: () => setAndNotify("aiGenerationActive", false),
 
-      // Comment input commands
-      commentInputShow: createToggle("commentInputVisible", true),
-      commentInputHide: createToggle("commentInputVisible", false),
+      commentInputShow: () => setAndNotify("commentInputVisible", true),
+      commentInputHide: () => setAndNotify("commentInputVisible", false),
 
-      // Drag handle commands
-      setLockDragHandle: createBooleanSetter("lockDragHandle"),
-      setIsDragging: createBooleanSetter("isDragging"),
+      setLockDragHandle: (value: boolean) => setAndNotify("lockDragHandle", value),
+      setIsDragging: (value: boolean) => setAndNotify("isDragging", value),
 
-      // Reset command
       resetUiState: () => () => {
         Object.assign(this.storage, { ...defaultUiState })
+        try { setTimeout(() => (this.editor as any).emit("uiStateChanged")) } catch {}
         return true
       },
     }
-  },
-
-  onCreate() {
-    this.storage = { ...defaultUiState }
   },
 })
