@@ -1,13 +1,15 @@
 import { getDb } from "@/db/client"
 import { articles, categories, generatedArticles, scrapedNews, topics } from "@/db/schema"
 import { eq, isNull, sql } from "drizzle-orm"
-import { OPENROUTER_URL, OPENROUTER_MODEL, OPENROUTER_API_KEY, OPENROUTER_PROVIDER } from "@/lib/openrouter"
+import { OPENROUTER_URL, OPENROUTER_MODEL, OPENROUTER_API_KEY } from "@/lib/openrouter"
 import { uploadCoverWithDedup } from "@/lib/upload-image-dedup.server"
 import { isDuplicateTitle } from "@/lib/article-dedup.server"
+import { getCategoryQuotas } from "@/lib/db-generation-quota.server"
 
 export const dynamic = "force-dynamic"
 
-const CONCURRENCY = 3
+const CONCURRENCY = 4
+const DEFAULT_LIMIT = 60
 
 function event(name: string, data: Record<string, unknown>) {
   return `event: ${name}\ndata: ${JSON.stringify(data)}\n\n`
@@ -23,30 +25,38 @@ async function classifyAllTopics(): Promise<number> {
 
   if (unclassified.length === 0) return 0
 
-  const res = await fetch(OPENROUTER_URL, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${OPENROUTER_API_KEY}`, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      model: OPENROUTER_MODEL,
-      provider: OPENROUTER_PROVIDER,
-      messages: [
-        { role: "system", content: `Assign each topic to the best category. Respond JSON: { "assignments": [{ "topicId": "...", "categoryId": "..." }] }` },
-        { role: "user", content: JSON.stringify({ categories: allCats, topics: unclassified }) },
-      ],
-      temperature: 0.1,
-      response_format: { type: "json_object" },
-    }),
-  })
-
-  const data = await res.json() as any
-  const raw = data.choices?.[0]?.message?.content ?? "{}"
-  const parsed = JSON.parse(raw) as { assignments: { topicId: string; categoryId: string }[] }
-
+  // Classify in small chunks — one giant request can hang or exceed limits.
+  const CHUNK = 40
   let updated = 0
-  for (const a of parsed.assignments ?? []) {
-    if (a.categoryId && allCats.some((c) => c.id === a.categoryId)) {
-      await db.update(topics).set({ categoryId: a.categoryId }).where(eq(topics.id, a.topicId))
-      updated++
+  for (let i = 0; i < unclassified.length; i += CHUNK) {
+    const chunk = unclassified.slice(i, i + CHUNK)
+    try {
+      const res = await fetch(OPENROUTER_URL, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${OPENROUTER_API_KEY}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: OPENROUTER_MODEL,
+          messages: [
+            { role: "system", content: `Assign each topic to the best category. Respond JSON: { "assignments": [{ "topicId": "...", "categoryId": "..." }] }` },
+            { role: "user", content: JSON.stringify({ categories: allCats, topics: chunk }) },
+          ],
+          temperature: 0.1,
+          response_format: { type: "json_object" },
+        }),
+        signal: AbortSignal.timeout(45000),
+      })
+      if (!res.ok) continue
+      const data = await res.json() as any
+      const raw = data.choices?.[0]?.message?.content ?? "{}"
+      const parsed = JSON.parse(raw) as { assignments?: { topicId: string; categoryId: string }[] }
+      for (const a of parsed.assignments ?? []) {
+        if (a.categoryId && allCats.some((c) => c.id === a.categoryId)) {
+          await db.update(topics).set({ categoryId: a.categoryId }).where(eq(topics.id, a.topicId))
+          updated++
+        }
+      }
+    } catch {
+      // skip chunk on timeout/parse error
     }
   }
   return updated
@@ -83,7 +93,6 @@ async function generateArticleForTopic(topicId: string): Promise<{ title: string
     headers: { Authorization: `Bearer ${OPENROUTER_API_KEY}`, "Content-Type": "application/json" },
     body: JSON.stringify({
       model: OPENROUTER_MODEL,
-      provider: OPENROUTER_PROVIDER,
       messages: [
         { role: "system", content: "Write a comprehensive Arabic news article. Respond JSON: { title, excerpt, highlights[], paragraphs[] } where highlights is 3-5 bullet points. CRITICAL: Do NOT include any 'أبرز النقاط', 'ملخص', bullet lists, or summary sections inside the paragraphs — only flowing prose. Highlights go ONLY in the highlights field." },
         { role: "user", content: JSON.stringify({ topic: topic.title, sources }) },
@@ -91,6 +100,7 @@ async function generateArticleForTopic(topicId: string): Promise<{ title: string
       temperature: 0.6,
       response_format: { type: "json_object" },
     }),
+    signal: AbortSignal.timeout(90000),
   })
 
   const data = await res.json() as any
@@ -144,7 +154,11 @@ async function generateArticleForTopic(topicId: string): Promise<{ title: string
   return { title: parsed.title }
 }
 
-export async function GET(): Promise<Response> {
+export async function GET(request: Request): Promise<Response> {
+  const url = new URL(request.url)
+  const parsedLimit = Number.parseInt(url.searchParams.get("limit") ?? "", 10)
+  const limit = Number.isFinite(parsedLimit) && parsedLimit > 0 ? parsedLimit : DEFAULT_LIMIT
+
   const stream = new ReadableStream({
     async start(controller) {
       const encoder = new TextEncoder()
@@ -152,49 +166,103 @@ export async function GET(): Promise<Response> {
       const emit = (n: string, d: Record<string, unknown>) => { if (!finished) controller.enqueue(encoder.encode(event(n, d))) }
       const done = () => { if (!finished) { finished = true; controller.close() } }
 
-      const timeout = setTimeout(() => { emit("error", { message: "Timed out" }); emit("complete", { timedOut: true }); done() }, 600000)
+      const timeout = setTimeout(() => { emit("error", { message: "Timed out" }); emit("complete", { timedOut: true }); done() }, 900000)
 
       try {
         emit("classify", { status: "started" })
-        const classified = await classifyAllTopics()
+        let classified = 0
+        try {
+          classified = await classifyAllTopics()
+        } catch (err) {
+          emit("error", { message: `classify failed: ${err instanceof Error ? err.message : String(err)}` })
+        }
         emit("classify", { classified })
+
+        const quotas = await getCategoryQuotas()
+        const quotaById = new Map(quotas.map((q) => [q.id, q]))
+        const usedThisRun = new Map<string, number>()
 
         const db = getDb()
         const unprocessed = await db
-          .select({ id: topics.id, title: topics.title, categoryId: topics.categoryId })
+          .select({
+            id: topics.id,
+            title: topics.title,
+            categoryId: topics.categoryId,
+          })
           .from(topics)
           .leftJoin(generatedArticles, eq(topics.id, generatedArticles.topicId))
-          .where(sql`${generatedArticles.id} IS NULL`)
+          .where(sql`${generatedArticles.id} IS NULL AND ${topics.isActive} = 1 AND ${topics.categoryId} IS NOT NULL`)
+          .orderBy(sql`${topics.articleCount} DESC`)
 
-        emit("generate", { total: unprocessed.length })
-        let generated = 0
-
-        for (let i = 0; i < unprocessed.length; i += CONCURRENCY) {
-          const chunk = unprocessed.slice(i, i + CONCURRENCY)
-          const results = await Promise.allSettled(
-            chunk.map(async (topic) => {
-              emit("generating", { topic: topic.title })
-              const r = await generateArticleForTopic(topic.id)
-              return { topic, result: r }
-            }),
-          )
-
-          for (const r of results) {
-            if (r.status === "fulfilled") {
-              if (r.value.result) {
-                generated++
-                emit("generated", { title: r.value.result.title })
-              } else {
-                emit("skipped", { topic: r.value.topic.title })
-              }
-            } else {
-              emit("error", { message: r.reason?.message ?? "Unknown error" })
-            }
-          }
+        const queues = new Map<string, { id: string; title: string }[]>()
+        for (const t of unprocessed) {
+          if (!t.categoryId || !quotaById.has(t.categoryId)) continue
+          const arr = queues.get(t.categoryId) ?? []
+          arr.push({ id: t.id, title: t.title })
+          queues.set(t.categoryId, arr)
         }
 
-        emit("complete", { classified, generated })
-      } finally { clearTimeout(timeout); done() }
+        const remaining = (catId: string) => {
+          const q = quotaById.get(catId)
+          if (!q) return 0
+          return Math.max(0, q.dailyQuota - q.generatedToday - (usedThisRun.get(catId) ?? 0))
+        }
+
+        emit("plan", {
+          limit,
+          categories: quotas.map((q) => ({ slug: q.slug, quota: q.dailyQuota, generatedToday: q.generatedToday, remaining: q.remaining, queued: queues.get(q.id)?.length ?? 0 })),
+        })
+
+        const catOrder = [...queues.keys()]
+        let rr = 0
+        const pickNext = (): { id: string; title: string; catId: string } | null => {
+          for (let i = 0; i < catOrder.length; i++) {
+            const catId = catOrder[(rr + i) % catOrder.length]
+            if (remaining(catId) <= 0) continue
+            const q = queues.get(catId)
+            if (!q || q.length === 0) continue
+            rr = (rr + i + 1) % catOrder.length
+            const t = q.shift()!
+            usedThisRun.set(catId, (usedThisRun.get(catId) ?? 0) + 1)
+            return { ...t, catId }
+          }
+          return null
+        }
+
+        let generated = 0
+        let attempted = 0
+        const inFlight = new Set<Promise<void>>()
+
+        while (generated + inFlight.size < limit) {
+          const next = pickNext()
+          if (!next) break
+          attempted++
+          let p: Promise<void>
+          p = (async () => {
+            emit("generating", { topic: next.title, category: next.catId })
+            let result: { title: string } | null = null
+            try {
+              result = await generateArticleForTopic(next.id)
+            } catch (err) {
+              emit("error", { message: err instanceof Error ? err.message : String(err) })
+            }
+            if (result) {
+              generated++
+              emit("generated", { title: result.title, category: next.catId })
+            } else {
+              emit("skipped", { topic: next.title, category: next.catId })
+            }
+          })().finally(() => { inFlight.delete(p) })
+          inFlight.add(p)
+          if (inFlight.size >= CONCURRENCY) await Promise.race(inFlight)
+        }
+
+        await Promise.all(inFlight)
+        emit("complete", { classified, generated, attempted, limit })
+      } finally {
+        clearTimeout(timeout)
+        done()
+      }
     },
   })
 

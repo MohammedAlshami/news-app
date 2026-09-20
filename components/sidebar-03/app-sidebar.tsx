@@ -23,6 +23,7 @@ import {
   Newspaper,
   PanelLeft,
   Radio,
+  Settings,
   Sparkles,
   Tag,
   Users,
@@ -106,6 +107,12 @@ const dashboardRoutes: Route[] = [
       { title: ar.adminNavUsers, link: "/admin/users" },
       { title: ar.adminNavClients, link: "/admin/clients" },
     ],
+  },
+  {
+    id: "admin-settings",
+    title: "الإعدادات",
+    icon: <Settings className="size-4" />,
+    link: "/admin/settings",
   },
 ]
 

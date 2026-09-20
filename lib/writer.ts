@@ -1,9 +1,10 @@
 import { getDb } from "@/db/client"
 import { articles, generatedArticles, scrapedNews, topics } from "@/db/schema"
 import { desc, eq, sql } from "drizzle-orm"
-import { OPENROUTER_URL, OPENROUTER_MODEL, OPENROUTER_API_KEY, OPENROUTER_PROVIDER } from "@/lib/openrouter"
+import { OPENROUTER_URL, OPENROUTER_MODEL, OPENROUTER_API_KEY } from "@/lib/openrouter"
 import { uploadCoverWithDedup } from "@/lib/upload-image-dedup.server"
 import { isDuplicateTitle } from "@/lib/article-dedup.server"
+import { getCategoryQuotas } from "@/lib/db-generation-quota.server"
 
 const WRITE_PROMPT = `
 You are a professional Arabic news journalist. Write a comprehensive news article.
@@ -80,20 +81,44 @@ export async function runWriter(): Promise<WriterResult> {
     })
     .from(topics)
     .leftJoin(generatedArticles, eq(topics.id, generatedArticles.topicId))
-    .where(sql`${generatedArticles.id} IS NULL AND ${topics.isActive} = 1`)
+    .where(sql`${generatedArticles.id} IS NULL AND ${topics.isActive} = 1 AND ${topics.categoryId} IS NOT NULL`)
     .orderBy(desc(topics.articleCount))
-    .limit(5)
+    .limit(200)
 
   if (candidates.length === 0) {
     return { action: "skip", reason: "No candidate topics without generated articles" }
   }
 
-  for (const candidate of candidates) {
+  // Category-balanced: prefer categories that still have daily quota left,
+  // so low-volume categories (technology, science, environment) aren't starved
+  // by high-volume ones (sports, politics, economy).
+  const quotas = await getCategoryQuotas()
+  const remainingByCat = new Map(quotas.map((q) => [q.id, q.remaining]))
+  const byCategory = new Map<string, CandidateTopic[]>()
+  for (const c of candidates) {
+    if (!c.categoryId) continue
+    const arr = byCategory.get(c.categoryId) ?? []
+    arr.push(c)
+    byCategory.set(c.categoryId, arr)
+  }
+  const orderedCandidates = [...byCategory.values()]
+    .sort(
+      (a, b) =>
+        (remainingByCat.get(b[0].categoryId ?? "") ?? 0) -
+        (remainingByCat.get(a[0].categoryId ?? "") ?? 0),
+    )
+    .flat()
+
+  for (const candidate of orderedCandidates) {
+    if ((remainingByCat.get(candidate.categoryId ?? "") ?? 0) <= 0) continue
+
     const sources = await loadSources(candidate.id)
     const withContent = sources.filter((s) => s.content)
     const withImages = sources.filter((s) => s.imageUrl)
 
-    if (withContent.length < 2 || withImages.length === 0) continue
+    // Single-source topics are allowed (technology/science often have only one
+    // outlet covering an event); an image is still required.
+    if (withContent.length < 1 || withImages.length === 0) continue
 
     const previous = await loadPrevious(candidate.id)
     const coverImageUrl = withImages[0].imageUrl!
@@ -228,7 +253,6 @@ async function generateSingle(
       },
       body: JSON.stringify({
         model: OPENROUTER_MODEL,
-        provider: OPENROUTER_PROVIDER,
         messages: [
           { role: "system", content: WRITE_PROMPT },
           { role: "user", content: userMessage },

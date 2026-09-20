@@ -1,0 +1,1 @@
+ALTER TABLE `categories` ADD COLUMN `daily_quota` integer NOT NULL DEFAULT 25;

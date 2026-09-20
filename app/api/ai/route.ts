@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server"
-import { OPENROUTER_URL, OPENROUTER_MODEL, OPENROUTER_API_KEY, OPENROUTER_PROVIDER } from "@/lib/openrouter"
+import { OPENROUTER_URL, OPENROUTER_MODEL, OPENROUTER_API_KEY } from "@/lib/openrouter"
 
 const INLINE_EDITOR_SYSTEM_PROMPT =
   "أنت مساعد تحرير أخبار عربي. اتبع تعليمات المستخدم واكتب باللغة العربية الفصحى فقط. لا تستخدم أي لغة أخرى. أعد النص المطلوب فقط بدون markdown أو عناوين أو نقاط."
@@ -42,7 +42,6 @@ export async function POST(request: Request) {
 
   const bodyJson: Record<string, unknown> = {
     model: OPENROUTER_MODEL,
-    provider: OPENROUTER_PROVIDER,
     messages,
     temperature: editorInline ? 0.3 : 0.7,
   }

@@ -1,4 +1,4 @@
-import { OPENROUTER_URL, OPENROUTER_MODEL, OPENROUTER_API_KEY, OPENROUTER_PROVIDER } from "@/lib/openrouter"
+import { OPENROUTER_URL, OPENROUTER_MODEL, OPENROUTER_API_KEY } from "@/lib/openrouter"
 
 export type ArticleInput = {
   id: string
@@ -136,7 +136,6 @@ async function batchClassifyArticles(
       headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
       body: JSON.stringify({
         model: OPENROUTER_MODEL,
-        provider: OPENROUTER_PROVIDER,
         messages: [
           { role: "system", content: BATCH_CLASSIFY_PROMPT },
           { role: "user", content: JSON.stringify({
@@ -179,7 +178,6 @@ async function classifySingle(
       headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
       body: JSON.stringify({
         model: OPENROUTER_MODEL,
-        provider: OPENROUTER_PROVIDER,
         messages: [
           { role: "system", content: "Classify this article into a category: economy, sports, technology, politics, health, culture, science, environment. Respond with ONLY the category slug." },
           { role: "user", content: text },
@@ -219,7 +217,6 @@ async function groupArticles(
       headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
       body: JSON.stringify({
         model: OPENROUTER_MODEL,
-        provider: OPENROUTER_PROVIDER,
         messages: [
           { role: "system", content: GROUP_PROMPT },
           { role: "user", content: JSON.stringify({ articles: payload }) },
