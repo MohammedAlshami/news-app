@@ -1,7 +1,7 @@
 import { getDb } from "@/db/client"
 import { articles, categories, generatedArticles, scrapedNews, topics } from "@/db/schema"
 import { eq, isNull, sql } from "drizzle-orm"
-import { OPENCODE_GO_URL, OPENCODE_GO_MODEL, OPENCODE_GO_KEY } from "@/lib/opencode-go"
+import { OPENROUTER_URL, OPENROUTER_MODEL, OPENROUTER_API_KEY } from "@/lib/openrouter"
 import { uploadCoverWithDedup } from "@/lib/upload-image-dedup.server"
 import { isDuplicateTitle } from "@/lib/article-dedup.server"
 
@@ -23,11 +23,11 @@ async function classifyAllTopics(): Promise<number> {
 
   if (unclassified.length === 0) return 0
 
-  const res = await fetch(OPENCODE_GO_URL, {
+  const res = await fetch(OPENROUTER_URL, {
     method: "POST",
-    headers: { Authorization: `Bearer ${OPENCODE_GO_KEY}`, "Content-Type": "application/json" },
+    headers: { Authorization: `Bearer ${OPENROUTER_API_KEY}`, "Content-Type": "application/json" },
     body: JSON.stringify({
-      model: OPENCODE_GO_MODEL,
+      model: OPENROUTER_MODEL,
       messages: [
         { role: "system", content: `Assign each topic to the best category. Respond JSON: { "assignments": [{ "topicId": "...", "categoryId": "..." }] }` },
         { role: "user", content: JSON.stringify({ categories: allCats, topics: unclassified }) },
@@ -77,11 +77,11 @@ async function generateArticleForTopic(topicId: string): Promise<{ title: string
     return null
   }
 
-  const res = await fetch(OPENCODE_GO_URL, {
+  const res = await fetch(OPENROUTER_URL, {
     method: "POST",
-    headers: { Authorization: `Bearer ${OPENCODE_GO_KEY}`, "Content-Type": "application/json" },
+    headers: { Authorization: `Bearer ${OPENROUTER_API_KEY}`, "Content-Type": "application/json" },
     body: JSON.stringify({
-      model: OPENCODE_GO_MODEL,
+      model: OPENROUTER_MODEL,
       messages: [
         { role: "system", content: "Write a comprehensive Arabic news article. Respond JSON: { title, excerpt, highlights[], paragraphs[] } where highlights is 3-5 bullet points. CRITICAL: Do NOT include any 'أبرز النقاط', 'ملخص', bullet lists, or summary sections inside the paragraphs — only flowing prose. Highlights go ONLY in the highlights field." },
         { role: "user", content: JSON.stringify({ topic: topic.title, sources }) },

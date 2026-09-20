@@ -1,7 +1,7 @@
 "use server"
 
 import { randomUUID } from "node:crypto"
-import { mkdir, unlink, writeFile } from "node:fs/promises"
+import { unlink } from "node:fs/promises"
 import { join } from "node:path"
 
 import { revalidatePath } from "next/cache"
@@ -16,7 +16,6 @@ import { tiptapEmptyDocument } from "@/lib/tiptap-empty-doc"
 import { getArticlePath } from "@/lib/site-routes"
 import {
   deleteStoredImageIfR2,
-  isR2Configured,
   putR2Object,
 } from "@/lib/r2.server"
 import { ar } from "@/lib/ui-ar"
@@ -238,27 +237,12 @@ export async function uploadArticleCoverImageAction(
     file.type ||
     (finalExt === "jpg" ? "image/jpeg" : `image/${finalExt}`)
 
-  let publicUrl: string
-  if (isR2Configured()) {
-    const key = `articles/${articleId}/${name}`
-    publicUrl = await putR2Object({
-      key,
-      body: buffer,
-      contentType,
-    })
-  } else {
-    const dir = join(
-      process.cwd(),
-      "public",
-      "uploads",
-      "articles",
-      articleId,
-    )
-    await mkdir(dir, { recursive: true })
-    const outPath = join(dir, name)
-    await writeFile(outPath, buffer)
-    publicUrl = `/uploads/articles/${articleId}/${name}`
-  }
+  const key = `articles/${articleId}/${name}`
+  const publicUrl = await putR2Object({
+    key,
+    body: buffer,
+    contentType,
+  })
 
   await getDb()
     .update(articles)
@@ -350,31 +334,13 @@ export async function uploadArticleInlineImageAction(
   const id = randomUUID()
   const filename = `${id}.${finalExt}`
 
-  if (isR2Configured()) {
-    const key = `articles/${articleId}/inline/${filename}`
-    const url = await putR2Object({
-      key,
-      body: buffer,
-      contentType,
-    })
-    return { ok: true, url }
-  }
-
-  const dir = join(
-    process.cwd(),
-    "public",
-    "uploads",
-    "articles",
-    articleId,
-    "inline",
-  )
-  await mkdir(dir, { recursive: true })
-  const outPath = join(dir, filename)
-  await writeFile(outPath, buffer)
-  return {
-    ok: true,
-    url: `/uploads/articles/${articleId}/inline/${filename}`,
-  }
+  const key = `articles/${articleId}/inline/${filename}`
+  const url = await putR2Object({
+    key,
+    body: buffer,
+    contentType,
+  })
+  return { ok: true, url }
 }
 
 export type AdminArticlePreviewData = {

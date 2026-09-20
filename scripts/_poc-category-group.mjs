@@ -5,9 +5,9 @@ import { fileURLToPath } from "node:url"
 const root = join(dirname(fileURLToPath(import.meta.url)), "..")
 config({ path: join(root, ".env.local") })
 const { CLOUDFLARE_ACCOUNT_ID: a, CLOUDFLARE_DATABASE_ID: d, CLOUDFLARE_D1_TOKEN: t } = process.env
-const apiKey = process.env.OPENCODE_GO_KEY
-const OPENCODE_GO_URL = "https://opencode.ai/zen/go/v1/chat/completions"
-const OPENCODE_GO_MODEL = process.env.OPENCODE_GO_MODEL ?? "deepseek-v4-flash"
+const apiKey = process.env.OPENROUTER_API_KEY
+const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
+const OPENROUTER_MODEL = process.env.OPENROUTER_MODEL ?? "deepseek/deepseek-v4-flash"
 
 async function q(sql) {
   const r = await fetch(`https://api.cloudflare.com/client/v4/accounts/${a}/d1/database/${d}/raw`, { method: "POST", headers: { Authorization: `Bearer ${t}`, "Content-Type": "application/json" }, body: JSON.stringify({ sql, params: [], method: "all" }) })
@@ -76,11 +76,11 @@ console.log(`  Total mixed: ${totalMixed} (needs AI classification)`)
 console.log(`\n=== Testing AI grouping for 'sport' category ===`)
 const sportArts = byCat["sport"] || byCat["sports"] || []
 if (sportArts.length > 0) {
-  const res = await fetch(OPENCODE_GO_URL, {
+  const res = await fetch(OPENROUTER_URL, {
     method: "POST",
     headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
     body: JSON.stringify({
-      model: OPENCODE_GO_MODEL,
+      model: OPENROUTER_MODEL,
       messages: [
         { role: "system", content: "Group articles covering the SAME specific event together. Return JSON: { groups: [{ title: \"...\", articleIds: [\"...\"] }] }" },
         { role: "user", content: JSON.stringify({ articles: sportArts.map(a => ({ id: a.id, title: a.title, excerpt: a.excerpt.slice(0, 200) })) }) },

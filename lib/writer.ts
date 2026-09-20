@@ -1,7 +1,7 @@
 import { getDb } from "@/db/client"
 import { articles, generatedArticles, scrapedNews, topics } from "@/db/schema"
 import { desc, eq, sql } from "drizzle-orm"
-import { OPENCODE_GO_URL, OPENCODE_GO_MODEL, OPENCODE_GO_KEY } from "@/lib/opencode-go"
+import { OPENROUTER_URL, OPENROUTER_MODEL, OPENROUTER_API_KEY } from "@/lib/openrouter"
 import { uploadCoverWithDedup } from "@/lib/upload-image-dedup.server"
 import { isDuplicateTitle } from "@/lib/article-dedup.server"
 
@@ -65,7 +65,7 @@ type SourceRow = {
 }
 
 export async function runWriter(): Promise<WriterResult> {
-  if (!OPENCODE_GO_KEY) throw new Error("OPENCODE_GO_KEY is not set")
+  if (!OPENROUTER_API_KEY) throw new Error("OPENROUTER_API_KEY is not set")
 
   const db = getDb()
 
@@ -220,14 +220,14 @@ async function generateSingle(
   })
 
   try {
-    const res = await fetch(OPENCODE_GO_URL, {
+    const res = await fetch(OPENROUTER_URL, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${OPENCODE_GO_KEY}`,
+        Authorization: `Bearer ${OPENROUTER_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: OPENCODE_GO_MODEL,
+        model: OPENROUTER_MODEL,
         messages: [
           { role: "system", content: WRITE_PROMPT },
           { role: "user", content: userMessage },
@@ -240,7 +240,7 @@ async function generateSingle(
 
     if (!res.ok) {
       const text = await res.text()
-      console.error(`OpenCode Go write request failed: ${res.status} ${text}`)
+      console.error(`OpenRouter write request failed: ${res.status} ${text}`)
       return null
     }
 

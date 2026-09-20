@@ -1,4 +1,4 @@
-import { OPENCODE_GO_URL, OPENCODE_GO_MODEL, OPENCODE_GO_KEY } from "@/lib/opencode-go"
+import { OPENROUTER_URL, OPENROUTER_MODEL, OPENROUTER_API_KEY } from "@/lib/openrouter"
 
 export type SourceArticleInput = {
   id: string
@@ -60,8 +60,8 @@ export async function generateArticleFromSources(
   topic: string,
   sources: SourceArticleInput[],
 ): Promise<GeneratedArticleOutput> {
-  if (!OPENCODE_GO_KEY) {
-    throw new Error("OPENCODE_GO_KEY is not set.")
+  if (!OPENROUTER_API_KEY) {
+    throw new Error("OPENROUTER_API_KEY is not set.")
   }
 
   if (sources.length === 0) {
@@ -80,14 +80,14 @@ export async function generateArticleFromSources(
     })),
   })
 
-  const res = await fetch(OPENCODE_GO_URL, {
+  const res = await fetch(OPENROUTER_URL, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${OPENCODE_GO_KEY}`,
+      Authorization: `Bearer ${OPENROUTER_API_KEY}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      model: OPENCODE_GO_MODEL,
+      model: OPENROUTER_MODEL,
       messages: [
         { role: "system", content: SYSTEM_PROMPT },
         { role: "user", content: userMessage },
@@ -99,7 +99,7 @@ export async function generateArticleFromSources(
 
   if (!res.ok) {
     const text = await res.text()
-    throw new Error(`OpenCode Go article generation failed: ${res.status} ${text}`)
+    throw new Error(`OpenRouter article generation failed: ${res.status} ${text}`)
   }
 
   const data = (await res.json()) as {
