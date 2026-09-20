@@ -1,7 +1,11 @@
 import { initOpenNextCloudflareForDev } from "@opennextjs/cloudflare"
 
 // Makes Cloudflare bindings (D1 `DB`, R2 `MEDIA`) available under `next dev`.
-initOpenNextCloudflareForDev()
+// Skipped during production builds (`next build` / opennextjs-cloudflare build),
+// which don't need bindings and must not open remote proxy sessions.
+if (process.env.NODE_ENV !== "production") {
+  initOpenNextCloudflareForDev()
+}
 
 /** @type {import('next').NextConfig} */
 const r2Patterns = []
