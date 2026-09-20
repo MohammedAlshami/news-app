@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server"
-import { OPENCODE_GO_URL, OPENCODE_GO_MODEL, OPENCODE_GO_KEY } from "@/lib/opencode-go"
+import { OPENROUTER_URL, OPENROUTER_MODEL, OPENROUTER_API_KEY } from "@/lib/openrouter"
 
 const INLINE_EDITOR_SYSTEM_PROMPT =
   "أنت مساعد تحرير أخبار عربي. اتبع تعليمات المستخدم واكتب باللغة العربية الفصحى فقط. لا تستخدم أي لغة أخرى. أعد النص المطلوب فقط بدون markdown أو عناوين أو نقاط."
 
 export async function POST(request: Request) {
-  if (!OPENCODE_GO_KEY) {
+  if (!OPENROUTER_API_KEY) {
     return new NextResponse("AI is not configured.", { status: 500 })
   }
 
@@ -41,17 +41,17 @@ export async function POST(request: Request) {
   ]
 
   const bodyJson: Record<string, unknown> = {
-    model: OPENCODE_GO_MODEL,
+    model: OPENROUTER_MODEL,
     messages,
     temperature: editorInline ? 0.3 : 0.7,
   }
 
   bodyJson.stream = true
 
-  const upstream = await fetch(OPENCODE_GO_URL, {
+  const upstream = await fetch(OPENROUTER_URL, {
     method: "POST",
     headers: {
-      authorization: `Bearer ${OPENCODE_GO_KEY}`,
+      authorization: `Bearer ${OPENROUTER_API_KEY}`,
       "content-type": "application/json",
     },
     body: JSON.stringify(bodyJson),

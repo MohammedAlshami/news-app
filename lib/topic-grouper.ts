@@ -1,4 +1,4 @@
-import { OPENCODE_GO_URL, OPENCODE_GO_MODEL, OPENCODE_GO_KEY } from "@/lib/opencode-go"
+import { OPENROUTER_URL, OPENROUTER_MODEL, OPENROUTER_API_KEY } from "@/lib/openrouter"
 
 export type ArticleInput = {
   id: string
@@ -131,11 +131,11 @@ async function batchClassifyArticles(
   }
 
   try {
-    const res = await fetch(OPENCODE_GO_URL, {
+    const res = await fetch(OPENROUTER_URL, {
       method: "POST",
       headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: OPENCODE_GO_MODEL,
+        model: OPENROUTER_MODEL,
         messages: [
           { role: "system", content: BATCH_CLASSIFY_PROMPT },
           { role: "user", content: JSON.stringify({
@@ -173,11 +173,11 @@ async function classifySingle(
   if (!text.trim()) return "mixed"
 
   try {
-    const res = await fetch(OPENCODE_GO_URL, {
+    const res = await fetch(OPENROUTER_URL, {
       method: "POST",
       headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: OPENCODE_GO_MODEL,
+        model: OPENROUTER_MODEL,
         messages: [
           { role: "system", content: "Classify this article into a category: economy, sports, technology, politics, health, culture, science, environment. Respond with ONLY the category slug." },
           { role: "user", content: text },
@@ -212,11 +212,11 @@ async function groupArticles(
   }))
 
   try {
-    const res = await fetch(OPENCODE_GO_URL, {
+    const res = await fetch(OPENROUTER_URL, {
       method: "POST",
       headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: OPENCODE_GO_MODEL,
+        model: OPENROUTER_MODEL,
         messages: [
           { role: "system", content: GROUP_PROMPT },
           { role: "user", content: JSON.stringify({ articles: payload }) },
@@ -246,8 +246,8 @@ export async function groupArticlesByTopic(
   searchTopics: (query: string) => Promise<{ id: string; title: string }[]>,
   searchCategories: (query: string) => Promise<{ id: string; name: string; slug: string }[]>,
 ): Promise<GroupingResult> {
-  const apiKey = OPENCODE_GO_KEY
-  if (!apiKey) throw new Error("OPENCODE_GO_KEY is not set")
+  const apiKey = OPENROUTER_API_KEY
+  if (!apiKey) throw new Error("OPENROUTER_API_KEY is not set")
   if (articles.length === 0) return { groups: [], skippedArticleIds: [] }
 
   const catMap = await getCategoryMap(searchCategories)

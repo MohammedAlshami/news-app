@@ -6,11 +6,11 @@ const root = join(dirname(fileURLToPath(import.meta.url)), "..")
 config({ path: join(root, ".env.local") })
 
 const { CLOUDFLARE_ACCOUNT_ID: accountId, CLOUDFLARE_DATABASE_ID: databaseId, CLOUDFLARE_D1_TOKEN: token } = process.env
-const apiKey = process.env.OPENCODE_GO_KEY
-const OPENCODE_GO_URL = "https://opencode.ai/zen/go/v1/chat/completions"
-const OPENCODE_GO_MODEL = process.env.OPENCODE_GO_MODEL ?? "deepseek-v4-flash"
+const apiKey = process.env.OPENROUTER_API_KEY
+const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
+const OPENROUTER_MODEL = process.env.OPENROUTER_MODEL ?? "deepseek/deepseek-v4-flash"
 
-if (!apiKey) { console.error("Missing OPENCODE_GO_KEY"); process.exit(1) }
+if (!apiKey) { console.error("Missing OPENROUTER_API_KEY"); process.exit(1) }
 
 async function d1Query(sql) {
   const res = await fetch(
@@ -82,14 +82,14 @@ console.log(`\n=== Calling OpenCode Go with ${articles.length} articles... ===`)
 const start = Date.now()
 
 try {
-  const res = await fetch(OPENCODE_GO_URL, {
+  const res = await fetch(OPENROUTER_URL, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${apiKey}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      model: OPENCODE_GO_MODEL,
+      model: OPENROUTER_MODEL,
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: JSON.stringify(payload) },

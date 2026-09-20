@@ -88,5 +88,5 @@ If you prefer to test manually:
 ## Troubleshooting
 
 - If tests fail with "Timeout", increase timeout in test or check if dev server is running
-- If AI streaming doesn't work, check OPENCODE_GO_KEY in .env.local
+- If AI streaming doesn't work, check OPENROUTER_API_KEY in .env.local
 - If login fails, verify admin credentials in database

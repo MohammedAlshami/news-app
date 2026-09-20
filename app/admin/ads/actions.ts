@@ -1,6 +1,6 @@
 "use server"
 
-import { mkdir, unlink, writeFile } from "node:fs/promises"
+import { unlink } from "node:fs/promises"
 import { join } from "node:path"
 
 import { revalidatePath } from "next/cache"
@@ -11,7 +11,6 @@ import { siteAds } from "@/db/schema"
 import { getAdminSiteAdById } from "@/lib/db-site-ads.server"
 import {
   deleteStoredImageIfR2,
-  isR2Configured,
   putR2Object,
 } from "@/lib/r2.server"
 import { ar } from "@/lib/ui-ar"
@@ -175,21 +174,12 @@ export async function uploadSiteAdBannerAction(
     (finalExt === "jpg" ? "image/jpeg" : `image/${finalExt}`)
   const filename = `banner.${finalExt}`
 
-  let publicUrl: string
-  if (isR2Configured()) {
-    const key = `ads/${adId}/${filename}`
-    publicUrl = await putR2Object({
-      key,
-      body: buffer,
-      contentType,
-    })
-  } else {
-    const dir = join(process.cwd(), "public", "uploads", "ads", adId)
-    await mkdir(dir, { recursive: true })
-    const outPath = join(dir, filename)
-    await writeFile(outPath, buffer)
-    publicUrl = `/uploads/ads/${adId}/${filename}`
-  }
+  const key = `ads/${adId}/${filename}`
+  const publicUrl = await putR2Object({
+    key,
+    body: buffer,
+    contentType,
+  })
 
   await getDb()
     .update(siteAds)

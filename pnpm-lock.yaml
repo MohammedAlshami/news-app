@@ -30,11 +30,11 @@ importers:
         specifier: ^1.2.6
         version: 1.2.6(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       '@tiptap-pro/extension-ai':
-        specifier: ^3.7.4
-        version: 3.7.4(@tiptap/core@3.25.0(@tiptap/pm@3.25.0))(@tiptap/extension-image@3.22.5(@tiptap/core@3.25.0(@tiptap/pm@3.25.0)))(@tiptap/pm@3.25.0)
+        specifier: file:./vendor/tiptap-pro/tiptap-pro-extension-ai-3.6.1.tgz
+        version: file:vendor/tiptap-pro/tiptap-pro-extension-ai-3.6.1.tgz(@tiptap/core@3.25.0(@tiptap/pm@3.25.0))(@tiptap/extension-image@3.22.5(@tiptap/core@3.25.0(@tiptap/pm@3.25.0)))(@tiptap/pm@3.25.0)
       '@tiptap-pro/provider':
-        specifier: ^3.7.4
-        version: 3.7.4(@hocuspocus/provider@4.1.0(y-protocols@1.0.7(yjs@13.6.30))(yjs@13.6.30))(lib0@0.2.117)(yjs@13.6.30)
+        specifier: file:./vendor/tiptap-pro/tiptap-pro-provider-3.6.1.tgz
+        version: file:vendor/tiptap-pro/tiptap-pro-provider-3.6.1.tgz(@hocuspocus/provider@4.1.0(y-protocols@1.0.7(yjs@13.6.30))(yjs@13.6.30))(lib0@0.2.117)(yjs@13.6.30)
       '@tiptap/core':
         specifier: ^3.23.6
         version: 3.25.0(@tiptap/pm@3.25.0)
@@ -3327,15 +3327,17 @@ packages:
   '@tailwindcss/postcss@4.2.4':
     resolution: {integrity: sha512-wgAVj6nUWAolAu8YFvzT2cTBIElWHkjZwFYovF+xsqKsW2ADxM/X2opxj5NsF/qVccAOjRNe8X2IdPzMsWyHTg==}
 
-  '@tiptap-pro/extension-ai@3.7.4':
-    resolution: {integrity: sha512-N0jjVERM4+3ZQELMgSD8UCtdLQTQVVXC+wvjVzDIWwSk0qfGbtO4tbj4UvG06ZTLwgYF2Nf6PE4CyK0TTafJDg==}
+  '@tiptap-pro/extension-ai@file:vendor/tiptap-pro/tiptap-pro-extension-ai-3.6.1.tgz':
+    resolution: {integrity: sha512-3nYS4Bfxg3iL2Nq9ZpSt4D71gMJaN9yKNBjXIEFcWTCaaIFbjGd5O+ZpGv4l1F/tnd+7a1Q0fgHfl1tmz4oEOg==, tarball: file:vendor/tiptap-pro/tiptap-pro-extension-ai-3.6.1.tgz}
+    version: 3.6.1
     peerDependencies:
       '@tiptap/core': ^3.15.0
       '@tiptap/extension-image': ^3.15.0
       '@tiptap/pm': ^3.15.0
 
-  '@tiptap-pro/provider@3.7.4':
-    resolution: {integrity: sha512-TRu6grquvs6hWUNWU4q9d/hOh4n021zglOy7z0Y3aa0CMopCQHg2aovtePU7Tz+Gi1qXtNtDIWSMkSB6oaDqGw==}
+  '@tiptap-pro/provider@file:vendor/tiptap-pro/tiptap-pro-provider-3.6.1.tgz':
+    resolution: {integrity: sha512-KkTjgIEgmES07VnBcuioLzGSPGIe6nLQSFFIxKkUWoELvTL1iP/qcybMylKf8TRTuPuUKykTPbmdNqKbAwPfTw==, tarball: file:vendor/tiptap-pro/tiptap-pro-provider-3.6.1.tgz}
+    version: 3.6.1
     peerDependencies:
       '@hocuspocus/provider': ^3.4.4
       lib0: ^0.2.99
@@ -11100,7 +11102,7 @@ snapshots:
       postcss: 8.5.14
       tailwindcss: 4.2.4
 
-  '@tiptap-pro/extension-ai@3.7.4(@tiptap/core@3.25.0(@tiptap/pm@3.25.0))(@tiptap/extension-image@3.22.5(@tiptap/core@3.25.0(@tiptap/pm@3.25.0)))(@tiptap/pm@3.25.0)':
+  '@tiptap-pro/extension-ai@file:vendor/tiptap-pro/tiptap-pro-extension-ai-3.6.1.tgz(@tiptap/core@3.25.0(@tiptap/pm@3.25.0))(@tiptap/extension-image@3.22.5(@tiptap/core@3.25.0(@tiptap/pm@3.25.0)))(@tiptap/pm@3.25.0)':
     dependencies:
       '@tiptap/core': 3.25.0(@tiptap/pm@3.25.0)
       '@tiptap/extension-image': 3.22.5(@tiptap/core@3.25.0(@tiptap/pm@3.25.0))
@@ -11108,7 +11110,7 @@ snapshots:
       memoize-one: 6.0.0
       tiny-invariant: 1.3.3
 
-  '@tiptap-pro/provider@3.7.4(@hocuspocus/provider@4.1.0(y-protocols@1.0.7(yjs@13.6.30))(yjs@13.6.30))(lib0@0.2.117)(yjs@13.6.30)':
+  '@tiptap-pro/provider@file:vendor/tiptap-pro/tiptap-pro-provider-3.6.1.tgz(@hocuspocus/provider@4.1.0(y-protocols@1.0.7(yjs@13.6.30))(yjs@13.6.30))(lib0@0.2.117)(yjs@13.6.30)':
     dependencies:
       '@hocuspocus/provider': 4.1.0(y-protocols@1.0.7(yjs@13.6.30))(yjs@13.6.30)
       lib0: 0.2.117

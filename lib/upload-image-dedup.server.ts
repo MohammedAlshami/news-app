@@ -5,7 +5,7 @@ import { eq } from "drizzle-orm"
 
 import { getDb } from "@/db/client"
 import { images } from "@/db/schema"
-import { putR2Object, isR2Configured } from "@/lib/r2.server"
+import { putR2Object } from "@/lib/r2.server"
 
 export async function uploadCoverWithDedup(
   sourceUrl: string,
@@ -52,9 +52,7 @@ export async function uploadCoverWithDedup(
   const contentType = res.headers.get("content-type") || "image/jpeg"
   const ext = contentType.split("/")[1] || "jpg"
   const key = `articles/${ownerId}/cover.${ext}`
-  const r2Url = isR2Configured()
-    ? await putR2Object({ key, body: buffer, contentType })
-    : sourceUrl
+  const r2Url = await putR2Object({ key, body: buffer, contentType })
 
   await db.insert(images).values({
     sourceUrl,
