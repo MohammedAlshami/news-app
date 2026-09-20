@@ -1,7 +1,7 @@
 import "server-only"
-import { desc, sql } from "drizzle-orm"
+import { desc } from "drizzle-orm"
 import { getDb } from "@/db/client"
-import { articles, generatedArticles } from "@/db/schema"
+import { articles } from "@/db/schema"
 
 function titleSimilarity(a: string, b: string): number {
   const t1 = a.replace(/\s/g, "")
@@ -54,14 +54,4 @@ export async function findMatchingTopic(
 
   if (bestScore >= 2) return best
   return null
-}
-
-export async function loadAllExistingTopics(): Promise<{ id: string; title: string }[]> {
-  const db = getDb()
-  const rows = await db
-    .select({ id: generatedArticles.id, title: generatedArticles.title })
-    .from(generatedArticles)
-    .orderBy(desc(generatedArticles.createdAt))
-    .limit(500)
-  return rows
 }

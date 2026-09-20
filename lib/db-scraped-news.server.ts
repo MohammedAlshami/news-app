@@ -8,8 +8,6 @@ import type { ScrapeResult, ScrapedNewsItem, ScraperSourceKey } from "@/lib/news
 
 export const ADMIN_SCRAPED_PAGE_SIZE = 20
 
-export type ScrapeJobRow = typeof scrapedNews.$inferSelect
-
 export type AdminScrapedNewsListItem = {
   id: string
   source: string
@@ -74,22 +72,6 @@ export async function insertScrapedNewsRows(input: {
   }
 
   return newItems.length
-}
-
-export async function getRecentScrapedNews(limit = 20): Promise<ScrapeJobRow[]> {
-  return getDb()
-    .select()
-    .from(scrapedNews)
-    .orderBy(desc(scrapedNews.scrapedAt))
-    .limit(limit)
-}
-
-export async function countScrapedNewsBySource(sourceKey: ScraperSourceKey): Promise<number> {
-  const rows = await getDb()
-    .select({ count: sql<number>`count(*)` })
-    .from(scrapedNews)
-    .where(eq(scrapedNews.sourceKey, sourceKey))
-  return Number(rows[0]?.count ?? 0)
 }
 
 export type ScrapeRunSummary = {

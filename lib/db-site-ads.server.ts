@@ -142,25 +142,6 @@ export async function getAdminSiteAdListPage(input: {
   return { rows: sortByTierAndCreatedAt(rows), total: Number(total ?? 0) }
 }
 
-export async function getAdminSiteAdList(): Promise<AdminSiteAdListItem[]> {
-  const rows = await getDb()
-    .select({
-      id: siteAds.id,
-      name: siteAds.name,
-      imageUrl: siteAds.imageUrl,
-      href: siteAds.href,
-      showOnHome: siteAds.showOnHome,
-      showOnArticle: siteAds.showOnArticle,
-      isActive: siteAds.isActive,
-      tier: siteAds.tier,
-      createdAt: siteAds.createdAt,
-    })
-    .from(siteAds)
-    .orderBy(desc(siteAds.createdAt))
-
-  return sortByTierAndCreatedAt(rows)
-}
-
 export async function getAdminSiteAdById(id: string) {
   const [row] = await getDb()
     .select()

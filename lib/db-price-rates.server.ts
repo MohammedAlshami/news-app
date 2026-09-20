@@ -7,14 +7,6 @@ import { priceRates } from "@/db/schema"
 
 export type PriceRateRow = typeof priceRates.$inferSelect
 
-export async function getLatestPriceRates(market = "sanaa"): Promise<PriceRateRow[]> {
-  return getDb()
-    .select()
-    .from(priceRates)
-    .where(eq(priceRates.market, market))
-    .orderBy(desc(priceRates.scrapedAt))
-}
-
 export async function getLatestPriceRateByCurrency(
   market: string,
   currencyCode: string,
