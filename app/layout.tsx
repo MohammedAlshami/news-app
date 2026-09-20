@@ -26,13 +26,11 @@ export default function RootLayout({
       className={cn(shubbak.variable, neirizi.variable, "font-sans antialiased")}
     >
       <body className="min-h-svh">
-        {process.env.NODE_ENV === "development" && (
-          <Script
-            src="//unpkg.com/react-grab/dist/index.global.js"
-            crossOrigin="anonymous"
-            strategy="afterInteractive"
-          />
-        )}
+        <Script
+          src="//unpkg.com/react-grab/dist/index.global.js"
+          crossOrigin="anonymous"
+          strategy="afterInteractive"
+        />
         <ThemeProvider>
           <TooltipProvider delayDuration={0}>{children}</TooltipProvider>
         </ThemeProvider>

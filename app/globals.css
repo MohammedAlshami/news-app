@@ -350,3 +350,14 @@
     width: 200%;
   }
 }
+
+/*
+ * Tiptap's editor stylesheet (imported on article pages) sets a global
+ * `body { font-family: "Inter" }` which leaks to the whole page. Keep the site
+ * font (Shubbak) on the page chrome. Tiptap's own selectors (e.g.
+ * `.tiptap.ProseMirror`, code blocks) still win by specificity where they set
+ * their own font, so editor internals are unaffected.
+ */
+html body {
+  font-family: var(--font-sans);
+}
