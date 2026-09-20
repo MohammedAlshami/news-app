@@ -1,4 +1,4 @@
-import { OPENROUTER_URL, OPENROUTER_MODEL, OPENROUTER_API_KEY } from "@/lib/openrouter"
+import { OPENROUTER_URL, OPENROUTER_MODEL, OPENROUTER_API_KEY, OPENROUTER_PROVIDER } from "@/lib/openrouter"
 
 export type SourceArticleInput = {
   id: string
@@ -88,6 +88,7 @@ export async function generateArticleFromSources(
     },
     body: JSON.stringify({
       model: OPENROUTER_MODEL,
+      provider: OPENROUTER_PROVIDER,
       messages: [
         { role: "system", content: SYSTEM_PROMPT },
         { role: "user", content: userMessage },

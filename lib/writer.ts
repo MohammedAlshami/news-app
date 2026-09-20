@@ -1,7 +1,7 @@
 import { getDb } from "@/db/client"
 import { articles, generatedArticles, scrapedNews, topics } from "@/db/schema"
 import { desc, eq, sql } from "drizzle-orm"
-import { OPENROUTER_URL, OPENROUTER_MODEL, OPENROUTER_API_KEY } from "@/lib/openrouter"
+import { OPENROUTER_URL, OPENROUTER_MODEL, OPENROUTER_API_KEY, OPENROUTER_PROVIDER } from "@/lib/openrouter"
 import { uploadCoverWithDedup } from "@/lib/upload-image-dedup.server"
 import { isDuplicateTitle } from "@/lib/article-dedup.server"
 
@@ -228,6 +228,7 @@ async function generateSingle(
       },
       body: JSON.stringify({
         model: OPENROUTER_MODEL,
+        provider: OPENROUTER_PROVIDER,
         messages: [
           { role: "system", content: WRITE_PROMPT },
           { role: "user", content: userMessage },
