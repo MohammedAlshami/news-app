@@ -9,6 +9,8 @@ export const categories = sqliteTable("categories", {
   name: text("name").notNull(),
   slug: text("slug").notNull().unique(),
   description: text("description"),
+  /** Max AI-generated articles to create for this category per day (0 = disabled). */
+  dailyQuota: integer("daily_quota").notNull().default(25),
   createdAt: integer("created_at", { mode: "timestamp_ms" })
     .notNull()
     .default(sql`(unixepoch() * 1000)`),
