@@ -1,7 +1,7 @@
 import { getDb } from "@/db/client"
 import { articles, categories, generatedArticles, scrapedNews, topics } from "@/db/schema"
 import { eq, isNull, sql } from "drizzle-orm"
-import { OPENROUTER_URL, OPENROUTER_MODEL, OPENROUTER_API_KEY } from "@/lib/openrouter"
+import { OPENROUTER_URL, OPENROUTER_MODEL, OPENROUTER_API_KEY, OPENROUTER_PROVIDER } from "@/lib/openrouter"
 import { uploadCoverWithDedup } from "@/lib/upload-image-dedup.server"
 import { isDuplicateTitle } from "@/lib/article-dedup.server"
 
@@ -28,6 +28,7 @@ async function classifyAllTopics(): Promise<number> {
     headers: { Authorization: `Bearer ${OPENROUTER_API_KEY}`, "Content-Type": "application/json" },
     body: JSON.stringify({
       model: OPENROUTER_MODEL,
+      provider: OPENROUTER_PROVIDER,
       messages: [
         { role: "system", content: `Assign each topic to the best category. Respond JSON: { "assignments": [{ "topicId": "...", "categoryId": "..." }] }` },
         { role: "user", content: JSON.stringify({ categories: allCats, topics: unclassified }) },
@@ -82,6 +83,7 @@ async function generateArticleForTopic(topicId: string): Promise<{ title: string
     headers: { Authorization: `Bearer ${OPENROUTER_API_KEY}`, "Content-Type": "application/json" },
     body: JSON.stringify({
       model: OPENROUTER_MODEL,
+      provider: OPENROUTER_PROVIDER,
       messages: [
         { role: "system", content: "Write a comprehensive Arabic news article. Respond JSON: { title, excerpt, highlights[], paragraphs[] } where highlights is 3-5 bullet points. CRITICAL: Do NOT include any 'أبرز النقاط', 'ملخص', bullet lists, or summary sections inside the paragraphs — only flowing prose. Highlights go ONLY in the highlights field." },
         { role: "user", content: JSON.stringify({ topic: topic.title, sources }) },

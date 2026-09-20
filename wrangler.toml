@@ -14,6 +14,8 @@ CLOUDFLARE_DATABASE_ID = "2da1adf6-5917-41f3-b473-c79d8e5c789c"
 R2_PUBLIC_URL = "https://pub-22db16bb70fb414aafa322450d8bf3c1.r2.dev"
 # Avoid Next.js dynamic `require()` of `middleware-manifest.json` in the Workers runtime (opennextjs/opennextjs-cloudflare#1232).
 NEXT_PRIVATE_MINIMAL_MODE = "1"
+# Cheapest OpenRouter model (routed to the lowest-price provider via provider.sort=price).
+OPENROUTER_MODEL = "deepseek/deepseek-v4-flash"
 
 [assets]
 directory = ".open-next/assets"
