@@ -50,24 +50,6 @@ export async function getAdminArticleListPage(input: {
   }
 }
 
-export async function getAdminArticleList(): Promise<AdminArticleListItem[]> {
-  const rows = await getDb()
-    .select()
-    .from(articles)
-    .orderBy(desc(articles.updatedAt))
-  return rows.map((r) => ({
-    id: r.id,
-    title: r.title,
-    excerpt: r.excerpt,
-    date: r.createdAt.toISOString().slice(0, 10),
-    categoryIds: r.categoryId ? [r.categoryId] : [],
-    isPublished: r.isPublished,
-    isMemberOnly: r.isMemberOnly,
-    views: r.views,
-    coverImageUrl: r.coverImageUrl,
-  }))
-}
-
 export async function getAdminArticleById(
   id: string,
 ): Promise<typeof articles.$inferSelect | undefined> {

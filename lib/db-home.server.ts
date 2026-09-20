@@ -85,25 +85,3 @@ export async function getHeroArticles(): Promise<FeedArticle[]> {
     .limit(3)
   return rows.map(toFeedArticle)
 }
-
-export async function getCampusNewsArticles(): Promise<FeedArticle[]> {
-  const rows = await getDb()
-    .select(cols)
-    .from(articles)
-    .where(eq(articles.isPublished, true))
-    .orderBy(desc(articles.updatedAt))
-    .limit(4)
-  return rows.map(toFeedArticle)
-}
-
-export async function getFinanceArticles(): Promise<FeedArticle[]> {
-  return getArticlesByCategory("economy", 4)
-}
-
-export async function getSportsArticles(): Promise<FeedArticle[]> {
-  return getArticlesByCategory("sports", 5)
-}
-
-export async function getTechArticles(): Promise<FeedArticle[]> {
-  return getArticlesByCategory("technology", 5)
-}

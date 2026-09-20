@@ -46,6 +46,8 @@ scripts/articles-by-category.export.json
 node_modules/ 
 .open-next/ 
 .wrangler/
+.data/
+deploy.log
 .env 
 .env.* 
 .npmrc
