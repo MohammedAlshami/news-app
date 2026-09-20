@@ -8,9 +8,6 @@ importers:
 
   .:
     dependencies:
-      '@aws-sdk/client-s3':
-        specifier: ^3.1038.0
-        version: 3.1043.0
       '@floating-ui/react':
         specifier: ^0.27.19
         version: 0.27.19(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
@@ -149,9 +146,6 @@ importers:
       next:
         specifier: ^16.2.3
         version: 16.2.4(@babel/core@7.29.0)(@playwright/test@1.60.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(sass@1.99.0)
-      opencode-ai:
-        specifier: ^1.17.9
-        version: 1.18.3
       radix-ui:
         specifier: ^1.4.3
         version: 1.4.3(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
@@ -393,10 +387,6 @@ packages:
 
   '@aws-sdk/client-lambda@3.984.0':
     resolution: {integrity: sha512-kqwNBIGNxGVhINwgN/UQfdsQkaMjbu9PFV2EhATWouV+RT60uMjK9JENgLDwbgJmEVbbnPsh9HaZ5KKwPSdiDg==}
-    engines: {node: '>=20.0.0'}
-
-  '@aws-sdk/client-s3@3.1043.0':
-    resolution: {integrity: sha512-QrDh9PACpmijOgbVnvQIvoWFZcMEBoGw0qiQRfGvsUEcB1JPCS2U5R0irB4XQSmsBlQUNlNeXVfpx3JI++NqrA==}
     engines: {node: '>=20.0.0'}
 
   '@aws-sdk/client-s3@3.984.0':
@@ -5919,75 +5909,6 @@ packages:
     resolution: {integrity: sha512-MVHddDVweXZF3awtlAS+6pgKLlm/JgxZ90+/NBurBoQctVOOB/zDdVjcyPzQ+0laDGbsWgrRkflI65sQeOgT9Q==}
     engines: {node: '>=8'}
 
-  opencode-ai@1.18.3:
-    resolution: {integrity: sha512-HnItl/+uhSpj7JV9x6ITiE0XFq4b/PKF5OM03TIyiFoFiLw3MQoJOAXZFTEzC7IOgAIYcysRQBBmCmlXILkxww==}
-    cpu: [arm64, x64]
-    os: [darwin, linux, win32]
-    hasBin: true
-
-  opencode-darwin-arm64@1.18.3:
-    resolution: {integrity: sha512-BkfJf4E502OVwpDXgaVz8eqTDOy2B9xXPefYebT+xv8TXYvEo1wtby4eu4MoN51o4o1qpzcvCCXDqUDXu1pBGQ==}
-    cpu: [arm64]
-    os: [darwin]
-
-  opencode-darwin-x64-baseline@1.18.3:
-    resolution: {integrity: sha512-8qQ9Ig7Zp7LEKaKGRL+OIlDb/uTLYkeAq6SGsN0fLHR2rHZRHyb61KrpkS5TgUlGwSWPtb5uCeVtTA9rGbEAKw==}
-    cpu: [x64]
-    os: [darwin]
-
-  opencode-darwin-x64@1.18.3:
-    resolution: {integrity: sha512-ujy61O3WUEHjPqk+qXMBl97zR9q3crOzHbm2VLmXLHUWbqB5ZtN1HToODbuI1SBMKVR8GyZwPygRQVMfON4DHg==}
-    cpu: [x64]
-    os: [darwin]
-
-  opencode-linux-arm64-musl@1.18.3:
-    resolution: {integrity: sha512-s1vNP8dpIH3vFs8aoMzgHViBNVz6xtR7n24gGg0WOw4uSZVM+sRUmZKc3Hj56XjHQSsVBg5AkwR2Xm0nFSfIUQ==}
-    cpu: [arm64]
-    os: [linux]
-    libc: [musl]
-
-  opencode-linux-arm64@1.18.3:
-    resolution: {integrity: sha512-K+1SPkfrYFUufPUYpbSurlB2ogpjv5in2usA1FwOM7HCOpNxR3ap7K+X4uQXnOV8AtsON+Vr9W5uYXQJA1yKlA==}
-    cpu: [arm64]
-    os: [linux]
-
-  opencode-linux-x64-baseline-musl@1.18.3:
-    resolution: {integrity: sha512-F2nNPqYPdTCydLvNH1rvSXdlX3pfmOmOOfsFl+pqi3W0iE3Alyxmv28AjrIGUw4/6EfWhMKYcyxKjNIKLFyaZQ==}
-    cpu: [x64]
-    os: [linux]
-    libc: [musl]
-
-  opencode-linux-x64-baseline@1.18.3:
-    resolution: {integrity: sha512-DDfspGSQ123yhsFhAlbpF+tsvje5kHOS2/PYUpWJroTlvgtqRLGmET51Anrxd5BrAFrqB6PXYA2kGh5QStPU/g==}
-    cpu: [x64]
-    os: [linux]
-
-  opencode-linux-x64-musl@1.18.3:
-    resolution: {integrity: sha512-SSp2zSpAM4dntcPZw8ISl3CmXYrWPftLc8u0HuAIeNWJOo6G4xAHPoXhNnXI3tQYqqGcppArf/3EMPnF9WnyFw==}
-    cpu: [x64]
-    os: [linux]
-    libc: [musl]
-
-  opencode-linux-x64@1.18.3:
-    resolution: {integrity: sha512-p+19dSTf3pWL3+Rh/Ym94DvS9mNxNG94HJnR5oMCDhQvgimdT5tSdoK4ETtk4XOoCKz3OcTQDPHTdYKcJg32KQ==}
-    cpu: [x64]
-    os: [linux]
-
-  opencode-windows-arm64@1.18.3:
-    resolution: {integrity: sha512-qkz9/r6kUhhgLycQv71MoSQ2m5UI2QnZZx8SeZgyYD7oB8pDH6DIGbDWcs6BJ02ND1Y5hmgYWlP+rOrMkGlMJw==}
-    cpu: [arm64]
-    os: [win32]
-
-  opencode-windows-x64-baseline@1.18.3:
-    resolution: {integrity: sha512-+tyoxwSfY7msfZNY1IoA0ZWRL9XfdqY+ash6U3ldfE+GfF2WNAdhewmmYiUsC4lHjkdSmLt2brdWgoebQK9HAg==}
-    cpu: [x64]
-    os: [win32]
-
-  opencode-windows-x64@1.18.3:
-    resolution: {integrity: sha512-V/Q4VkyZ7TkotLbpTCX/s5wP8MoFj5UnRqBHFJ8WGptb/+oYw36kamUUt1P1wN8iRjmw+8vwYhuYdAe+3xbgpQ==}
-    cpu: [x64]
-    os: [win32]
-
   optionator@0.9.4:
     resolution: {integrity: sha512-6IpQ7mKUxRcZNLIObR0hz7lxsapSSIYNZJwXPGeF0mTVqGKFIXj1DQcMoT22S3ROcLyY/rz0PWaWZ9ayWmad9g==}
     engines: {node: '>= 0.8.0'}
@@ -7368,66 +7289,6 @@ snapshots:
       '@smithy/fetch-http-handler': 5.3.17
       '@smithy/hash-node': 4.2.14
       '@smithy/invalid-dependency': 4.2.14
-      '@smithy/middleware-content-length': 4.2.14
-      '@smithy/middleware-endpoint': 4.4.32
-      '@smithy/middleware-retry': 4.5.7
-      '@smithy/middleware-serde': 4.2.20
-      '@smithy/middleware-stack': 4.2.14
-      '@smithy/node-config-provider': 4.3.14
-      '@smithy/node-http-handler': 4.6.1
-      '@smithy/protocol-http': 5.3.14
-      '@smithy/smithy-client': 4.12.13
-      '@smithy/types': 4.14.1
-      '@smithy/url-parser': 4.2.14
-      '@smithy/util-base64': 4.3.2
-      '@smithy/util-body-length-browser': 4.2.2
-      '@smithy/util-body-length-node': 4.2.3
-      '@smithy/util-defaults-mode-browser': 4.3.49
-      '@smithy/util-defaults-mode-node': 4.2.54
-      '@smithy/util-endpoints': 3.4.2
-      '@smithy/util-middleware': 4.2.14
-      '@smithy/util-retry': 4.3.8
-      '@smithy/util-stream': 4.5.25
-      '@smithy/util-utf8': 4.2.2
-      '@smithy/util-waiter': 4.3.0
-      tslib: 2.8.1
-    transitivePeerDependencies:
-      - aws-crt
-
-  '@aws-sdk/client-s3@3.1043.0':
-    dependencies:
-      '@aws-crypto/sha1-browser': 5.2.0
-      '@aws-crypto/sha256-browser': 5.2.0
-      '@aws-crypto/sha256-js': 5.2.0
-      '@aws-sdk/core': 3.974.8
-      '@aws-sdk/credential-provider-node': 3.972.39
-      '@aws-sdk/middleware-bucket-endpoint': 3.972.10
-      '@aws-sdk/middleware-expect-continue': 3.972.10
-      '@aws-sdk/middleware-flexible-checksums': 3.974.16
-      '@aws-sdk/middleware-host-header': 3.972.10
-      '@aws-sdk/middleware-location-constraint': 3.972.10
-      '@aws-sdk/middleware-logger': 3.972.10
-      '@aws-sdk/middleware-recursion-detection': 3.972.11
-      '@aws-sdk/middleware-sdk-s3': 3.972.37
-      '@aws-sdk/middleware-ssec': 3.972.10
-      '@aws-sdk/middleware-user-agent': 3.972.38
-      '@aws-sdk/region-config-resolver': 3.972.13
-      '@aws-sdk/signature-v4-multi-region': 3.996.25
-      '@aws-sdk/types': 3.973.8
-      '@aws-sdk/util-endpoints': 3.996.8
-      '@aws-sdk/util-user-agent-browser': 3.972.10
-      '@aws-sdk/util-user-agent-node': 3.973.24
-      '@smithy/config-resolver': 4.4.17
-      '@smithy/core': 3.23.17
-      '@smithy/eventstream-serde-browser': 4.2.14
-      '@smithy/eventstream-serde-config-resolver': 4.3.14
-      '@smithy/eventstream-serde-node': 4.2.14
-      '@smithy/fetch-http-handler': 5.3.17
-      '@smithy/hash-blob-browser': 4.2.15
-      '@smithy/hash-node': 4.2.14
-      '@smithy/hash-stream-node': 4.2.14
-      '@smithy/invalid-dependency': 4.2.14
-      '@smithy/md5-js': 4.2.14
       '@smithy/middleware-content-length': 4.2.14
       '@smithy/middleware-endpoint': 4.4.32
       '@smithy/middleware-retry': 4.5.7
@@ -13387,57 +13248,6 @@ snapshots:
     dependencies:
       is-docker: 2.2.1
       is-wsl: 2.2.0
-
-  opencode-ai@1.18.3:
-    optionalDependencies:
-      opencode-darwin-arm64: 1.18.3
-      opencode-darwin-x64: 1.18.3
-      opencode-darwin-x64-baseline: 1.18.3
-      opencode-linux-arm64: 1.18.3
-      opencode-linux-arm64-musl: 1.18.3
-      opencode-linux-x64: 1.18.3
-      opencode-linux-x64-baseline: 1.18.3
-      opencode-linux-x64-baseline-musl: 1.18.3
-      opencode-linux-x64-musl: 1.18.3
-      opencode-windows-arm64: 1.18.3
-      opencode-windows-x64: 1.18.3
-      opencode-windows-x64-baseline: 1.18.3
-
-  opencode-darwin-arm64@1.18.3:
-    optional: true
-
-  opencode-darwin-x64-baseline@1.18.3:
-    optional: true
-
-  opencode-darwin-x64@1.18.3:
-    optional: true
-
-  opencode-linux-arm64-musl@1.18.3:
-    optional: true
-
-  opencode-linux-arm64@1.18.3:
-    optional: true
-
-  opencode-linux-x64-baseline-musl@1.18.3:
-    optional: true
-
-  opencode-linux-x64-baseline@1.18.3:
-    optional: true
-
-  opencode-linux-x64-musl@1.18.3:
-    optional: true
-
-  opencode-linux-x64@1.18.3:
-    optional: true
-
-  opencode-windows-arm64@1.18.3:
-    optional: true
-
-  opencode-windows-x64-baseline@1.18.3:
-    optional: true
-
-  opencode-windows-x64@1.18.3:
-    optional: true
 
   optionator@0.9.4:
     dependencies:
