@@ -75,12 +75,6 @@ export function HomeTopicCarousel({
           </h2>
 
           <div className="flex shrink-0 items-center justify-end gap-3 sm:justify-start">
-            <Link
-              href={categoryHref}
-              className="flex h-8 items-center rounded-full border border-black/15 px-4 text-sm font-bold text-black transition hover:bg-black hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black"
-            >
-              {moreLabel}
-            </Link>
             <div className="flex gap-1.5">
               <button
                 type="button"
@@ -101,6 +95,13 @@ export function HomeTopicCarousel({
                 <ChevronLeft className="h-3.5 w-3.5" aria-hidden />
               </button>
             </div>
+            <Link
+              href={categoryHref}
+              className="inline-flex items-center gap-1 text-sm font-bold text-black underline-offset-4 transition-colors hover:underline"
+            >
+              {moreLabel}
+              <ChevronLeft className="h-3.5 w-3.5" aria-hidden />
+            </Link>
           </div>
         </header>
 
