@@ -29,13 +29,14 @@ CREATE INDEX IF NOT EXISTS articles_created_idx ON articles(created_at);
 CREATE INDEX IF NOT EXISTS articles_category_created_idx ON articles(category_id, created_at);
 
 -- 3. Backfill (after the indexes exist: the subqueries below rely on scraped_news_topic_idx) ----------------------------------------------------------------
+-- (D1 limits LIKE/GLOB patterns to 50 bytes, so the pattern is kept short.)
 -- published_ts: ISO-looking values parsed (timezone offset ignored, fine for backfill),
 -- everything else falls back to scraped_at. Never later than scraped_at.
 UPDATE scraped_news
 SET published_ts = MIN(
   scraped_at,
   COALESCE(
-    CASE WHEN published_at GLOB '20[0-9][0-9]-[0-9][0-9]-[0-9][0-9]T[0-9][0-9]:[0-9][0-9]:[0-9][0-9]*'
+    CASE WHEN published_at GLOB '20[0-9][0-9]-[0-9][0-9]-[0-9][0-9]T*' AND length(published_at) >= 19
       THEN CAST(strftime('%s', substr(published_at, 1, 19)) AS INTEGER) * 1000
     END,
     scraped_at
