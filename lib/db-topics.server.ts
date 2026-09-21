@@ -86,16 +86,19 @@ export async function runTopicGrouping(windowMs = 24 * 60 * 60 * 1000): Promise<
     if (group.articleIds.length === 0) continue
 
     let topicId: string
+    let reused = false
 
     if (group.topicId) {
       topicId = group.topicId
       topicsReused++
+      reused = true
     } else {
       const { findMatchingTopic } = await import("@/lib/article-dedup.server")
       const match = await findMatchingTopic(group.title, allExistingTopics)
       if (match) {
         topicId = match.id
         topicsReused++
+        reused = true
       } else {
         const newId = crypto.randomUUID()
         await db.insert(topics).values({
@@ -109,6 +112,15 @@ export async function runTopicGrouping(windowMs = 24 * 60 * 60 * 1000): Promise<
         topicId = newId
         topicsCreated++
       }
+    }
+
+    // Keep a reused topic's category in sync with the freshly classified group,
+    // so a previously mislabeled topic gets corrected when new articles arrive.
+    if (reused && group.categoryId) {
+      await db
+        .update(topics)
+        .set({ categoryId: group.categoryId, updatedAt: new Date() })
+        .where(eq(topics.id, topicId))
     }
 
     const ids = [...new Set(group.articleIds)]
