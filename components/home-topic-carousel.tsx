@@ -1,11 +1,13 @@
 "use client"
 
 import Image from "next/image"
+import Link from "next/link"
 import { useCallback, useEffect, useRef, useState } from "react"
-import { ChevronLeft, ChevronRight } from "lucide-react"
+import { ChevronLeft, ChevronRight, ExternalLink } from "lucide-react"
 
 import { SubscriptionGate } from "@/components/subscription-gate"
 import { getArticlePath } from "@/lib/site-routes"
+import { formatArticleDate } from "@/lib/format-date"
 import type { FeedArticle } from "@/lib/site-types"
 import { cn } from "@/lib/utils"
 
@@ -13,6 +15,8 @@ type HomeTopicCarouselProps = {
   headingId: string
   title: string
   articles: FeedArticle[]
+  categoryHref: string
+  moreLabel: string
   navPrevLabel: string
   navNextLabel: string
   isSubscribed: boolean
@@ -22,6 +26,8 @@ export function HomeTopicCarousel({
   headingId,
   title,
   articles,
+  categoryHref,
+  moreLabel,
   navPrevLabel,
   navNextLabel,
   isSubscribed,
@@ -68,25 +74,33 @@ export function HomeTopicCarousel({
             {title}
           </h2>
 
-          <div className="flex shrink-0 justify-end gap-1.5 sm:justify-start">
-            <button
-              type="button"
-              disabled={!canScroll}
-              aria-label={navPrevLabel}
-              onClick={() => scrollStep(1)}
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-black text-white shadow-sm transition hover:bg-neutral-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black disabled:pointer-events-none disabled:opacity-35"
+          <div className="flex shrink-0 items-center justify-end gap-3 sm:justify-start">
+            <Link
+              href={categoryHref}
+              className="flex h-8 items-center rounded-full border border-black/15 px-4 text-sm font-bold text-black transition hover:bg-black hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black"
             >
-              <ChevronRight className="h-3.5 w-3.5" aria-hidden />
-            </button>
-            <button
-              type="button"
-              disabled={!canScroll}
-              aria-label={navNextLabel}
-              onClick={() => scrollStep(-1)}
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-black text-white shadow-sm transition hover:bg-neutral-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black disabled:pointer-events-none disabled:opacity-35"
-            >
-              <ChevronLeft className="h-3.5 w-3.5" aria-hidden />
-            </button>
+              {moreLabel}
+            </Link>
+            <div className="flex gap-1.5">
+              <button
+                type="button"
+                disabled={!canScroll}
+                aria-label={navPrevLabel}
+                onClick={() => scrollStep(1)}
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-black text-white shadow-sm transition hover:bg-neutral-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black disabled:pointer-events-none disabled:opacity-35"
+              >
+                <ChevronRight className="h-3.5 w-3.5" aria-hidden />
+              </button>
+              <button
+                type="button"
+                disabled={!canScroll}
+                aria-label={navNextLabel}
+                onClick={() => scrollStep(-1)}
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-black text-white shadow-sm transition hover:bg-neutral-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black disabled:pointer-events-none disabled:opacity-35"
+              >
+                <ChevronLeft className="h-3.5 w-3.5" aria-hidden />
+              </button>
+            </div>
           </div>
         </header>
 
@@ -157,6 +171,14 @@ function TopicArticleCard({
           <p className="line-clamp-2 text-pretty text-sm leading-relaxed text-neutral-600 md:text-[15px]">
             {article.excerpt}
           </p>
+          <div className="flex items-center gap-2 pt-1">
+            <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-gray-100">
+              <ExternalLink className="h-3 w-3 text-gray-500" aria-hidden />
+            </div>
+            <span className="text-[12px] font-medium text-gray-400">
+              {formatArticleDate(article.date)}
+            </span>
+          </div>
         </div>
       </SubscriptionGate>
     </article>

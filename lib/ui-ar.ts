@@ -264,6 +264,7 @@ export const ar = {
   footerLinkEvents: "الأحداث",
   footerLinkPrograms: "البرامج",
   footerLinkCurrency: "محول العملات",
+  sectionMore: "المزيد",
   footerSeeOnMap: "عرض على الخريطة",
   footerAddressLine1: "٩٤٠ إيميلي هاتسون",
   footerAddressLine2: "طريق جولدنديل، واسيلا، ألاسكا",
