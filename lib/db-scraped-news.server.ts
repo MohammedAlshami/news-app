@@ -1,10 +1,12 @@
 import "server-only"
 
-import { desc, eq, like, or, sql } from "drizzle-orm"
+import { and, desc, eq, inArray, like, or, sql } from "drizzle-orm"
 
-import { getDb } from "@/db/client"
+import { getDb, type AppDb } from "@/db/client"
 import { scrapedNews } from "@/db/schema"
 import type { ScrapeResult, ScrapedNewsItem, ScraperSourceKey } from "@/lib/news-scraper"
+import { parsePublishedTs } from "@/lib/published-ts"
+import { canonicalizeUrl } from "@/lib/url-canonical"
 
 export const ADMIN_SCRAPED_PAGE_SIZE = 20
 
@@ -23,55 +25,73 @@ export type AdminScrapedNewsListItem = {
   scrapedAt: Date
 }
 
-export async function insertScrapedNewsRows(input: {
-  sourceKey: ScraperSourceKey
-  source: string
-  category: string
-  query?: string
-  items: ScrapedNewsItem[]
-}) {
-  if (input.items.length === 0) return 0
-  const db = getDb()
+/** Which of these canonical URLs are already stored for the source (chunked, uses the unique index). */
+export async function findKnownUrls(sourceKey: string, urls: string[], db: AppDb = getDb()): Promise<Set<string>> {
+  const known = new Set<string>()
+  for (let i = 0; i < urls.length; i += 80) {
+    const part = urls.slice(i, i + 80)
+    const rows = await db
+      .select({ url: scrapedNews.url })
+      .from(scrapedNews)
+      .where(and(eq(scrapedNews.sourceKey, sourceKey), inArray(scrapedNews.url, part)))
+    for (const r of rows) known.add(r.url)
+  }
+  return known
+}
 
-  // Deduplicate within the batch itself first
-  const uniqueItems = input.items.filter(
-    (item, idx, arr) => arr.findIndex((i) => i.url === item.url) === idx,
-  )
+export async function insertScrapedNewsRows(
+  input: {
+    sourceKey: ScraperSourceKey
+    source: string
+    category: string
+    query?: string
+    items: ScrapedNewsItem[]
+  },
+  db: AppDb = getDb(),
+  now: number = Date.now(),
+) {
+  if (input.items.length === 0) return 0
+
+  // Canonicalize + dedupe inside the batch
+  const seen = new Set<string>()
+  const unique = input.items
+    .map((item) => ({ ...item, url: canonicalizeUrl(item.url) }))
+    .filter((item) => (seen.has(item.url) ? false : (seen.add(item.url), true)))
 
   // Skip any item without an image — no fallback images allowed
-  const withImages = uniqueItems.filter((item) => !!item.imageUrl?.trim())
+  const withImages = unique.filter((item) => !!item.imageUrl?.trim())
+  if (withImages.length === 0) return 0
 
-  // Fetch all existing URLs for this source in one query to avoid N round-trips
-  const existingRows = await db
-    .select({ url: scrapedNews.url })
-    .from(scrapedNews)
-    .where(eq(scrapedNews.sourceKey, input.sourceKey))
-
-  const existingUrls = new Set(existingRows.map((r) => r.url))
-
-  // Filter out anything already in the DB
-  const newItems = withImages.filter((item) => !existingUrls.has(item.url))
-
+  const known = await findKnownUrls(input.sourceKey, withImages.map((i) => i.url), db)
+  const newItems = withImages.filter((item) => !known.has(item.url))
   if (newItems.length === 0) return 0
 
-  // Insert one row at a time to stay within D1 SQL variable limits
+  // One row at a time (D1 statement size); the unique (source_key, url) index makes races harmless.
+  let inserted = 0
   for (const item of newItems) {
-    await db.insert(scrapedNews).values({
-      source: input.source,
-      sourceKey: input.sourceKey,
-      category: input.category,
-      query: input.query ?? null,
-      title: item.title,
-      excerpt: item.excerpt,
-      content: item.content ?? null,
-      url: item.url,
-      imageUrl: item.imageUrl ?? null,
-      publishedAt: item.publishedAt ?? null,
-      rawJson: JSON.stringify(item.rawJson),
-    })
+    const rows = await db
+      .insert(scrapedNews)
+      .values({
+        source: input.source,
+        sourceKey: input.sourceKey,
+        category: input.category,
+        query: input.query ?? null,
+        title: item.title,
+        excerpt: item.excerpt,
+        content: item.content ?? null,
+        url: item.url,
+        imageUrl: item.imageUrl ?? null,
+        publishedAt: item.publishedAt ?? null,
+        publishedTs: parsePublishedTs(item.publishedAt, now) ?? now,
+        status: "pending",
+        rawJson: JSON.stringify(item.rawJson),
+      })
+      .onConflictDoNothing()
+      .returning({ id: scrapedNews.id })
+    inserted += rows.length
   }
 
-  return newItems.length
+  return inserted
 }
 
 export type ScrapeRunSummary = {

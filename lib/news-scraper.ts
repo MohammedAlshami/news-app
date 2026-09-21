@@ -1,4 +1,9 @@
-export type ScraperSourceKey = "rt" | "independent" | "skynews" | "youm7" | "bbc" | "alaraby" | "elwatan" | "alquds" | "shabiba" | "addustour" | "alhurra" | "aawsat"
+import { canonicalizeUrl } from "@/lib/url-canonical"
+
+/** Max NEW (not yet stored) articles fetched per category page per run. */
+const MAX_NEW_PER_CATEGORY = 10
+
+export type ScraperSourceKey = "rt" | "independent" | "skynews" | "youm7" | "bbc" | "alaraby" | "elwatan" | "alquds" | "shabiba" | "addustour" | "aawsat"
 
 export type ScrapedNewsItem = {
   title: string
@@ -519,17 +524,22 @@ async function fetchIndependentArticleContent(url: string): Promise<{ title: str
 }
 
 function parseSkynews(html: string): ScrapedNewsItem[] {
-  // Parse JSON-LD ItemList from skynewsarabia.com pages
+  // Older markup: JSON-LD ItemList. Current markup has no JSON-LD, only plain article links
+  // like https://www.skynewsarabia.com/middle-east/1893532-slug — used as the fallback.
+  const urls: string[] = []
   const jsonLdMatch = html.match(
     /<script type="application\/ld\+json">[\s\S]*?"@type"\s*:\s*"ItemList"[\s\S]*?<\/script>/i,
   )
-  if (!jsonLdMatch) return []
-
-  const urls: string[] = []
-  const urlRegex = /"url"\s*:\s*"(https:\/\/www\.skynewsarabia\.com\/[^"]+)"/g
-  let m: RegExpExecArray | null
-  while ((m = urlRegex.exec(jsonLdMatch[0])) !== null) {
-    urls.push(m[1])
+  if (jsonLdMatch) {
+    const urlRegex = /"url"\s*:\s*"(https:\/\/www\.skynewsarabia\.com\/[^"]+)"/g
+    let m: RegExpExecArray | null
+    while ((m = urlRegex.exec(jsonLdMatch[0])) !== null) {
+      urls.push(m[1])
+    }
+  }
+  if (urls.length === 0) {
+    const linkRegex = /https:\/\/www\.skynewsarabia\.com\/(?!asset\/|topic\/|video\/|photos\/|infograph)[a-z-]+\/\d{6,}-[^"'\s<>)]+/g
+    for (const u of html.match(linkRegex) ?? []) if (!urls.includes(u)) urls.push(u)
   }
 
   return urls.slice(0, 20).map((url) => {
@@ -1015,86 +1025,6 @@ async function fetchAlqudsArticleContent(url: string): Promise<{ title: string; 
     if (!bodyHtml) {
       const proseMatch = html.match(/<div\b[^>]*class="[^"]*\bprose\b[^"]*"[^>]*>([\s\S]*?)<\/div>/i)
       if (proseMatch) bodyHtml = proseMatch[1]
-    }
-
-    if (bodyHtml) {
-      bodyHtml = bodyHtml.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "")
-      bodyHtml = bodyHtml.replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, "")
-    }
-
-    const content = bodyHtml ? htmlToTiptapJson(bodyHtml) : ""
-
-    return { title, excerpt, imageUrl, publishedAt, content }
-  } catch {
-    return { title: "", excerpt: "", imageUrl: "", publishedAt: "", content: "" }
-  }
-}
-
-function parseAlhurra(html: string): ScrapedNewsItem[] {
-  const items: ScrapedNewsItem[] = []
-  const seen = new Set<string>()
-
-  const numericLinkRegex = /<a\b[^>]*href="(https:\/\/alhurra\.com\/(\d+))"[^>]*>([\s\S]*?)<\/a>/gi
-  let m: RegExpExecArray | null
-  while ((m = numericLinkRegex.exec(html)) !== null) {
-    const url = m[1]
-    const id = m[2]
-    if (seen.has(id)) continue
-    seen.add(id)
-    const title = cleanText(m[3])
-    if (!title) continue
-    items.push({ title, url, excerpt: "", rawJson: { id, title } })
-  }
-
-  const hRegex = /<h[23][^>]*>[\s\S]*?<a\b[^>]*href="(https:\/\/alhurra\.com\/(\d+))"[^>]*>([\s\S]*?)<\/a>[\s\S]*?<\/h[23]>/gi
-  while ((m = hRegex.exec(html)) !== null) {
-    const url = m[1]
-    const id = m[2]
-    if (seen.has(id)) continue
-    seen.add(id)
-    const title = cleanText(m[3])
-    if (!title) continue
-    items.push({ title, url, excerpt: "", rawJson: { id, title } })
-  }
-
-  return items
-}
-
-async function fetchAlhurraArticleContent(url: string): Promise<{ title: string; excerpt: string; imageUrl: string; publishedAt: string; content: string }> {
-  try {
-    const html = await fetch(url, {
-      cache: "no-store",
-      headers: {
-        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-        "accept-language": "ar,en;q=0.9",
-      }
-    }).then((r) => r.text())
-
-    let title = ""
-    let excerpt = ""
-    let imageUrl = ""
-    let publishedAt = ""
-
-    const ogTitle = html.match(/<meta\b[^>]*property="og:title"[^>]*content="([^"]+)"/i)
-    if (ogTitle) title = cleanText(ogTitle[1])
-
-    const metaDesc = html.match(/<meta\b[^>]*name="description"[^>]*content="([^"]+)"/i)
-    if (metaDesc) excerpt = cleanText(metaDesc[1])
-
-    const ogImage = html.match(/<meta\b[^>]*property="og:image"[^>]*content="([^"]+)"/i)
-    if (ogImage) imageUrl = ogImage[1]
-
-    const ptMatch = html.match(/<meta\b[^>]*property="article:published_time"[^>]*content="([^"]+)"/i)
-    if (ptMatch) publishedAt = ptMatch[1]
-
-    let bodyHtml = ""
-    const bodyMatch = html.match(/<div\b[^>]*class="[^"]*\b(?:entry-content|bt_bb_text|article-content)[^"]*"[^>]*>([\s\S]*?)<\/div>/i)
-    if (bodyMatch) bodyHtml = bodyMatch[1]
-
-    if (!bodyHtml) {
-      const articleMatch = html.match(/<article[^>]*>([\s\S]*?)<\/article>/i)
-      if (articleMatch) bodyHtml = articleMatch[1]
     }
 
     if (bodyHtml) {
@@ -1662,38 +1592,6 @@ const SOURCES: Record<ScraperSourceKey, SourceConfig> = {
     },
     parse: parseAddustour,
   },
-  alhurra: {
-    searchUrl: (query) => `https://alhurra.com/?s=${encodeURIComponent(query)}`,
-    categoryUrl: (category) => {
-      const map: Record<string, string> = {
-        america: "https://alhurra.com/category/أميركا",
-        iran: "https://alhurra.com/category/إيران",
-        lebanon: "https://alhurra.com/category/لبنان",
-        israel: "https://alhurra.com/category/إسرائيل",
-        gulf: "https://alhurra.com/category/الخليج",
-        iraq: "https://alhurra.com/category/العراق",
-        egypt: "https://alhurra.com/category/مصر",
-        syria: "https://alhurra.com/category/سوريا",
-      }
-      return map[category] ?? null
-    },
-    supportedCategories: {
-      america: "https://alhurra.com/category/أميركا",
-      iran: "https://alhurra.com/category/إيران",
-      lebanon: "https://alhurra.com/category/لبنان",
-      israel: "https://alhurra.com/category/إسرائيل",
-      gulf: "https://alhurra.com/category/الخليج",
-      iraq: "https://alhurra.com/category/العراق",
-      egypt: "https://alhurra.com/category/مصر",
-      syria: "https://alhurra.com/category/سوريا",
-    },
-    searchHeaders: {
-      accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-      "accept-language": "ar,en;q=0.9",
-    },
-    parse: parseAlhurra,
-  },
   aawsat: {
     searchUrl: (query) => `https://aawsat.com/search?search=${encodeURIComponent(query)}`,
     categoryUrl: (category) => {
@@ -1743,7 +1641,6 @@ export class NewsScraper {
     if (this.source === "alquds") return "palestine"
     if (this.source === "shabiba") return "local"
     if (this.source === "addustour") return "local"
-    if (this.source === "alhurra") return "america"
     if (this.source === "aawsat") return "middle-east"
     return "news"
   }
@@ -1756,7 +1653,12 @@ export class NewsScraper {
     return cfg.searchUrl(query)
   }
 
-  async scrape(input: { query?: string; category?: string }): Promise<ScrapeResult> {
+  async scrape(input: {
+    query?: string
+    category?: string
+    /** Given canonical URLs, returns the ones already stored so their bodies are not re-fetched. */
+    filterKnown?: (canonicalUrls: string[]) => Promise<Set<string>>
+  }): Promise<ScrapeResult> {
     const cfg = SOURCES[this.source]
     const query = (input.query ?? "").trim()
     const category = (input.category ?? "").trim().toLowerCase()
@@ -1767,11 +1669,18 @@ export class NewsScraper {
       if (!res.ok) throw new Error(`Fetch failed: ${res.status} ${text.slice(0, 200)}`)
       return text
     })
-    const items = cfg.parse(html)
-    
-    // Fetch content for each article to get full text + images
+    const parsed = cfg.parse(html)
+
+    // Only fetch article bodies for URLs we have not stored yet.
+    let items = parsed
+    if (input.filterKnown && parsed.length > 0) {
+      const known = await input.filterKnown(parsed.map((i) => canonicalizeUrl(i.url)))
+      items = parsed.filter((i) => !known.has(canonicalizeUrl(i.url)))
+    }
+
+    // Fetch content for each new article to get full text + images
     const itemsWithContent = await Promise.all(
-      items.slice(0, 5).map(async (item) => {
+      items.slice(0, MAX_NEW_PER_CATEGORY).map(async (item) => {
         if (this.source === "rt") {
           const { excerpt, imageUrl, publishedAt, content } = await fetchRtArticleContent(item.url)
           return {
@@ -1853,16 +1762,6 @@ export class NewsScraper {
           }
         } else if (this.source === "elwatan") {
           const { title, excerpt, imageUrl, publishedAt, content } = await fetchElwatanArticleContent(item.url)
-          return {
-            ...item,
-            title: title || item.title,
-            excerpt: excerpt || item.excerpt,
-            imageUrl: imageUrl || item.imageUrl,
-            publishedAt: publishedAt || item.publishedAt,
-            content,
-          }
-        } else if (this.source === "alhurra") {
-          const { title, excerpt, imageUrl, publishedAt, content } = await fetchAlhurraArticleContent(item.url)
           return {
             ...item,
             title: title || item.title,

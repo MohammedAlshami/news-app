@@ -21,6 +21,7 @@
     "export:articles-by-category": "tsx scripts/export-articles-by-category.ts",
     "db:seed-from-bbc-export": "tsx scripts/seed-d1-articles-from-bbc-export.ts",
     "news:last-24h": "tsx scripts/fetch-last-24h-scraped-news.ts",
+    "test:unit": "node --conditions=react-server --import tsx --import ./tests/unit/helpers/register.mjs --test tests/unit/*.test.ts",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:debug": "playwright test --debug"

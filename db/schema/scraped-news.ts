@@ -20,6 +20,18 @@ export const scrapedNews = sqliteTable("scraped_news", {
     .default(sql`(unixepoch() * 1000)`),
   rawJson: text("raw_json").notNull(),
   topicId: text("topic_id").references(() => topics.id, { onDelete: "set null" }),
+  /** Clustering state: pending → clustered (or skipped/failed). */
+  status: text("status", { enum: ["pending", "clustering", "clustered", "skipped", "failed"] })
+    .notNull()
+    .default("pending"),
+  /** Failed clustering attempts (row is parked as `failed` after 3). */
+  attempts: integer("attempts").notNull().default(0),
+  /** Parsed publication time in epoch ms (falls back to scrape time). */
+  publishedTs: integer("published_ts"),
+  /** Epoch ms when a clustering run claimed this row (stale claims are released). */
+  claimedAt: integer("claimed_at"),
+  /** JSON event signature (domain/type/actors/countries/date/...) extracted by the LLM. */
+  signature: text("signature"),
 })
 
 export type ScrapedNews = typeof scrapedNews.$inferSelect

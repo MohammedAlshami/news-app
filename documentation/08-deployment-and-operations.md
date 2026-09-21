@@ -80,13 +80,23 @@ R2 public URL: `https://pub-22db16bb70fb414aafa322450d8bf3c1.r2.dev` (`wrangler 
 
 ## Migrations
 
-Migrations are applied manually (Drizzle `meta/_journal.json` is empty):
+Applied manually (Drizzle `meta/_journal.json` is empty). **For the clustering/generation overhaul, apply in this order, before deploying the new code:**
 
 ```bash
-# via wrangler
-npx wrangler d1 execute news-site --remote --file=db/migrations/0014_category_daily_quota.sql
-# or via the D1 HTTP API (POST .../raw with method:"run")
+npx wrangler d1 execute news-site --remote --file=db/migrations/0015_pipeline_state.sql
+npx wrangler d1 execute news-site --remote --file=db/migrations/0016_cleanup_topics.sql   # recompute counts + delete empty topics
+npx wrangler d1 execute news-site --remote --file=db/migrations/0017_scraped_news_signature.sql
 ```
+Then `pnpm run deploy` (site) and `cd news_workers && pnpm exec wrangler deploy` (scheduler).
+0015 marks already-grouped rows `clustered`, old ungrouped rows `skipped` and keeps the last 72h `pending` (they are clustered over the next ticks, newest first).
+Take a D1 backup/export first if you want a rollback point (`wrangler d1 export news-site --remote --output backup.sql`).
+
+The blocked source `alhurra` was removed from the code and its `news_sources` row deleted.
+
+## Tests
+
+`pnpm test:unit` — 50+ unit/integration tests on in-memory SQLite (clustering, generation, migrations, parsing).
+`PROD_SNAPSHOT_DB=/path/snapshot.db pnpm test:unit` also runs 0015–0017 against a copy of a production snapshot.
 
 ## Tiptap Pro vendoring
 
@@ -98,7 +108,7 @@ so installs don't need the private registry token. The `.npmrc` no longer carrie
 ## Common runbooks
 
 **Generate more articles**
-- Bulk: `curl -N ".../api/cron/batch-generate?limit=50"` (respects per-category daily quota).
+- Bulk: `curl -N ".../api/cron/batch-generate?limit=50"` (respects freshness + per-category daily quota).
 - Single: `GET /api/cron/generate-articles?topicId=…`.
 - Raise limits in **`/admin/settings`**.
 

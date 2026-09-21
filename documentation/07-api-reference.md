@@ -42,36 +42,31 @@ Returns `500` if `OPENROUTER_API_KEY` is unset, `502` on upstream failure.
 
 ## Cron / pipeline
 
+> **Security:** `/api/cron/*` is **unauthenticated** (intended for the `news-latest` service binding but publicly reachable). Gate it (shared secret / Cloudflare Access) if that matters.
+
 ### `GET /api/cron/scrape-source/[key]`
-Scrape one source across its categories, insert new items, update `lastScrapedAt`, then run
-topic grouping. Returns a JSON summary (`results[]`, `totalInserted`, `topicsGrouped`).
-See [03-scraping-pipeline.md](./03-scraping-pipeline.md).
+Scrape one source (known URLs skipped before fetching bodies), insert new rows as `pending`. Returns `{ results[], totalInserted, failedCategories }`. Does **not** cluster.
 
-### `GET /api/cron/scrape-news`
-Scrape all enabled sources. Query: `category?`, `limit?`. Returns a JSON summary.
-
-### `GET /api/cron/batch-generate`
-SSE stream. Query: `limit` (default 60). Classifies uncategorized topics, then generates
-articles round-robin across categories within each category's daily quota.
-Events: `classify`, `plan`, `generating`, `generated`, `skipped`, `error`, `complete`.
+### `GET /api/cron/cluster`
+Runs `runClustering` (max 40 pending rows, newest first). Returns the run stats: `claimed, extracted, extractionFailed, fallbackSignatures, blocks, blocksJudged, blockJudgeFailed, newTopics, attachedToExisting, classified, prunedEmptyTopics, …`. 500 with `{ok:false,error}` on failure.
 
 ### `GET /api/cron/write-pipeline`
-SSE stream. Runs `runWriter()` (one article) with a 120s timeout.
-Events: `start`, `written` | `skipped`, `complete`.
+SSE. Shared generation loop, up to 4 articles. Events: `start`, `written` | `skipped`, `error`, `complete` (with summary). Timeout 200s.
+
+### `GET /api/cron/batch-generate`
+SSE, manual bulk generation: same loop, `?limit=N` (default 60), concurrency 4. Events: `plan`, `generating`, `generated`, `skipped`, `error`, `complete`.
+
+### `GET /api/cron/health`
+JSON counters (`pendingRows`, `oldestPendingAgeMin`, `lastScrapeAgeMin`, `lastTopicAgeMin`, `lastArticleAgeMin`, `articlesLast24h`, `stuckWriting`, `flags[]`). **200** when healthy, **503** with flags (`scraping_stalled`, `clustering_backlog`, `no_new_topics_4h`, `no_articles_4h`, `stuck_writing_topics`).
 
 ### `GET /api/cron/generate-articles`
-Generates from the most recently updated topic. Query: `topicId?`, `limit?` (max 10).
+Admin/testing: generates an unpublished draft for a topic via the standalone generator (`?topicId=`, `?limit=`).
 
 ### `GET /api/cron/update-price-rates`
-Scrapes `2dec.net` rates into `price_rates` (markets: `sanaa`, `aden`, `gold`).
+Scrapes `2dec.net` rates into `price_rates` (`sanaa`, `aden`, `gold`).
 
 ## Calling from the scheduler
 
-`news_workers/src/index.ts` calls these via the `NEWS_SITE` service binding:
-
 ```
-scrape-source/[key]  (all 12, staggered)
-batch-generate
-write-pipeline
-update-price-rates
+scrape-source/[key] (hourly, all 11, staggered) → cluster → write-pipeline → update-price-rates → health
 ```

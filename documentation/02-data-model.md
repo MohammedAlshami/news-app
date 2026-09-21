@@ -55,6 +55,11 @@ Clusters of scraped articles about the same event.
 | `parent_id` | text? | optional parent topic (hierarchy) |
 | `type` | `persistent` \| `event` | |
 | `is_active` | boolean | |
+| `status` | text | `open` → `writing` → `written` (or `skipped`) |
+| `last_seen_at` | integer? | newest member's publish time (freshness/clustering window) |
+| `gen_attempts` | integer | failed writing attempts (skipped after 3) |
+| `claimed_at` | integer? | when a writer claimed it (stale after 15 min) |
+| `written_source_count` | integer | sources at the time the article was written (follow-ups) |
 | `start_date` / `end_date` | text? | |
 | `created_at` / `updated_at` | timestamp_ms | |
 
@@ -74,7 +79,12 @@ Raw scraped items.
 | `published_at` | text? | |
 | `scraped_at` | timestamp_ms | |
 | `raw_json` | text | |
-| `topic_id` | text? → `topics.id` | set by topic grouping |
+| `topic_id` | text? → `topics.id` | set by clustering |
+| `status` | text | `pending` → `clustering` → `clustered` (or `skipped` / `failed`) |
+| `attempts` | integer | failed clustering attempts (row is parked as `failed` after 3) |
+| `published_ts` | integer? | parsed publish time, epoch ms (falls back to scrape time) |
+| `claimed_at` | integer? | when a clustering run claimed the row |
+| `signature` | text? | JSON event signature (LLM) used for blocking/clustering |
 
 ### `generated_articles`
 AI-generated articles (same shape as `articles`, kept separate).
@@ -199,7 +209,9 @@ Revenue records for the admin finance page.
 `0004_add_content_to_scraped_news`, `0005_topics`, `0006_topics_article_count`,
 `0007_generated_articles`, `0008_news_sources`, `0009_article_member_only`,
 `0010_skynews_source`, `0011_more_sources`, `0012_new_categories_highlights`,
-`0013_topics_hierarchy_images`, `0014_category_daily_quota`.
+`0013_topics_hierarchy_images`, `0014_category_daily_quota`, `0015_pipeline_state`, `0016_cleanup_topics`, `0017_scraped_news_signature`.
+
+> `article_count` is recomputed from real rows on every clustering run (it used to be corrupted by `+= n` on re-processing).
 
 To add one: write `db/migrations/00NN_name.sql`, apply it to D1 (HTTP API or
 `wrangler d1 execute`), and update the Drizzle schema in `db/schema/`.

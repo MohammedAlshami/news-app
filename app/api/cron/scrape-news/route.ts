@@ -2,7 +2,8 @@ import { NextResponse } from "next/server"
 
 import { saveScrapeResult } from "@/lib/db-scraped-news.server"
 import { getEnabledSourceKeys } from "@/lib/db-news-sources.server"
-import { runTopicGrouping } from "@/lib/db-topics.server"
+import { findKnownUrls } from "@/lib/db-scraped-news.server"
+import { runClusteringNow } from "@/lib/clustering/run-now.server"
 import { createNewsScraper, getSupportedCategories, type ScraperSourceKey } from "@/lib/news-scraper"
 
 export const dynamic = "force-dynamic"
@@ -36,7 +37,7 @@ async function runSource(
 
   for (const category of categories) {
     if (remaining <= 0) break
-    const result = await scraper.scrape({ category })
+    const result = await scraper.scrape({ category, filterKnown: (urls) => findKnownUrls(sourceKey, urls) })
     // Trim items to whatever is left of the limit
     result.items = result.items.slice(0, remaining)
     const saved = await saveScrapeResult(result)
@@ -75,8 +76,8 @@ export async function GET(request: Request) {
 
   const sources = Object.fromEntries(results.map(({ key, summaries }) => [key, summaries]))
 
-  // 2. Group freshly scraped articles into topics via AI
-  const topicSummary = await runTopicGrouping()
+  // 2. Cluster freshly scraped articles into topics
+  const topicSummary = await runClusteringNow()
 
   return NextResponse.json({ ok: true, sources, topics: topicSummary })
 }

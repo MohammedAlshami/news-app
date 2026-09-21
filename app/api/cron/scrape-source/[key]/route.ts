@@ -1,11 +1,14 @@
 import { NextResponse } from "next/server"
 import { getNewsSourceByKey, getLastScrapedAt, updateLastScrapedAt } from "@/lib/db-news-sources.server"
-import { saveScrapeResult, insertScrapedNewsRows } from "@/lib/db-scraped-news.server"
+import { findKnownUrls, insertScrapedNewsRows } from "@/lib/db-scraped-news.server"
 import { createNewsScraper, getSupportedCategories, type ScraperSourceKey } from "@/lib/news-scraper"
-import { runTopicGrouping } from "@/lib/db-topics.server"
 
 export const dynamic = "force-dynamic"
 
+/**
+ * Scrape one source. Clustering is NOT run here any more: `/api/cron/cluster` runs it once
+ * per cycle for all sources (running it per source re-processed the same rows 12× an hour).
+ */
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ key: string }> },
@@ -23,60 +26,48 @@ export async function GET(
   const scraper = createNewsScraper(key as ScraperSourceKey)
   const categories = getSupportedCategories(key as ScraperSourceKey)
 
-  const results: { category: string; inserted: number; skipped: number }[] = []
+  const results: { category: string; inserted: number; skipped: number; error?: string }[] = []
   const now = new Date()
 
   for (const category of categories) {
-    const result = await scraper.scrape({ category })
-    if (result.items.length === 0) {
-      results.push({ category, inserted: 0, skipped: 0 })
-      continue
+    // One failing category page must not abort the whole source.
+    try {
+      const result = await scraper.scrape({
+        category,
+        filterKnown: (urls) => findKnownUrls(key, urls),
+      })
+      if (result.items.length === 0) {
+        results.push({ category, inserted: 0, skipped: 0 })
+        continue
+      }
+
+      // Duplicates are handled by URL (unique index); no date filter here — a date filter
+      // silently drops late-discovered items and mis-parses timezone-less dates.
+      const filled = result.items.map((item) => ({
+        ...item,
+        publishedAt: item.publishedAt || now.toISOString(),
+      }))
+
+      const inserted = await insertScrapedNewsRows({
+        sourceKey: result.sourceKey,
+        source: result.source,
+        category: result.category,
+        query: result.query,
+        items: filled,
+      })
+      results.push({ category, inserted, skipped: filled.length - inserted })
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      console.error(`scrape ${key}/${category} failed: ${message}`)
+      results.push({ category, inserted: 0, skipped: 0, error: message })
     }
-
-    // Use lastScrapedAt to filter: only keep items with publishedAt >= lastScrapedAt.
-    // If publishedAt is missing, fall back to current time (so freshly scraped items pass through).
-    const filtered = lastScrapedAt
-      ? result.items.filter((item) => {
-          if (!item.publishedAt) return true // no date → include
-          const d = new Date(item.publishedAt)
-          return isNaN(d.getTime()) || d >= lastScrapedAt
-        })
-      : result.items
-
-    if (filtered.length === 0) {
-      results.push({ category, inserted: 0, skipped: 0 })
-      continue
-    }
-
-    // Fill missing publishedAt with current scrape time
-    const filled = filtered.map((item) => ({
-      ...item,
-      publishedAt: item.publishedAt || now.toISOString(),
-    }))
-
-    const inserted = await insertScrapedNewsRows({
-      sourceKey: result.sourceKey,
-      source: result.source,
-      category: result.category,
-      query: result.query,
-      items: filled,
-    })
-    results.push({ category, inserted, skipped: filled.length - inserted })
   }
 
   const totalInserted = results.reduce((sum, r) => sum + r.inserted, 0)
+  const failedCategories = results.filter((r) => r.error).length
   const nowIso = now.toISOString()
-  await updateLastScrapedAt(key, nowIso)
-
-  // Run topic grouping on any ungrouped articles
-  let topicsGrouped = null
-  let topicError: string | null = null
-  try {
-    topicsGrouped = await runTopicGrouping()
-  } catch (err) {
-    topicError = err instanceof Error ? err.message : String(err)
-    console.error(`Topic grouping after ${key}:`, topicError)
-  }
+  // Only advance lastScrapedAt when at least one category worked.
+  if (failedCategories < results.length) await updateLastScrapedAt(key, nowIso)
 
   return NextResponse.json({
     ok: true,
@@ -85,7 +76,6 @@ export async function GET(
     previousScrape: lastScrapedAt?.toISOString() ?? null,
     results,
     totalInserted,
-    topicsGrouped,
-    topicError,
+    failedCategories,
   })
 }

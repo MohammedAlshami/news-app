@@ -2,7 +2,7 @@ import "server-only"
 
 import { eq, gte, sql } from "drizzle-orm"
 
-import { getDb } from "@/db/client"
+import { getDb, type AppDb } from "@/db/client"
 import { categories, generatedArticles, topics } from "@/db/schema"
 
 export type CategoryQuota = {
@@ -14,18 +14,20 @@ export type CategoryQuota = {
   remaining: number
 }
 
-function startOfUtcDay(): Date {
-  const now = new Date()
+function startOfUtcDay(nowMs: number): Date {
+  const now = new Date(nowMs)
   return new Date(
     Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()),
   )
 }
 
 /** Per-category daily generation quota plus how many were generated today (UTC). */
-export async function getCategoryQuotas(): Promise<CategoryQuota[]> {
-  const db = getDb()
+export async function getCategoryQuotas(
+  db: AppDb = getDb(),
+  nowMs: number = Date.now(),
+): Promise<CategoryQuota[]> {
   const cats = await db.select().from(categories)
-  const since = startOfUtcDay()
+  const since = startOfUtcDay(nowMs)
 
   const counts = await db
     .select({
