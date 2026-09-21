@@ -7,6 +7,7 @@ import {
   getArticlesByCategory,
 } from "@/lib/db-home.server"
 import { getCategories } from "@/lib/db-categories.server"
+import { getCategoryPagePath } from "@/lib/site-routes"
 import { isSubscribed } from "@/lib/subscription"
 import { ar } from "@/lib/ui-ar"
 
@@ -45,6 +46,8 @@ export default async function HomePage() {
             headingId={`cat-${cat.slug}`}
             title={cat.name}
             articles={articles}
+            categoryHref={getCategoryPagePath(cat.slug)}
+            moreLabel={ar.sectionMore}
             isSubscribed={subscribed}
             navPrevLabel={ar.homeFinanceNavPrev}
             navNextLabel={ar.homeFinanceNavNext}

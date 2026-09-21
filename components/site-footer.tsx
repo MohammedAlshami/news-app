@@ -81,8 +81,8 @@ export async function SiteFooter() {
             </h3>
             <ul className="space-y-3 sm:space-y-4">
               <FooterLink label={ar.footerContact} href="/advertise" />
-              <FooterLink label={ar.footerPrivacy} href="#" />
-              <FooterLink label={ar.footerTerms} href="#" />
+              <FooterLink label={ar.footerPrivacy} href="/privacy" />
+              <FooterLink label={ar.footerTerms} href="/terms" />
             </ul>
           </div>
 
