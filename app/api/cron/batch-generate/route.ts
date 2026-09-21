@@ -15,9 +15,23 @@ function event(name: string, data: Record<string, unknown>) {
   return `event: ${name}\ndata: ${JSON.stringify(data)}\n\n`
 }
 
+const CATEGORY_HINTS: Record<string, string> = {
+  economy: "business, finance, markets, trade, money",
+  sports: "sports, athletics, matches, tournaments",
+  technology: "tech, AI, gadgets, software, internet",
+  politics: "politics, diplomacy, government, international, conflicts, war",
+  health: "health, medicine, diseases, nutrition",
+  culture: "arts, cinema, music, literature, theater, celebrities",
+  science: "science, space, research, discoveries",
+  environment: "environment, climate, weather, nature, water, agriculture",
+}
+
 async function classifyAllTopics(): Promise<number> {
   const db = getDb()
-  const allCats = await db.select({ id: categories.id, name: categories.name }).from(categories)
+  const allCats = await db
+    .select({ id: categories.id, name: categories.name, slug: categories.slug })
+    .from(categories)
+  const idBySlug = Object.fromEntries(allCats.map((c) => [c.slug, c.id]))
   const unclassified = await db
     .select({ id: topics.id, title: topics.title })
     .from(topics)
@@ -25,8 +39,13 @@ async function classifyAllTopics(): Promise<number> {
 
   if (unclassified.length === 0) return 0
 
+  const catLines = allCats
+    .map((c) => `- ${c.slug}: ${CATEGORY_HINTS[c.slug] ?? c.name}`)
+    .join("\n")
+  const systemPrompt = `You are a news classifier. Given articles with titles, assign each to the best category slug from the list below.\nCategories:\n${catLines}\nRespond with valid JSON only: {"classifications":[{"id":"<id>","category":"<slug>"}]}`
+
   // Classify in small chunks — one giant request can hang or exceed limits.
-  const CHUNK = 40
+  const CHUNK = 25
   let updated = 0
   for (let i = 0; i < unclassified.length; i += CHUNK) {
     const chunk = unclassified.slice(i, i + CHUNK)
@@ -37,8 +56,8 @@ async function classifyAllTopics(): Promise<number> {
         body: JSON.stringify({
           model: OPENROUTER_MODEL,
           messages: [
-            { role: "system", content: `Assign each topic to the best category. Respond JSON: { "assignments": [{ "topicId": "...", "categoryId": "..." }] }` },
-            { role: "user", content: JSON.stringify({ categories: allCats, topics: chunk }) },
+            { role: "system", content: systemPrompt },
+            { role: "user", content: JSON.stringify({ articles: chunk.map((t) => ({ id: t.id, title: t.title, excerpt: "" })) }) },
           ],
           temperature: 0.1,
           response_format: { type: "json_object" },
@@ -48,10 +67,12 @@ async function classifyAllTopics(): Promise<number> {
       if (!res.ok) continue
       const data = await res.json() as any
       const raw = data.choices?.[0]?.message?.content ?? "{}"
-      const parsed = JSON.parse(raw) as { assignments?: { topicId: string; categoryId: string }[] }
-      for (const a of parsed.assignments ?? []) {
-        if (a.categoryId && allCats.some((c) => c.id === a.categoryId)) {
-          await db.update(topics).set({ categoryId: a.categoryId }).where(eq(topics.id, a.topicId))
+      const parsed = JSON.parse(raw) as { classifications?: { id: string; category: string }[] }
+      for (const c of parsed.classifications ?? []) {
+        const slug = String(c.category ?? "").trim().toLowerCase()
+        const catId = idBySlug[slug]
+        if (catId) {
+          await db.update(topics).set({ categoryId: catId }).where(eq(topics.id, c.id))
           updated++
         }
       }
