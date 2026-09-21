@@ -25,7 +25,16 @@ type Props = {
 }
 
 function normalize(value: string) {
-  return value.trim().toLowerCase()
+  return value
+    .trim()
+    .toLowerCase()
+    // Strip Arabic diacritics and tatweel.
+    .replace(/[\u064B-\u0652\u0670\u0640]/g, "")
+    // Normalize alef, hamza, ya and ta-marbuta variants so «اسرائيل» matches «إسرائيل».
+    .replace(/[أإآٱ]/g, "ا")
+    .replace(/[ؤ]/g, "و")
+    .replace(/[ئى]/g, "ي")
+    .replace(/ة/g, "ه")
 }
 
 export default function SearchClient({ articles, initialQuery }: Props) {
@@ -95,23 +104,24 @@ export default function SearchClient({ articles, initialQuery }: Props) {
             <div className="mx-auto max-w-3xl space-y-3">
               {filtered.map((article) => {
                 const imgSrc = article.coverImageUrl?.trim()
-                if (!imgSrc) return null
                 return (
                   <Link
                     key={article.id}
                     href={getArticlePath(article.id)}
                     className="group flex items-center gap-4 rounded-xl border border-neutral-100 px-5 py-4 text-right transition-colors hover:bg-neutral-50"
                   >
-                    <div className="relative h-16 w-24 shrink-0 overflow-hidden rounded-lg bg-neutral-100">
-                      <Image
-                        src={imgSrc}
-                        alt=""
-                        fill
-                        className="object-cover"
-                        sizes="96px"
-                        unoptimized
-                      />
-                    </div>
+                    {imgSrc ? (
+                      <div className="relative h-16 w-24 shrink-0 overflow-hidden rounded-lg bg-neutral-100">
+                        <Image
+                          src={imgSrc}
+                          alt=""
+                          fill
+                          className="object-cover"
+                          sizes="96px"
+                          unoptimized
+                        />
+                      </div>
+                    ) : null}
                     <div className="min-w-0 flex-1">
                       <h3 className="text-base font-bold leading-snug text-neutral-900 transition-colors group-hover:text-neutral-700">
                         {article.title}
