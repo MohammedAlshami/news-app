@@ -1,6 +1,6 @@
 import "server-only"
 
-import { desc, gte } from "drizzle-orm"
+import { desc, eq, gte } from "drizzle-orm"
 
 import { getDb } from "@/db/client"
 import { categories, scrapedNews, topics } from "@/db/schema"
