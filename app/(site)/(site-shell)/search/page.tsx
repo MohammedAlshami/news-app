@@ -26,6 +26,7 @@ export default async function SearchPage({ searchParams }: PageProps) {
     excerpt: a.excerpt,
     date: a.date,
     categoryIds: a.categoryIds,
+    coverImageUrl: a.coverImageUrl,
     isMemberOnly: a.isMemberOnly,
   }))
 

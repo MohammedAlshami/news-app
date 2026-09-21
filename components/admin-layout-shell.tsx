@@ -17,13 +17,13 @@ export function AdminLayoutShell({ children }: Props) {
     "/admin/articles/preview/",
   ) ?? false
   if (isFullscreenArticlePreview) {
-    return <div className="min-h-svh bg-background" dir="rtl">{children}</div>
+    return <div className="admin-scale min-h-svh bg-background" dir="rtl">{children}</div>
   }
 
   return (
     <SidebarProvider>
       <div
-        className="relative flex h-svh w-full min-h-0 flex-row overflow-x-hidden overflow-y-hidden"
+        className="admin-scale relative flex h-svh w-full min-h-0 flex-row overflow-x-hidden overflow-y-hidden"
         dir="rtl"
       >
         <DashboardSidebar />

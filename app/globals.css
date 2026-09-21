@@ -361,3 +361,20 @@
 html body {
   font-family: var(--font-sans);
 }
+
+/*
+ * Admin: scale the Tailwind text scale by 1.2 so the panel reads larger,
+ * approximating ~120% browser zoom without affecting the public site.
+ * Line-height vars are unitless ratios, so they scale with the font size.
+ */
+.admin-scale {
+  --text-xs: calc(0.75rem * 1.2);
+  --text-sm: calc(0.875rem * 1.2);
+  --text-base: calc(1rem * 1.2);
+  --text-lg: calc(1.125rem * 1.2);
+  --text-xl: calc(1.25rem * 1.2);
+  --text-2xl: calc(1.5rem * 1.2);
+  --text-3xl: calc(1.875rem * 1.2);
+  --text-4xl: calc(2.25rem * 1.2);
+  --text-5xl: calc(3rem * 1.2);
+}
