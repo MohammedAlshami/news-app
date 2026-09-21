@@ -23,7 +23,6 @@ const SCRAPE_CATEGORIES = [
   { key: "varieties", label: "منوعات" },
   { key: "technology", label: "تكنولوجيا" },
   { key: "arab", label: "عرب" },
-  { key: "climate", label: "مناخ" },
   { key: "palestine", label: "فلسطين" },
   { key: "arab-and-world", label: "عربي ودولي" },
   { key: "accidents", label: "حوادث" },

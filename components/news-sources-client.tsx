@@ -143,7 +143,6 @@ const SOURCES: NewsSource[] = [
       { key: "world", labelAr: "عالم", url: "https://www.bbc.com/arabic/topics/cz9mm6r1q5et" },
       { key: "middle_east", labelAr: "الشرق الأوسط", url: "https://www.bbc.com/arabic/topics/c2dl0pn0lqjt" },
       { key: "sport", labelAr: "رياضة", url: "https://www.bbc.com/arabic/topics/cdxkdwgjw2zt" },
-      { key: "climate", labelAr: "مناخ", url: "https://www.bbc.com/arabic/topics/c1gdq3kq8nzt" },
     ],
   },
   {
