@@ -1,21 +1,35 @@
-# Next.js template
+# News App / Satellite Demo
 
-This is a Next.js template with shadcn/ui.
+A Next.js app experimenting with location-based news cards and Mapbox satellite
+imagery (static previews per lat/lon). Built for a UMHack-style hackathon/demo.
 
-## Adding components
+- Interactive map previews using Mapbox static images
+- News list pages with region filters
+- Cloudflare/OpenNext + Wrangler deployment scripts
+- Optional Playwright visual tests (helpers excluded from the public tree)
 
-To add components to your app, run the following command:
+## Tech stack
+
+- Next.js 15, React 19, TypeScript
+- Tailwind, Radix/shadcn UI
+- Mapbox (satellite tiles)
+- Cloudflare Workers/OpenNext hosting
+
+## Getting started
 
 ```bash
-pnpm dlx shadcn@latest add button
+npm install
+npm run dev   # http://localhost:3000
 ```
 
-This will place the ui components in the `components` directory.
+Set env vars via `.env.local`:
 
-## Using components
-
-To use the components in your app, import them as follows:
-
-```tsx
-import { Button } from "@/components/ui/button";
+```ini
+NEXT_PUBLIC_MAPBOX_TOKEN=
+NEXT_PUBLIC_OPENAI_API_KEY=
+# and vendor keys in .env
 ```
+
+## Notes
+
+- Build artifacts (`.next/`, `.open-next/`, `.wrangler/`, `playwright-report/`) are intentionally excluded.
