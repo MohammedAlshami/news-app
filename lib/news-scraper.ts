@@ -3,7 +3,7 @@ import { canonicalizeUrl } from "@/lib/url-canonical"
 
 /** Hosts the scrapers may talk to (a poisoned feed cannot point us at internal or arbitrary hosts). */
 const ALLOWED_HOST_SUFFIXES = [
-  "rt.com", "independentarabia.com", "aajeg.com", "alaraby.co.uk", "youm7.com", "skynewsarabia.com", "shabiba.com",
+  "rt.com", "rtarabic.com", "independentarabia.com", "aajeg.com", "alaraby.co.uk", "youm7.com", "skynewsarabia.com", "snabusiness.com", "shabiba.com",
   "elwatannews.com", "alquds.com", "addustour.com", "aawsat.com", "bbc.com", "bbc.co.uk",
 ]
 const FETCH_TIMEOUT_MS = 10_000

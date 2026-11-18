@@ -26,6 +26,11 @@ function getD1FromBindings(): CloudflareEnv["DB"] | undefined {
   return undefined
 }
 
+/** The raw D1 binding when running on Workers (undefined in dev/tests). Used for atomic `batch` of raw statements. */
+export function getRawD1(): CloudflareEnv["DB"] | undefined {
+  return getD1FromBindings()
+}
+
 function getRequiredEnv(name: string) {
   const value = getRuntimeEnv(name)
   if (!value) {

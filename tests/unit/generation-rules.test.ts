@@ -384,3 +384,24 @@ test("scheduler: every source belongs to exactly one slot per hour; cron express
   assert.equal(stepFor("6-59/10 * * * *"), "scrape")
   assert.equal(stepFor("0 0 * * *"), null)
 })
+
+test("a copied first draft gets ONE automatic rewrite request, and the second draft is published", async () => {
+  const { sqlite, db } = freshDb()
+  const id = seedTopic(sqlite, {})
+  const src = "نص المقال ".repeat(80)
+  const copied = makeLlm({ paragraphs: [src.slice(0, 200), src.slice(0, 200), src.slice(0, 200), src.slice(0, 200)] })
+  const clean = makeLlm()
+  const seen: any[] = []
+  let n = 0
+  const llm = (async (req: any) => {
+    if (!req.system.includes("MATERIAL new information")) seen.push(JSON.parse(req.user))
+    n++
+    return n === 1 ? copied.llm(req) : clean.llm(req)
+  }) as typeof copied.llm
+  const r = await generateForCandidate(deps(db, llm), (await listCandidates(db, NOW)).find((c) => c.id === id)!)
+  assert.equal(r.outcome, "written")
+  assert.equal(seen.length, 2)
+  assert.equal(seen[0].revision, undefined)
+  assert.match(seen[1].revision, /copied sentences/)
+  assert.equal(one(sqlite, "SELECT count(*) n FROM articles").n, 1)
+})
