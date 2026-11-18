@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState, useTransition } from "react"
 import { ArrowRightLeft, ChevronDown } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
-import { LABELS } from "@/lib/currency-converter-data"
+import { LABELS, SYMBOLS } from "@/lib/currency-converter-data"
 import { ar } from "@/lib/ui-ar"
 
 const COMMON = [
@@ -60,15 +60,15 @@ function useOutsideClose(open: boolean, onClose: () => void) {
 }
 
 function SelectField({
-  label,
   value,
   onChange,
   market,
+  badge,
 }: {
-  label: string
   value: string
   onChange: (value: string) => void
   market: string
+  badge: string
 }) {
   const [open, setOpen] = useState(false)
   const rootRef = useOutsideClose(open, () => setOpen(false))
@@ -76,35 +76,33 @@ function SelectField({
   const displayValue = LABELS[displayCode] ?? LABELS[value] ?? value
 
   return (
-    <div ref={rootRef} className="relative rounded-3xl bg-white px-5 py-4">
-      <span className="mb-2 block text-xs font-bold text-gray-400">{label}</span>
+    <div ref={rootRef} className="relative">
       <button
         type="button"
         onClick={() => setOpen((next) => !next)}
-        className="flex w-full items-center justify-between gap-4 text-right"
+        className="flex w-full items-center justify-between gap-3 rounded-full bg-white/25 py-2 pl-4 pr-2 text-right transition-colors hover:bg-white/35"
       >
-        <span className="text-2xl font-black tracking-tight text-black md:text-[2rem]">{displayValue}</span>
-        <ChevronDown className="h-5 w-5 shrink-0 text-gray-400" />
+        <span className="flex min-w-0 items-center gap-3">
+          <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-lg font-black ${badge}`}>{SYMBOLS[value] ?? value.slice(0, 1)}</span>
+          <span className="truncate text-lg font-extrabold md:text-xl">{displayValue}</span>
+        </span>
+        <ChevronDown className="h-5 w-5 shrink-0" aria-hidden />
       </button>
 
       {open ? (
-        <div className="absolute inset-x-3 top-[calc(100%+0.5rem)] z-20 max-h-72 overflow-auto rounded-2xl bg-white p-2 shadow-xl shadow-black/10">
+        <div className="absolute inset-x-0 top-[calc(100%+0.5rem)] z-20 max-h-72 overflow-auto rounded-3xl bg-white p-2 text-neutral-900 shadow-xl shadow-black/15">
           {COMMON.map((code) => (
             <button
               key={code}
               type="button"
               onClick={() => {
-                if (code === "YER_SANAA") onChange("YER_SANAA")
-                else if (code === "YER_ADEN") onChange("YER_ADEN")
-                else onChange(code)
+                onChange(code)
                 setOpen(false)
               }}
-              className="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-right transition-colors hover:bg-neutral-100"
+              className="flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-right transition-colors hover:bg-neutral-100"
             >
-              <span className="font-bold text-gray-900">{LABELS[code] ?? code}</span>
-              <span className="text-xs text-gray-500">
-                {code === "YER_SANAA" ? "sanaa" : code === "YER_ADEN" ? "aden" : code}
-              </span>
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-neutral-900 text-sm font-black text-white">{SYMBOLS[code] ?? code.slice(0, 1)}</span>
+              <span className="font-bold">{LABELS[code] ?? code}</span>
             </button>
           ))}
         </div>
@@ -170,84 +168,64 @@ export function CurrencyConverter() {
     setAmount((next / result.rate).toString())
   }
 
+  const rateLine = result ? `1 ${SYMBOLS[from] ?? from} = ${result.rate.toLocaleString("en-US", { maximumFractionDigits: 4 })} ${SYMBOLS[to] ?? to}` : null
+
   return (
     <div className="w-full">
-      <section className="rounded-[2rem] bg-neutral-100">
-        <div className="px-5 py-8 md:px-10 md:py-12">
-          <h1 className="max-w-3xl text-3xl font-extrabold leading-[1.1] tracking-tight text-black md:text-5xl">
-            {ar.currencyConverterTitle}
-          </h1>
+      <h1 className="text-4xl font-extrabold leading-tight tracking-tight text-black md:text-6xl">{ar.currencyConverterTitle}</h1>
+      <p className="mt-3 max-w-2xl text-lg leading-8 text-neutral-500">{ar.currencyConverterSub}</p>
 
-          <p className="mt-3 max-w-2xl text-base leading-8 text-neutral-600 md:text-lg">
-            {ar.currencyConverterSub}
-          </p>
-          <div className="mt-8 grid gap-4 lg:grid-cols-[1fr_auto_1fr]">
-            <SelectField label={ar.currencyConverterFrom} value={from} onChange={setFrom} market={market} />
-
-            <div className="flex items-center justify-center lg:pt-7">
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                onClick={swap}
-                className="h-12 w-12 rounded-full border-0 bg-black text-white hover:bg-neutral-800 hover:text-white"
-                aria-label={ar.currencyConverterSwap}
-              >
-                <ArrowRightLeft className="h-5 w-5" />
-              </Button>
-            </div>
-
-            <SelectField label={ar.currencyConverterTo} value={to} onChange={setTo} market={market} />
-          </div>
-
-          <div className="mt-4 grid gap-4 lg:grid-cols-2">
-            <label className="rounded-3xl bg-white px-5 py-4">
-              <span className="mb-2 block text-xs font-bold text-gray-400">
-                {ar.currencyConverterAmount}
-              </span>
-              <input
-                type="number"
-                min="0"
-                step="0.01"
-                value={amount}
-                onChange={(e) => onAmountChange(e.target.value)}
-                className="w-full bg-transparent text-2xl font-black tracking-tight text-black outline-none md:text-[2rem]"
-              />
-            </label>
-
-            <label className="rounded-3xl bg-white px-5 py-4">
-              <span className="mb-2 block text-xs font-bold text-gray-400">
-                {ar.currencyConverterResult}
-              </span>
-              <input
-                type="number"
-                min="0"
-                step="0.01"
-                value={resultAmount}
-                onChange={(e) => onResultChange(e.target.value)}
-                className="w-full bg-transparent text-2xl font-black tracking-tight text-black outline-none md:text-[2rem]"
-              />
-              <div className="mt-1 text-sm font-medium text-gray-500">{LABELS[to] ?? to}</div>
-            </label>
-          </div>
-
-          {result ? (
-            <div className="mt-5 inline-flex flex-wrap items-center rounded-full bg-white px-5 py-2.5 text-sm font-medium text-neutral-600">
-              <span>سعر الصرف: {result.rate.toLocaleString("en-US")}</span>
-              <span className="mx-2">•</span>
-              <span>{to === "YER_ADEN" ? "عدن" : to === "YER_SANAA" ? "صنعاء" : "الريال اليمني"}</span>
-            </div>
-          ) : null}
-
-          {error ? (
-            <p className="mt-5 rounded-2xl bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
-              {error}
-            </p>
-          ) : null}
-
-          <p className="mt-5 max-w-3xl text-sm leading-7 text-gray-500">{ar.currencyConverterHint}</p>
+      <div className="mt-8 grid items-stretch gap-4 lg:grid-cols-[1fr_auto_1fr]">
+        <div className="rounded-[2rem] bg-amber-400 p-6 text-neutral-900 md:p-8">
+          <span className="mb-4 block text-sm font-extrabold text-neutral-900/60">{ar.currencyConverterFrom}</span>
+          <SelectField value={from} onChange={setFrom} market={market} badge="bg-neutral-900 text-amber-300" />
+          <input
+            type="number"
+            min="0"
+            step="0.01"
+            value={amount}
+            onChange={(e) => onAmountChange(e.target.value)}
+            aria-label={ar.currencyConverterAmount}
+            className="mt-6 w-full bg-transparent text-6xl font-black tabular-nums outline-none md:text-8xl"
+          />
         </div>
-      </section>
+
+        <div className="flex items-center justify-center">
+          <Button
+            type="button"
+            size="icon"
+            onClick={swap}
+            className="h-14 w-14 rounded-full border-0 bg-black text-white hover:bg-neutral-800 lg:rotate-0"
+            aria-label={ar.currencyConverterSwap}
+          >
+            <ArrowRightLeft className="h-6 w-6" />
+          </Button>
+        </div>
+
+        <div className="rounded-[2rem] bg-blue-600 p-6 text-white md:p-8">
+          <span className="mb-4 block text-sm font-extrabold text-white/70">{ar.currencyConverterTo}</span>
+          <SelectField value={to} onChange={setTo} market={market} badge="bg-white text-blue-700" />
+          <input
+            type="number"
+            min="0"
+            step="0.01"
+            value={resultAmount}
+            onChange={(e) => onResultChange(e.target.value)}
+            aria-label={ar.currencyConverterResult}
+            className="mt-6 w-full bg-transparent text-6xl font-black tabular-nums outline-none md:text-8xl"
+          />
+        </div>
+      </div>
+
+      <div className="mt-5 flex flex-wrap items-center gap-3">
+        {rateLine ? <span className="rounded-full bg-black px-5 py-2.5 text-base font-extrabold tabular-nums text-white">{rateLine}</span> : null}
+        {result ? (
+          <span className="rounded-full bg-amber-100 px-5 py-2.5 text-base font-bold text-amber-900">
+            {to === "YER_ADEN" || from === "YER_ADEN" ? "سعر عدن" : "سعر صنعاء"}
+          </span>
+        ) : null}
+        {error ? <span className="rounded-full bg-red-100 px-5 py-2.5 text-base font-bold text-red-700">{error}</span> : null}
+      </div>
     </div>
   )
 }
