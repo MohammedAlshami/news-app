@@ -27,7 +27,7 @@ import {
   buildWebsiteJsonLd,
   jsonLdString,
 } from "@/lib/seo"
-import { HomeRatesVariants } from "@/components/home-rates-variants"
+import { HomeUsdRates } from "@/components/home-usd-rates"
 import { getHomeRates } from "@/lib/db-price-rates.server"
 import { getActiveSiteAdsForHome } from "@/lib/db-site-ads.server"
 import { areSiteAdsEnabled } from "@/lib/site-ads-enabled"
@@ -147,12 +147,12 @@ export default async function HomePage() {
       />
 
       <HomeTrending items={trending} title={ar.homeTrending} isSubscribed={subscribed} categoryName={categoryName} />
-      <HomeRatesVariants rates={rates} href="/tools/currency-converter" />
       {carousels[0]}
       <HomeFeatured ads={sponsoredAds} picks={featuredPicks} title={ar.homeFeatured} isSubscribed={subscribed} />
       {blockFor("سياسة")}
       {carousels[1]}
       <HomeLongReads items={longReads} title={ar.homeLongReads} subtitle={ar.homeLongReadsSub} isSubscribed={subscribed} categoryName={categoryName} />
+      <HomeUsdRates rates={rates} href="/tools/currency-converter" />
       <HomePhotoMosaic items={mosaic} title={ar.homePhotos} isSubscribed={subscribed} />
       {carousels[2]}
       {blockFor("رياضة")}
