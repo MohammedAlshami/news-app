@@ -27,6 +27,8 @@ import {
   buildWebsiteJsonLd,
   jsonLdString,
 } from "@/lib/seo"
+import { HomeRatesSection } from "@/components/home-rates"
+import { getHomeRates } from "@/lib/db-price-rates.server"
 import { getActiveSiteAdsForHome } from "@/lib/db-site-ads.server"
 import { areSiteAdsEnabled } from "@/lib/site-ads-enabled"
 import { ALL_CATEGORIES_ID, getCategoryPagePath } from "@/lib/site-routes"
@@ -53,7 +55,7 @@ export const metadata: Metadata = {
 /** Categories that get their own block (matched by Arabic name) instead of a carousel. */
 const FEATURE_BLOCKS = {
   سياسة: { variant: "row", tone: "plain" },
-  رياضة: { variant: "split", tone: "dark" },
+  رياضة: { variant: "split", tone: "soft" },
   صحة: { variant: "split", tone: "soft" },
 } as const
 
@@ -64,6 +66,7 @@ export default async function HomePage() {
     getHomeHero(),
     getHomePool(),
   ])
+  const rates = await getHomeRates().catch(() => ({ sanaa: [], aden: [], updatedAt: null }))
   const sponsoredAds = areSiteAdsEnabled() && !subscribed ? await getActiveSiteAdsForHome().catch(() => []) : []
   const heroIds = new Set(heroArticles.map((a) => a.id))
 
@@ -144,6 +147,7 @@ export default async function HomePage() {
       />
 
       <HomeTrending items={trending} title={ar.homeTrending} isSubscribed={subscribed} categoryName={categoryName} />
+      <HomeRatesSection rates={rates} converterHref="/tools/currency-converter" />
       {carousels[0]}
       <HomeFeatured ads={sponsoredAds} picks={featuredPicks} title={ar.homeFeatured} isSubscribed={subscribed} />
       {blockFor("سياسة")}

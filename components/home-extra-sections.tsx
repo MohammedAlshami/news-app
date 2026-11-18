@@ -83,22 +83,22 @@ export function HomeLongReads({ items, title, subtitle, isSubscribed, categoryNa
   return (
     <section dir="rtl" lang="ar" aria-labelledby="home-longreads" className="py-6 md:py-10">
       <div className={WRAP}>
-        <div className="rounded-[2rem] bg-neutral-800 px-5 py-8 text-white md:px-10 md:py-12">
+        <div className="rounded-[2rem] bg-neutral-100 px-5 py-8 text-neutral-900 md:px-10 md:py-12">
           <div className="mb-7 flex flex-wrap items-end justify-between gap-2 md:mb-9">
-            <h2 id="home-longreads" className={`${H2} text-white`}>
+            <h2 id="home-longreads" className={`${H2} text-black`}>
               {title}
             </h2>
-            <p className="text-sm text-neutral-400 md:text-base">{subtitle}</p>
+            <p className="text-sm text-neutral-500 md:text-base">{subtitle}</p>
           </div>
           <div className="grid grid-cols-1 gap-8 lg:grid-cols-12 lg:gap-10">
             <article className="lg:col-span-7">
               <SubscriptionGate isMemberOnly={lead.isMemberOnly} isSubscribed={isSubscribed} href={getArticlePath(lead.id, lead.title)} className="group block text-right">
                 <Cover article={lead} sizes="(max-width: 1024px) 100vw, 56vw" className="aspect-[16/10] rounded-3xl" />
-                <span className="mt-5 block text-xs font-bold text-neutral-400">
+                <span className="mt-5 block text-xs font-bold text-neutral-500">
                   {categoryName?.(lead)} · قراءة {faNum.format(minutes(lead))} د
                 </span>
                 <span className="mt-2 line-clamp-3 block text-2xl font-extrabold leading-snug group-hover:underline md:text-3xl">{lead.title}</span>
-                <span className="mt-3 line-clamp-2 block text-[15px] leading-relaxed text-neutral-300">{lead.excerpt}</span>
+                <span className="mt-3 line-clamp-2 block text-[15px] leading-relaxed text-neutral-600">{lead.excerpt}</span>
               </SubscriptionGate>
             </article>
             <ul className="flex flex-col gap-3 lg:col-span-5">
@@ -108,11 +108,11 @@ export function HomeLongReads({ items, title, subtitle, isSubscribed, categoryNa
                     isMemberOnly={a.isMemberOnly}
                     isSubscribed={isSubscribed}
                     href={getArticlePath(a.id, a.title)}
-                    className="group flex items-center gap-4 rounded-2xl p-3 text-right transition-colors hover:bg-white/10"
+                    className="group flex items-center gap-4 rounded-2xl p-3 text-right transition-colors hover:bg-black/5"
                   >
                     <Cover article={a} sizes="160px" className="h-24 w-32 shrink-0 rounded-xl sm:h-28 sm:w-40" />
                     <span className="min-w-0 flex-1">
-                      <span className="block text-xs font-bold text-neutral-400">
+                      <span className="block text-xs font-bold text-neutral-500">
                         {categoryName?.(a)} · قراءة {faNum.format(minutes(a))} د
                       </span>
                       <span className="mt-1 line-clamp-3 block text-base font-extrabold leading-snug md:text-lg">{a.title}</span>

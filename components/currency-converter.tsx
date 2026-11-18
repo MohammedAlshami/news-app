@@ -76,19 +76,19 @@ function SelectField({
   const displayValue = LABELS[displayCode] ?? LABELS[value] ?? value
 
   return (
-    <div ref={rootRef} className="relative rounded-[1.75rem] border border-gray-200 bg-white px-5 py-4">
+    <div ref={rootRef} className="relative rounded-3xl bg-white px-5 py-4">
       <span className="mb-2 block text-xs font-bold text-gray-400">{label}</span>
       <button
         type="button"
         onClick={() => setOpen((next) => !next)}
         className="flex w-full items-center justify-between gap-4 text-right"
       >
-        <span className="text-2xl font-black tracking-tight text-gray-950 md:text-[2rem]">{displayValue}</span>
+        <span className="text-2xl font-black tracking-tight text-black md:text-[2rem]">{displayValue}</span>
         <ChevronDown className="h-5 w-5 shrink-0 text-gray-400" />
       </button>
 
       {open ? (
-        <div className="absolute inset-x-4 top-[calc(100%+0.5rem)] z-20 max-h-72 overflow-auto rounded-2xl border border-gray-200 bg-white p-2">
+        <div className="absolute inset-x-3 top-[calc(100%+0.5rem)] z-20 max-h-72 overflow-auto rounded-2xl bg-white p-2 shadow-xl shadow-black/10">
           {COMMON.map((code) => (
             <button
               key={code}
@@ -99,7 +99,7 @@ function SelectField({
                 else onChange(code)
                 setOpen(false)
               }}
-              className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-right hover:bg-gray-50"
+              className="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-right transition-colors hover:bg-neutral-100"
             >
               <span className="font-bold text-gray-900">{LABELS[code] ?? code}</span>
               <span className="text-xs text-gray-500">
@@ -171,14 +171,14 @@ export function CurrencyConverter() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl">
-      <section className="overflow-hidden rounded-[2rem] border border-gray-100 bg-white">
-        <div className="px-5 py-6 md:px-8 md:py-8">
-          <h1 className="max-w-3xl text-3xl font-black leading-[1.05] tracking-tight text-gray-950 md:text-5xl">
+    <div className="w-full">
+      <section className="rounded-[2rem] bg-neutral-100">
+        <div className="px-5 py-8 md:px-10 md:py-12">
+          <h1 className="max-w-3xl text-3xl font-extrabold leading-[1.1] tracking-tight text-black md:text-5xl">
             {ar.currencyConverterTitle}
           </h1>
 
-          <p className="max-w-2xl text-base leading-8 text-gray-600 md:text-lg">
+          <p className="mt-3 max-w-2xl text-base leading-8 text-neutral-600 md:text-lg">
             {ar.currencyConverterSub}
           </p>
           <div className="mt-8 grid gap-4 lg:grid-cols-[1fr_auto_1fr]">
@@ -190,7 +190,7 @@ export function CurrencyConverter() {
                 variant="outline"
                 size="icon"
                 onClick={swap}
-                className="h-12 w-12 rounded-full border-gray-200 bg-white text-gray-900 hover:bg-gray-50"
+                className="h-12 w-12 rounded-full border-0 bg-black text-white hover:bg-neutral-800 hover:text-white"
                 aria-label={ar.currencyConverterSwap}
               >
                 <ArrowRightLeft className="h-5 w-5" />
@@ -201,7 +201,7 @@ export function CurrencyConverter() {
           </div>
 
           <div className="mt-4 grid gap-4 lg:grid-cols-2">
-            <label className="rounded-[1.75rem] border border-gray-200 bg-white px-5 py-4">
+            <label className="rounded-3xl bg-white px-5 py-4">
               <span className="mb-2 block text-xs font-bold text-gray-400">
                 {ar.currencyConverterAmount}
               </span>
@@ -211,11 +211,11 @@ export function CurrencyConverter() {
                 step="0.01"
                 value={amount}
                 onChange={(e) => onAmountChange(e.target.value)}
-                className="w-full bg-transparent text-2xl font-black tracking-tight text-gray-950 outline-none md:text-[2rem]"
+                className="w-full bg-transparent text-2xl font-black tracking-tight text-black outline-none md:text-[2rem]"
               />
             </label>
 
-            <label className="rounded-[1.75rem] border border-gray-200 bg-white px-5 py-4">
+            <label className="rounded-3xl bg-white px-5 py-4">
               <span className="mb-2 block text-xs font-bold text-gray-400">
                 {ar.currencyConverterResult}
               </span>
@@ -225,14 +225,14 @@ export function CurrencyConverter() {
                 step="0.01"
                 value={resultAmount}
                 onChange={(e) => onResultChange(e.target.value)}
-                className="w-full bg-transparent text-2xl font-black tracking-tight text-gray-950 outline-none md:text-[2rem]"
+                className="w-full bg-transparent text-2xl font-black tracking-tight text-black outline-none md:text-[2rem]"
               />
               <div className="mt-1 text-sm font-medium text-gray-500">{LABELS[to] ?? to}</div>
             </label>
           </div>
 
           {result ? (
-            <div className="mt-4 rounded-[1.5rem] border border-gray-100 px-4 py-3 text-sm text-gray-500">
+            <div className="mt-5 inline-flex flex-wrap items-center rounded-full bg-white px-5 py-2.5 text-sm font-medium text-neutral-600">
               <span>سعر الصرف: {result.rate.toLocaleString("en-US")}</span>
               <span className="mx-2">•</span>
               <span>{to === "YER_ADEN" ? "عدن" : to === "YER_SANAA" ? "صنعاء" : "الريال اليمني"}</span>
@@ -240,7 +240,7 @@ export function CurrencyConverter() {
           ) : null}
 
           {error ? (
-            <p className="mt-5 rounded-[1.5rem] border border-red-100 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+            <p className="mt-5 rounded-2xl bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
               {error}
             </p>
           ) : null}

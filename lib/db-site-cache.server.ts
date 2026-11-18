@@ -145,3 +145,20 @@ export const getHomePool = cache(async (days = 30, limit = 80): Promise<FeedArti
     bodyLength: Number(r.bodyLength) || 0,
   }))
 })
+
+/** Recent published articles of one category (undefined = all) with views/body size, for the category landing sections. */
+export const getCategoryPool = cache(async (categoryId: string | undefined, days = 60, limit = 60): Promise<FeedArticle[]> => {
+  const since = Date.now() - days * 86_400_000
+  const rows = await getDb()
+    .select({ ...feedCols, views: articles.views, bodyLength: sql<number>`length(${articles.body})` })
+    .from(articles)
+    .where(
+      and(
+        sql`${articles.isPublished} = 1 AND ${articles.createdAt} >= ${since} AND ${articles.coverImageUrl} IS NOT NULL AND ${articles.coverImageUrl} != ''`,
+        categoryId ? eq(articles.categoryId, categoryId) : undefined,
+      ),
+    )
+    .orderBy(desc(articles.updatedAt))
+    .limit(limit)
+  return rows.map((r) => ({ ...toFeed(r), publishedAt: r.createdAt.toISOString(), views: r.views, bodyLength: Number(r.bodyLength) || 0 }))
+})
