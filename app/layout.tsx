@@ -1,4 +1,5 @@
 import type { Metadata } from "next"
+import Script from "next/script"
 
 import "./globals.css"
 import { shubbak, neirizi } from "./fonts"
@@ -39,6 +40,10 @@ export default function RootLayout({
       className={cn(shubbak.variable, neirizi.variable, "font-sans antialiased")}
     >
       <body className="min-h-svh">
+        {process.env.REACT_GRAB === "1" ? (
+          // Opt-in element picker (set REACT_GRAB=1). Pinned version; next.config.mjs adds unpkg.com to the CSP only when set.
+          <Script src="https://unpkg.com/react-grab@0.2.0/dist/index.global.js" crossOrigin="anonymous" strategy="afterInteractive" />
+        ) : null}
         <ThemeProvider>
           <TooltipProvider delayDuration={0}>{children}</TooltipProvider>
         </ThemeProvider>
