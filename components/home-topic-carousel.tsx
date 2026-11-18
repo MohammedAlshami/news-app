@@ -116,12 +116,11 @@ export function HomeTopicCarousel({
               "[&::-webkit-scrollbar]:hidden",
             )}
           >
-            {articles.map((article, index) => (
+            {articles.map((article) => (
               <TopicArticleCard
                 key={article.id}
                 article={article}
                 isSubscribed={isSubscribed}
-                priority={index === 0}
               />
             ))}
           </div>
@@ -134,11 +133,9 @@ export function HomeTopicCarousel({
 function TopicArticleCard({
   article,
   isSubscribed,
-  priority,
 }: {
   article: FeedArticle
   isSubscribed: boolean
-  priority?: boolean
 }) {
   const href = getArticlePath(article.id, article.title)
 
@@ -157,11 +154,13 @@ function TopicArticleCard({
           {article.coverImageUrl ? (
             <Image
               src={article.coverImageUrl}
-              alt=""
+              alt={article.title}
               fill
               sizes="(max-width: 640px) 88vw, 380px"
-              priority={priority}
+              // No per-card priority: it emitted a preload for every section's first card.
               className="object-cover transition duration-500 ease-out will-change-transform group-hover:scale-[1.03]"
+              // Unoptimized: no Images binding; legacy covers hot-link source CDNs that 403 the server-side optimizer.
+              unoptimized
             />
           ) : null}
         </div>

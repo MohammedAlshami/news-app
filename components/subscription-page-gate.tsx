@@ -7,11 +7,12 @@ import { ar } from "@/lib/ui-ar"
 
 type Props = {
   title: string
+  excerpt?: string
   coverImageUrl: string | null
   back: { href: string; label: string }
 }
 
-export function SubscriptionPageGate({ title, coverImageUrl, back }: Props) {
+export function SubscriptionPageGate({ title, excerpt, coverImageUrl, back }: Props) {
   return (
     <div dir="rtl" lang="ar" className="flex min-h-[80vh] items-center justify-center bg-white px-4">
       <div className="w-full max-w-lg text-center">
@@ -19,7 +20,7 @@ export function SubscriptionPageGate({ title, coverImageUrl, back }: Props) {
           <div className="relative mx-auto mb-8 aspect-[16/9] w-full max-w-sm overflow-hidden rounded-2xl bg-neutral-100">
             <Image
               src={coverImageUrl}
-              alt=""
+              alt={title}
               fill
               className="object-cover opacity-40 blur-sm"
               sizes="(max-width: 640px) 100vw, 400px"
@@ -32,9 +33,10 @@ export function SubscriptionPageGate({ title, coverImageUrl, back }: Props) {
           <Lock className="h-8 w-8 text-amber-600" />
         </div>
 
-        <h1 className="mb-3 text-2xl font-bold text-neutral-900">{ar.adminArticleMemberOnlyToggle}</h1>
+        <p className="mb-3 text-2xl font-bold text-neutral-900">{ar.adminArticleMemberOnlyToggle}</p>
 
-        <p className="mb-2 text-lg font-semibold text-neutral-800">{title}</p>
+        <h1 className="mb-2 text-lg font-semibold text-neutral-800">{title}</h1>
+        {excerpt ? <p className="mb-2 text-sm leading-relaxed text-neutral-600">{excerpt}</p> : null}
 
         <p className="mb-8 text-sm leading-relaxed text-neutral-500">
           {ar.adminArticleMemberOnlyModalDesc}

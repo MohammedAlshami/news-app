@@ -18,12 +18,16 @@ function getPublicBase(): string {
 
 export async function putR2Object(params: {
   key: string
-  body: Buffer
+  body: Buffer | Uint8Array
   contentType: string
 }): Promise<string> {
   const key = params.key.replace(/^\//, "")
   await getMediaBucket().put(key, params.body, {
-    httpMetadata: { contentType: params.contentType },
+    httpMetadata: {
+      contentType: params.contentType,
+      // Keys are content-addressed (never overwritten), so they can be cached forever.
+      cacheControl: "public, max-age=31536000, immutable",
+    },
   })
   return `${getPublicBase()}/${key}`
 }
@@ -33,16 +37,15 @@ export async function deleteR2ObjectByKey(key: string): Promise<void> {
   await getMediaBucket().delete(k)
 }
 
-/** Public article/cover URL stored in DB: either `https://…/path` (R2) or `/uploads/…` (legacy local). */
+/** Deletes the object behind a stored public URL, but only when it lives on our own R2 public base. */
 export async function deleteStoredImageIfR2(storedUrl: string): Promise<void> {
-  if (!storedUrl) return
-  if (!/^https?:\/\//i.test(storedUrl)) return
+  if (!storedUrl || !/^https?:\/\//i.test(storedUrl)) return
   try {
-    const path = new URL(storedUrl).pathname.replace(/^\//, "")
-    if (path) {
-      await deleteR2ObjectByKey(path)
-    }
+    const u = new URL(storedUrl)
+    if (u.origin !== new URL(getPublicBase()).origin) return
+    const path = decodeURIComponent(u.pathname).replace(/^\//, "")
+    if (path) await deleteR2ObjectByKey(path)
   } catch {
-    // ignore invalid URL
+    // ignore invalid URL / unconfigured base
   }
 }

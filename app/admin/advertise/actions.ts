@@ -1,5 +1,6 @@
 "use server"
 
+import { requireAdmin } from "@/lib/admin-guard.server"
 import { getAdminAdvertiseInquiryById } from "@/lib/db-advertise-inquiries.server"
 import { ar } from "@/lib/ui-ar"
 
@@ -22,6 +23,7 @@ export async function getAdminAdvertiseInquiryAction(
   | { ok: true; data: AdminAdvertiseInquiryPayload }
   | { ok: false; error: string }
 > {
+  await requireAdmin()
   const row = await getAdminAdvertiseInquiryById(id)
   if (!row) {
     return { ok: false, error: ar.adminAdvertiseNotFound }

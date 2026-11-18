@@ -114,7 +114,7 @@ export default function SearchClient({ articles, initialQuery }: Props) {
                       <div className="relative h-16 w-24 shrink-0 overflow-hidden rounded-lg bg-neutral-100">
                         <Image
                           src={imgSrc}
-                          alt=""
+                          alt={article.title}
                           fill
                           className="object-cover"
                           sizes="96px"

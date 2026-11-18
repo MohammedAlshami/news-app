@@ -4,6 +4,14 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import { Sparkles, Loader2 } from "lucide-react"
 
 import { AiMenuInputTextarea } from "@/components/tiptap-ui/ai-menu-input"
+import {
+  AI_EMPTY_MESSAGE,
+  AI_TRUNCATED_EMPTY_MESSAGE,
+  aiErrorMessage,
+  describeAiHttpError,
+  isAbortError,
+  stripAiControlMarks,
+} from "@/lib/ai-stream"
 import { cn } from "@/lib/utils"
 
 import "@/components/tiptap-ui/ai-prompt-dock.scss"
@@ -20,6 +28,9 @@ export function AiPromptDock({ editor: providedEditor, articleId }: AiPromptDock
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [articleContext, setArticleContext] = useState<string>("")
+  const abortRef = useRef<AbortController | null>(null)
+
+  useEffect(() => () => abortRef.current?.abort(), [])
 
   useEffect(() => {
     if (articleId) {
@@ -43,7 +54,9 @@ export function AiPromptDock({ editor: providedEditor, articleId }: AiPromptDock
 
       // Build prompt with full article context
       let promptWithContext = prompt
-      const fullText = editor.state.doc.textBetween(0, editor.state.doc.content.size, "\n", "\n")
+      const fullText = editor.state.doc
+        .textBetween(0, editor.state.doc.content.size, "\n", "\n")
+        .slice(0, 40_000) // stay under the /api/ai prompt cap
       if (fullText.trim()) {
         promptWithContext = `Article content:\n${fullText}\n\nUser request: ${prompt}`
       }
@@ -54,6 +67,10 @@ export function AiPromptDock({ editor: providedEditor, articleId }: AiPromptDock
         promptWithContext = `${promptWithContext}\n\nTone: ${tone}`
       }
 
+      abortRef.current?.abort()
+      const controller = new AbortController()
+      abortRef.current = controller
+
       try {
         const response = await fetch("/api/ai", {
           method: "POST",
@@ -63,15 +80,18 @@ export function AiPromptDock({ editor: providedEditor, articleId }: AiPromptDock
             mode: "write",
             prompt: promptWithContext,
           }),
+          signal: controller.signal,
         })
         if (!response.ok) {
-          setError("فشل الاتصال بالذكاء الاصطناعي")
+          const errorText = await response.text().catch(() => "")
+          setError(describeAiHttpError(response.status, errorText))
           return
         }
 
-        const text = await response.text()
+        const filtered = stripAiControlMarks(await response.text())
+        const text = filtered.text
         if (!text.trim()) {
-          setError("لم يتم الحصول على رد من الذكاء الاصطناعي")
+          setError(filtered.truncated ? AI_TRUNCATED_EMPTY_MESSAGE : AI_EMPTY_MESSAGE)
           return
         }
 
@@ -98,8 +118,10 @@ export function AiPromptDock({ editor: providedEditor, articleId }: AiPromptDock
           editor.chain().focus().insertContent(html).run()
         }
       } catch (err) {
-        setError("حدث خطأ أثناء الاتصال بالذكاء الاصطناعي")
+        if (isAbortError(err) || controller.signal.aborted) return
+        setError(aiErrorMessage(err))
       } finally {
+        if (abortRef.current === controller) abortRef.current = null
         setIsLoading(false)
       }
     },
@@ -107,6 +129,7 @@ export function AiPromptDock({ editor: providedEditor, articleId }: AiPromptDock
   )
 
   const handleClose = useCallback(() => {
+    abortRef.current?.abort()
     setIsExpanded(false)
     setError(null)
   }, [])

@@ -25,7 +25,7 @@ AI generation, frontend, admin, API, and deployment/operations.
 - **Next.js 16** (App Router, webpack) deployed to **Cloudflare Workers** via **OpenNext** (`@opennextjs/cloudflare`).
 - **D1** (SQLite) for data via the `DB` binding; **R2** for images via the `MEDIA` binding.
 - A separate scheduler Worker (`news_workers`, deployed as `news-latest`) runs **every 10 minutes** and drives the pipeline: scrape (hourly) → cluster → write → price rates → health check.
-- **AI:** OpenRouter, model `deepseek/deepseek-v4-flash`, for classification and Arabic article generation.
+- **AI:** OpenCode, model `deepseek-v4.1-flash`, for classification and Arabic article generation.
 - **Arabic-first** RTL news site with categories, member-only gating, ads, search, currency tool, and an admin panel.
 
 ## Content flow at a glance

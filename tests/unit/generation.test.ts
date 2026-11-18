@@ -35,6 +35,7 @@ type WriterOpts = { skip?: boolean; invalid?: boolean; throws?: boolean; title?:
 function makeWriter(o: WriterOpts = {}) {
   const calls: { user: any }[] = []
   const llm: LlmJson = async (req) => {
+    if (req.system.includes("MATERIAL new information")) return { material: true, new_facts: ["رقم جديد ومعلومة جديدة في القضية"], reason: "new" }
     const user = JSON.parse(req.user)
     calls.push({ user })
     if (o.delayMs) await new Promise((r) => setTimeout(r, o.delayMs))
@@ -75,7 +76,8 @@ test("listCandidates applies status, freshness, category, attempts and claim rul
   const tooManyTries = seedTopic(sqlite, { genAttempts: 3 })
   const skipped = seedTopic(sqlite, { status: "skipped" })
   const writingFresh = seedTopic(sqlite, { status: "writing", claimedAt: NOW - 60 * 1000 })
-  const writingStale = seedTopic(sqlite, { status: "writing", claimedAt: NOW - 20 * 60 * 1000 })
+  // stale-claim threshold is now 20 min (was 15): it must stay well above the worst-case duration of one step
+  const writingStale = seedTopic(sqlite, { status: "writing", claimedAt: NOW - 30 * 60 * 1000 })
   const hasArticle = seedTopic(sqlite, {})
   sqlite.prepare("INSERT INTO generated_articles (id, title, body, topic_id) VALUES ('g-manual', 't', '{}', ?)").run(hasArticle)
   const ids = (await listCandidates(db, NOW)).map((c) => c.id)
@@ -84,7 +86,7 @@ test("listCandidates applies status, freshness, category, attempts and claim rul
   for (const bad of [noCat, stale, tooManyTries, skipped, writingFresh, hasArticle]) assert.ok(!ids.includes(bad), `${bad} must not be a candidate`)
 })
 
-test("follow-ups: written topics need 3+ new sources, 6h since last article, and fewer than 2 articles", async () => {
+test("follow-ups: written topics need unseen sources, a 4h cooldown and fewer than 3 articles", async () => {
   const { sqlite, db } = freshDb()
   const mk = (over: { count: number; written: number; lastGenHoursAgo: number; nArticles?: number }) => {
     const id = seedTopic(sqlite, { status: "written", writtenSourceCount: over.written, sources: Array.from({ length: over.count }, (_, i) => ({ sourceKey: `s${i}` })) })
@@ -92,12 +94,13 @@ test("follow-ups: written topics need 3+ new sources, 6h since last article, and
     return id
   }
   const eligible = mk({ count: 5, written: 2, lastGenHoursAgo: 7 })
-  const fewNew = mk({ count: 4, written: 2, lastGenHoursAgo: 7 })
+  const oneNew = mk({ count: 3, written: 2, lastGenHoursAgo: 7 }) // still a candidate: the update judge decides, not a counter
+  const nothingNew = mk({ count: 4, written: 4, lastGenHoursAgo: 7 })
   const tooSoon = mk({ count: 5, written: 2, lastGenHoursAgo: 2 })
-  const alreadyTwice = mk({ count: 8, written: 2, lastGenHoursAgo: 12, nArticles: 2 })
+  const atMax = mk({ count: 8, written: 2, lastGenHoursAgo: 12, nArticles: 3 })
   const ids = (await listCandidates(db, NOW)).map((c) => c.id)
-  assert.ok(ids.includes(eligible))
-  for (const bad of [fewNew, tooSoon, alreadyTwice]) assert.ok(!ids.includes(bad))
+  assert.ok(ids.includes(eligible) && ids.includes(oneNew))
+  for (const bad of [nothingNew, tooSoon, atMax]) assert.ok(!ids.includes(bad))
 })
 
 test("generateForCandidate: publishes article + generated row, marks topic written, attributes sources with links", async () => {
@@ -118,12 +121,7 @@ test("generateForCandidate: publishes article + generated row, marks topic writt
   assert.deepEqual(topic, { status: "written", claimed_at: null, gen_attempts: 0, written_source_count: 2 })
 
   const body = JSON.parse(art.body)
-  const last = body.content.at(-1).content
-  assert.equal(last[0].text, "المصادر: ")
-  const linked = last.filter((n: any) => n.marks?.[0]?.type === "link")
-  assert.equal(linked.length, 2)
-  assert.ok(linked.every((n: any) => n.marks[0].attrs.href.startsWith("https://example.com/")))
-  assert.ok(linked.some((n: any) => n.text === "اليوم السابع") && linked.some((n: any) => n.text === "RT عربي"), "Arabic outlet names from news_sources")
+  assert.ok(!JSON.stringify(body).includes("المصادر"))
 
   // the LLM saw plain text (not Tiptap JSON) and never the image url / secrets
   const sent = calls[0].user
@@ -131,15 +129,17 @@ test("generateForCandidate: publishes article + generated row, marks topic writt
   assert.ok(!sent.sources[0].text.includes('"type"'))
 })
 
-test("attribution lists each outlet once even when it contributed several articles", async () => {
+test("gallery: every source's image is mirrored (cover first), stored on the public article, no sources line", async () => {
   const { sqlite, db } = freshDb()
-  sqlite.prepare("INSERT INTO news_sources (key, name, name_ar, url, is_enabled) VALUES ('rt','RT','RT عربي','https://rt.com',1), ('bbc','BBC','بي بي سي','https://bbc.com',1)").run()
-  const id = seedTopic(sqlite, { sources: [{ sourceKey: "rt" }, { sourceKey: "rt" }, { sourceKey: "bbc" }] })
+  const id = seedTopic(sqlite, { sources: [{ sourceKey: "rt" }, { sourceKey: "bbc" }, { sourceKey: "youm7" }, { imageUrl: null, sourceKey: "rt" }] })
   const { llm } = makeWriter()
-  await generateForCandidate(mkDeps(db, llm), await cand(db, id))
-  const last = JSON.parse(one(sqlite, "SELECT body FROM articles").body).content.at(-1).content
-  const names = last.filter((n: any) => n.marks).map((n: any) => n.text)
-  assert.deepEqual([...names].sort(), ["RT عربي", "بي بي سي"], "RT appears once")
+  await generateForCandidate(mkDeps(db, llm, { uploadCover: async (u: string) => `https://r2.test/${encodeURIComponent(u)}` }), await cand(db, id))
+  const art = one(sqlite, "SELECT cover_image_url, image_urls, body FROM articles")
+  const imgs = JSON.parse(art.image_urls)
+  assert.equal(imgs.length, 3, "one mirrored image per source that had one")
+  assert.equal(imgs[0], art.cover_image_url)
+  assert.equal(new Set(imgs).size, 3)
+  assert.ok(!art.body.includes("المصادر"))
 })
 
 test("two writers racing for the same topic: exactly one wins, one article, no stuck state", async () => {
@@ -305,13 +305,13 @@ test("parseWriterOutput validates model output", () => {
   }
 })
 
-test("buildBody: paragraphs then a source line with safe links; no source line without sources", () => {
-  const body = JSON.parse(buildBody(["ف1", "ف2"], [{ outlet: "RT", url: "https://a.com/1" }, { outlet: "BBC", url: "https://b.com/2" }]))
-  assert.equal(body.content.length, 3)
-  const nodes = body.content[2].content
-  assert.deepEqual(nodes.map((n: any) => n.text), ["المصادر: ", "RT", "، ", "BBC"])
-  assert.equal(nodes[1].marks[0].attrs.rel, "noopener noreferrer nofollow")
-  assert.equal(JSON.parse(buildBody(["ف"], [])).content.length, 1)
+test("buildBody: paragraphs only (no sources line); optional internal 'read also' link", () => {
+  const body = JSON.parse(buildBody(["ف1", "ف2"]))
+  assert.equal(body.content.length, 2)
+  assert.ok(!JSON.stringify(body).includes("المصادر"))
+  const withRel = JSON.parse(buildBody(["ف"], { title: "عنوان سابق", articleId: "abcdefgh-1234" }))
+  assert.equal(withRel.content.length, 2)
+  assert.equal(withRel.content[1].content[1].marks[0].attrs.href, "/news/abcdefgh-1234")
 })
 
 test("findNearDuplicate: same story reworded is caught; a different story with shared words is not", () => {

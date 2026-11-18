@@ -44,6 +44,7 @@ export default async function AdminEditArticlePage({ params }: PageProps) {
         initialIsPublished={row.isPublished}
         initialIsMemberOnly={row.isMemberOnly}
         initialBodyJson={row.body}
+        initialUpdatedAt={row.updatedAt.toISOString()}
         categories={categories}
       />
     </div>

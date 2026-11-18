@@ -32,6 +32,10 @@ export const scrapedNews = sqliteTable("scraped_news", {
   claimedAt: integer("claimed_at"),
   /** JSON event signature (domain/type/actors/countries/date/...) extracted by the LLM. */
   signature: text("signature"),
+  /** length(content) at insert time (cheap eligibility filter; NULL on legacy rows). */
+  contentLen: integer("content_len"),
+  /** 1 when the publish date could not be parsed (published_ts is NULL; kept out of generation). */
+  dateUnknown: integer("date_unknown").notNull().default(0),
 })
 
 export type ScrapedNews = typeof scrapedNews.$inferSelect

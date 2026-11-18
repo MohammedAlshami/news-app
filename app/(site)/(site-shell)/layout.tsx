@@ -3,10 +3,11 @@ import Link from "next/link"
 import { SiteFooter } from "@/components/site-footer"
 import { SiteNavbar } from "@/components/site-navbar"
 import { SiteSubscribeBanner } from "@/components/site-subscribe-banner"
-import { getCategoryNavItems } from "@/lib/categories"
+import type { CategoryNavItem } from "@/lib/db-categories.server"
 import { getMarqueeArticles } from "@/lib/db-home.server"
+import { getCategoriesCached, isSubscribedCached } from "@/lib/db-site-cache.server"
 import { areSiteAdsEnabled } from "@/lib/site-ads-enabled"
-import { isSubscribed } from "@/lib/subscription"
+import { getCategoryPagePath } from "@/lib/site-routes"
 import { ar } from "@/lib/ui-ar"
 
 /** Toggle to restore the top breaking-news marquee / ticker. */
@@ -18,13 +19,17 @@ export default async function SiteShellLayout({
   children: React.ReactNode
 }>) {
   const latestArticles = SHOW_NEWS_MARQUEE ? await getMarqueeArticles(4) : []
-  const categoryLinks = (await getCategoryNavItems())
-    .filter((item) => item.id !== "all")
-    .slice(0, 5)
-  const [showAdsUncached, subscribed] = await Promise.all([
+  // Request-scoped cache: the page and generateMetadata reuse this same categories query / cookie read.
+  const [categories, showAdsUncached, subscribed] = await Promise.all([
+    getCategoriesCached(),
     areSiteAdsEnabled(),
-    isSubscribed(),
+    isSubscribedCached(),
   ])
+  const categoryLinks: CategoryNavItem[] = categories.slice(0, 5).map((c) => ({
+    id: c.slug,
+    label: c.name,
+    href: getCategoryPagePath(c.slug),
+  }))
   const showAds = showAdsUncached && !subscribed
 
   return (

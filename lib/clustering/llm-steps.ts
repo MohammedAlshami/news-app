@@ -1,5 +1,5 @@
 import { SITE_CATEGORY_HINTS } from "@/lib/category-map"
-import type { LlmJson } from "@/lib/llm-json"
+import { isLlmStop, type LlmJson } from "@/lib/llm-json"
 
 export type CategoryRef = { id: string; slug: string }
 
@@ -32,6 +32,8 @@ Return JSON only: {"classifications":[{"id":"<id>","category":"<slug>"}]}`
         system,
         user: JSON.stringify({ items: chunk.map((c) => ({ id: c.id, title: c.title })) }),
         timeoutMs: 45000,
+        maxTokens: 1500,
+        label: "cluster-classify",
       })) as { classifications?: { id?: unknown; category?: unknown }[] }
       for (const c of raw?.classifications ?? []) {
         if (typeof c?.id !== "string" || !valid.has(c.id)) continue
@@ -39,6 +41,7 @@ Return JSON only: {"classifications":[{"id":"<id>","category":"<slug>"}]}`
         if (catId) out[c.id] = catId
       }
     } catch (err) {
+      if (isLlmStop(err)) throw err // usage limit / deadline: stop instead of failing every chunk
       onChunkError?.(err)
     }
   }

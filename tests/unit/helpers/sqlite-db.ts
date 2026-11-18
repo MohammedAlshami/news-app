@@ -9,21 +9,35 @@ import * as schema from "@/db/schema"
 
 /** drizzle sqlite-proxy over node:sqlite — same driver family the app uses, no network. */
 export function dbFromSqlite(sqlite: DatabaseSync): AppDb {
+  const exec = async (sql: string, params: unknown[], method: string) => {
+    const stmt = sqlite.prepare(sql)
+    stmt.setReturnArrays(true)
+    const p = params as (string | number | null)[]
+    if (method === "run") {
+      stmt.setReturnArrays(false)
+      stmt.run(...p)
+      return { rows: [] as unknown[] }
+    }
+    if (method === "get") {
+      const row = stmt.get(...p) as unknown[] | undefined
+      return { rows: row as never }
+    }
+    return { rows: stmt.all(...p) as unknown as unknown[][] }
+  }
   return drizzle(
-    async (sql, params, method) => {
-      const stmt = sqlite.prepare(sql)
-      stmt.setReturnArrays(true)
-      const p = params as (string | number | null)[]
-      if (method === "run") {
-        stmt.setReturnArrays(false)
-        stmt.run(...p)
-        return { rows: [] }
+    (sql, params, method) => exec(sql, params, method) as never,
+    // D1-style atomic batch: all statements commit together or not at all
+    async (queries) => {
+      sqlite.exec("BEGIN")
+      try {
+        const out = []
+        for (const q of queries) out.push(await exec(q.sql, q.params, q.method))
+        sqlite.exec("COMMIT")
+        return out as never
+      } catch (err) {
+        sqlite.exec("ROLLBACK")
+        throw err
       }
-      if (method === "get") {
-        const row = stmt.get(...p) as unknown[] | undefined
-        return { rows: row as never }
-      }
-      return { rows: stmt.all(...p) as unknown as unknown[][] }
     },
     { schema },
   ) as AppDb

@@ -19,12 +19,10 @@ type Props = {
 
 export function ArticleImageSection({ coverImageUrl, bodyImages, categoryByline, date, title, excerpt, children }: Props) {
   const allImages = coverImageUrl
-    ? [{ src: coverImageUrl, alt: "" }, ...bodyImages]
+    ? [{ src: coverImageUrl, alt: title }, ...bodyImages]
     : bodyImages
 
   const [activeIndex, setActiveIndex] = useState(0)
-
-  if (allImages.length === 0) return <>{children}</>
 
   const activeImage = allImages[activeIndex]
 
@@ -44,9 +42,10 @@ export function ArticleImageSection({ coverImageUrl, bodyImages, categoryByline,
           {excerpt}
         </p>
       </div>
+      {activeImage ? (
       <div className="w-full pt-6">
         <div className="relative aspect-[21/14] w-full overflow-hidden rounded-xl border border-border bg-muted sm:aspect-[21/12]">
-          <AnimatePresence mode="popLayout">
+          <AnimatePresence mode="popLayout" initial={false}>
             <motion.div
               key={activeImage.src}
               initial={{ opacity: 0 }}
@@ -57,17 +56,21 @@ export function ArticleImageSection({ coverImageUrl, bodyImages, categoryByline,
             >
               <Image
                 src={activeImage.src}
-                alt={activeImage.alt}
+                alt={activeImage.alt || title}
                 fill
                 className="object-cover"
                 sizes="(max-width: 48rem) 100vw, 48rem"
+                // Unoptimized: no Images binding yet, so /_next/image would return the same bytes. Follow-up: CDN/resizing.
                 unoptimized
+                // The cover is the article's single LCP image.
                 priority={activeIndex === 0}
+                fetchPriority={activeIndex === 0 ? "high" : "auto"}
               />
             </motion.div>
           </AnimatePresence>
         </div>
       </div>
+      ) : null}
       {allImages.length > 1 && (
         <ArticleImageGallery
           images={allImages}

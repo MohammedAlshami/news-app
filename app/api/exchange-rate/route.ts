@@ -2,6 +2,8 @@ import { NextResponse } from "next/server"
 
 import { getLatestPriceRateByCurrency } from "@/lib/db-price-rates.server"
 
+const CACHE = { headers: { "Cache-Control": "public, s-maxage=300, stale-while-revalidate=900" } }
+
 function isValidCurrency(code: string) {
   return /^[A-Z]{3,10}$/.test(code)
 }
@@ -10,7 +12,7 @@ export async function GET(request: Request) {
   const url = new URL(request.url)
   const from = (url.searchParams.get("from") ?? "USD").trim().toUpperCase()
   const to = (url.searchParams.get("to") ?? "YER").trim().toUpperCase()
-  const market = (url.searchParams.get("market") ?? "sanaa").trim().toLowerCase()
+  const market = (url.searchParams.get("market") ?? "sanaa").trim().toLowerCase().slice(0, 32)
   const amountRaw = url.searchParams.get("amount") ?? "1"
   const amount = Number(amountRaw)
 
@@ -32,7 +34,7 @@ export async function GET(request: Request) {
       result,
       date: quote.scrapedAt.toISOString(),
       source: quote.sourceUrl,
-    })
+    }, CACHE)
   }
 
   if (to === "YER") {
@@ -49,7 +51,7 @@ export async function GET(request: Request) {
       result,
       date: quote.scrapedAt.toISOString(),
       source: quote.sourceUrl,
-    })
+    }, CACHE)
   }
 
   return NextResponse.json(

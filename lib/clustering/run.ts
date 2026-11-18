@@ -1,13 +1,14 @@
-import { and, eq, gte, inArray, isNotNull, lt, sql } from "drizzle-orm"
+import { and, desc, eq, gte, inArray, isNotNull, lt, sql } from "drizzle-orm"
 
 import type { AppDb } from "@/db/client"
 import { categories, scrapedNews, topics } from "@/db/schema"
 import { directSiteCategory } from "@/lib/category-map"
-import type { LlmJson } from "@/lib/llm-json"
+import { isLlmStop, type LlmJson } from "@/lib/llm-json"
 
 import { buildBlocks, type SigDoc } from "./blocking"
 import { judgeBlock, type BlockItem } from "./block-llm"
 import { classifyTitles } from "./llm-steps"
+import { mergeDuplicateTopics } from "./merge"
 import { EXTRACT_BATCH, extractBatch, fallbackSignature, type Signature, type SignatureInput } from "./signature"
 
 export type ClusterRunDeps = {
@@ -19,6 +20,8 @@ export type ClusterRunDeps = {
   /** Rows claimed per run (newest first). Bounds one run's LLM time; the rest is picked up next tick. */
   maxPerRun?: number
   concurrency?: number
+  /** Epoch ms: no LLM call starts or runs past this (derived from the invocation's time budget). */
+  deadlineAt?: number
 }
 
 export type ClusterRunStats = {
@@ -36,10 +39,14 @@ export type ClusterRunStats = {
   unclassified: number
   prunedEmptyTopics: number
   failedRows: number
+  merged: number
+  /** set when the LLM reported a usage limit / budget / deadline: the run stopped and counted no attempts */
+  llmStopped: string | null
 }
 
 export const WINDOW_MS = 72 * 3600 * 1000
-const STALE_CLAIM_MS = 10 * 60 * 1000
+// well above the worst-case duration of one run (budget ≈ 2.5 min) so two runs never share rows
+const STALE_CLAIM_MS = 20 * 60 * 1000
 const DEFAULT_MAX_PER_RUN = 40
 const MAX_ATTEMPTS = 3
 
@@ -81,7 +88,7 @@ export async function runClustering(deps: ClusterRunDeps): Promise<ClusterRunSta
   const stats: ClusterRunStats = {
     claimed: 0, expired: 0, extracted: 0, extractionFailed: 0, fallbackSignatures: 0, blocks: 0,
     blocksJudged: 0, blockJudgeFailed: 0, newTopics: 0, attachedToExisting: 0, classified: 0,
-    unclassified: 0, prunedEmptyTopics: 0, failedRows: 0,
+    unclassified: 0, prunedEmptyTopics: 0, failedRows: 0, merged: 0, llmStopped: null,
   }
 
   // 0. housekeeping: release stale claims, expire rows that fell out of the window
@@ -92,7 +99,7 @@ export async function runClustering(deps: ClusterRunDeps): Promise<ClusterRunSta
   const expired = await db
     .update(scrapedNews)
     .set({ status: "skipped" })
-    .where(and(eq(scrapedNews.status, "pending"), lt(scrapedNews.publishedTs, windowStart)))
+    .where(and(eq(scrapedNews.status, "pending"), sql`(${scrapedNews.publishedTs} IS NULL OR ${scrapedNews.publishedTs} < ${windowStart})`))
     .returning({ id: scrapedNews.id })
   stats.expired = expired.length
 
@@ -102,7 +109,7 @@ export async function runClustering(deps: ClusterRunDeps): Promise<ClusterRunSta
 
   if (claimedIds.length > 0) {
     try {
-      await clusterClaimed(deps, now, windowStart, claimedIds, stats)
+      await clusterClaimed({ ...deps, llm: deadlined(deps) }, now, windowStart, claimedIds, stats)
     } finally {
       // anything still claimed by this run (crash / partial failure) goes back to pending
       await db
@@ -113,15 +120,32 @@ export async function runClustering(deps: ClusterRunDeps): Promise<ClusterRunSta
   }
 
   // 2. topics that still have no category (fallback signatures, LLM outage): classify by title
-  if (llm) {
-    const r = await classifyOpenTopics(db, llm, log)
-    stats.classified = r.classified
-    stats.unclassified = r.remaining
+  if (llm && !stats.llmStopped) {
+    try {
+      const r = await classifyOpenTopics(db, deadlined(deps)!, log)
+      stats.classified = r.classified
+      stats.unclassified = r.remaining
+    } catch (err) {
+      if (!isLlmStop(err)) throw err
+      stats.llmStopped = err.message
+    }
   }
 
-  // 3. prune empty leftovers
+  // 3. merge topics that describe the same event (deterministic), then prune empty leftovers
+  try {
+    stats.merged = await mergeDuplicateTopics(db, now)
+  } catch (err) {
+    log(`merge pass failed: ${err instanceof Error ? err.message : String(err)}`)
+  }
   stats.prunedEmptyTopics = await pruneEmptyTopics(db, now)
   return stats
+}
+
+/** The LLM with the step's deadline applied to every call. */
+function deadlined(deps: ClusterRunDeps): LlmJson | undefined {
+  const { llm, deadlineAt } = deps
+  if (!llm || deadlineAt === undefined) return llm
+  return (req) => llm({ deadlineAt, ...req })
 }
 
 async function claimPending(db: AppDb, now: number, windowStart: number, limit: number): Promise<string[]> {
@@ -216,16 +240,20 @@ async function clusterClaimed(
       }))
       const got = new Map<string, Signature>()
       await mapPool(chunk(inputs, EXTRACT_BATCH), conc, async (batch) => {
+        if (stats.llmStopped) return
         try {
           for (const [id, sig] of await extractBatch(llm, batch)) got.set(id, sig)
         } catch (err) {
+          if (isLlmStop(err)) stats.llmStopped = err.message
           log(`signature batch failed: ${err instanceof Error ? err.message : String(err)}`)
         }
       })
       const failedIds: string[] = []
       for (const r of need) {
         const sig = got.get(r.id)
-        if (sig) {
+        if (!sig && stats.llmStopped) {
+          dropped.add(r.id) // quota / deadline: back to pending below, NO attempt counted, no fallback signature
+        } else if (sig) {
           sigOf.set(r.id, sig)
           stats.extracted++
           await db.update(scrapedNews).set({ signature: JSON.stringify(sig) }).where(eq(scrapedNews.id, r.id))
@@ -252,6 +280,8 @@ async function clusterClaimed(
     })
     .from(scrapedNews)
     .where(and(isNotNull(scrapedNews.topicId), isNotNull(scrapedNews.signature), gte(scrapedNews.publishedTs, windowStart)))
+    .orderBy(desc(scrapedNews.publishedTs))
+    .limit(2500)
   const topicIds = [...new Set(memberRows.map((m) => m.topicId!).filter(Boolean))]
   const topicMeta = new Map<string, { title: string; status: string }>()
   for (const ids of chunk(topicIds, 90)) {
@@ -281,6 +311,10 @@ async function clusterClaimed(
   const singleton = (r: NewRow) => plan.newTopics.push({ title: r.title.trim().slice(0, 140), rows: [r] })
 
   await mapPool(blocks, conc, async (block) => {
+    if (stats.llmStopped) {
+      for (const d of block.docs) if (d.topicId === null) dropped.add(d.id)
+      return
+    }
     const newDocs = block.docs.filter((d) => d.topicId === null).sort((a, b) => a.publishedTs - b.publishedTs)
     const byTopic = new Map<string, SigDoc[]>()
     for (const d of block.docs) if (d.topicId) byTopic.set(d.topicId, [...(byTopic.get(d.topicId) ?? []), d])
@@ -309,6 +343,12 @@ async function clusterClaimed(
       stats.blocksJudged++
       groups = await judgeBlock(llm, items)
     } catch (err) {
+      if (isLlmStop(err)) {
+        // usage limit / budget / deadline: not the articles' fault. No attempt counted, no singleton fallback.
+        stats.llmStopped = err.message
+        for (const d of newDocs) dropped.add(d.id)
+        return
+      }
       stats.blockJudgeFailed++
       log(`block judge failed: ${err instanceof Error ? err.message : String(err)}`)
       // retry later; on the third strike keep the articles separate rather than lose them

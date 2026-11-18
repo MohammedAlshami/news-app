@@ -5,6 +5,7 @@ import { eq } from "drizzle-orm"
 
 import { getDb } from "@/db/client"
 import { categories } from "@/db/schema"
+import { requireAdmin } from "@/lib/admin-guard.server"
 import { slugifyCategoryName } from "@/lib/category-slug"
 import { ALL_CATEGORIES_ID } from "@/lib/site-routes"
 
@@ -21,11 +22,12 @@ export async function createCategoryAction(input: {
   name: string
   description: string
 }): Promise<{ ok: true; id: string } | { ok: false; error: string }> {
-  const name = input.name.trim()
+  await requireAdmin()
+  const name = String(input.name ?? "").trim().slice(0, 100)
   if (!name) {
     return { ok: false, error: "اسم القسم مطلوب." }
   }
-  const description = input.description.trim()
+  const description = String(input.description ?? "").trim().slice(0, 1000)
 
   const [row] = await getDb()
     .insert(categories)
@@ -49,11 +51,12 @@ export async function updateCategoryAction(input: {
   name: string
   description: string
 }): Promise<{ ok: true } | { ok: false; error: string }> {
-  const name = input.name.trim()
+  await requireAdmin()
+  const name = String(input.name ?? "").trim().slice(0, 100)
   if (!name) {
     return { ok: false, error: "اسم القسم مطلوب." }
   }
-  const description = input.description.trim()
+  const description = String(input.description ?? "").trim().slice(0, 1000)
   const nextSlug = slugifyCategoryName(name)
   const [existing] = await getDb()
     .select({ slug: categories.slug })

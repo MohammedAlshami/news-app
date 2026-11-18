@@ -1,4 +1,5 @@
 import "server-only"
+import { cleanImageUrl } from "@/lib/image-url"
 
 import { desc, eq, sql } from "drizzle-orm"
 
@@ -43,7 +44,7 @@ function toFeedArticle(r: {
     excerpt: r.excerpt,
     date: r.createdAt.toISOString().slice(0, 10),
     categoryIds: r.categoryId ? [r.categoryId] : [],
-    coverImageUrl: r.coverImageUrl,
+    coverImageUrl: cleanImageUrl(r.coverImageUrl),
     isMemberOnly: r.isMemberOnly,
   }
 }

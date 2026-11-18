@@ -29,7 +29,8 @@ export function findNearDuplicate(
   threshold: number,
 ): { article: RecentArticle; score: number } | null {
   if (candidates.length === 0 || recent.length === 0) return null
-  const idf = new IdfIndex()
+  // stable weights: a 300-document recent corpus plus a fixed prior (never a tiny, jumpy corpus)
+  const idf = new IdfIndex({ n: 300, df: 3 })
   const rc = recent.map((r) => termCounts(r.title, r.excerpt))
   for (const c of rc) idf.add(c)
   const cc = candidates.map((c) => termCounts(c.title, c.excerpt ?? ""))

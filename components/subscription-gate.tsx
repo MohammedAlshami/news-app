@@ -43,9 +43,13 @@ export function SubscriptionGate({ isMemberOnly, isSubscribed, href, children, c
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setShowDialog(true)}
+      // Real link (crawlable); non-members get the subscribe dialog instead of navigating.
+      <Link
+        href={href}
+        onClick={(e) => {
+          e.preventDefault()
+          setShowDialog(true)
+        }}
         className={cn("group relative cursor-pointer text-right", className)}
       >
         <div className="absolute left-2 top-2 z-10 flex items-center gap-1 rounded-full bg-amber-500/90 px-2 py-0.5 text-[11px] font-bold text-white backdrop-blur-sm">
@@ -53,7 +57,7 @@ export function SubscriptionGate({ isMemberOnly, isSubscribed, href, children, c
           {ar.adminArticleMemberOnlyToggle}
         </div>
         {children}
-      </button>
+      </Link>
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
         <DialogContent className="sm:max-w-md" dir="rtl">
           <DialogHeader>

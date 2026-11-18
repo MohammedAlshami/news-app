@@ -35,7 +35,17 @@ const prep = (doc: SigDoc): Prepared => ({
 /** Same person/org allowing "الرئيس ترامب" ⊂ "دونالد ترامب": one token set contained in the other. */
 export function sameName(x: string[], y: string[]): boolean {
   const [s, l] = x.length <= y.length ? [x, y] : [y, x]
-  return s.length >= 1 && s.every((t) => l.includes(t)) && s.join("").length >= 4
+  if (s.length >= 1 && s.every((t) => l.includes(t)) && s.join("").length >= 4) return true
+  // spelling variants of the same name (نتنياهو / نتانياهو / نتينياهو): compare consonant skeletons
+  const sk = (ts: string[]) => ts.map(nameSkeleton)
+  const ls = sk(l)
+  return s.length >= 1 && sk(s).every((t) => t.length >= 3 && ls.includes(t))
+}
+
+/** Consonant skeleton of a normalized token: drops interior long vowels / hamza (ا و ي ء). */
+export function nameSkeleton(token: string): string {
+  if (!token || /^[a-z0-9]+$/.test(token)) return token
+  return token[0] + token.slice(1).replace(/[اويءى]/g, "")
 }
 
 function jaccard(a: Set<string>, b: Set<string>): number {

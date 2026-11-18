@@ -156,7 +156,7 @@ export async function extractBatch(llm: LlmJson, batch: SignatureInput[]): Promi
         `### ${i + 1} | outlet ${b.sourceKey} | publish_date ${isoDay(b.publishedTs)} | source_category ${b.sourceCategory}\n${b.title}\n${tiptapToText(b.content, 700)}`,
     )
     .join("\n\n")
-  const raw = (await llm({ system: SIGNATURE_PROMPT, user, temperature: 0, timeoutMs: 150000 })) as { signatures?: unknown[] }
+  const raw = (await llm({ system: SIGNATURE_PROMPT, user, temperature: 0, timeoutMs: 90000, maxTokens: 3500, label: "cluster-signature" })) as { signatures?: unknown[] }
   const out = new Map<string, Signature>()
   for (const s of raw?.signatures ?? []) {
     const n = Number((s as any)?.n)

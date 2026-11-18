@@ -4,6 +4,7 @@ import { eq } from "drizzle-orm"
 
 import { getDb } from "@/db/client"
 import { articles, generatedArticles } from "@/db/schema"
+import { requireAdmin } from "@/lib/admin-guard.server"
 
 export type PublishGeneratedArticleResult =
   | { ok: true; articleId: string }
@@ -18,6 +19,7 @@ export async function publishGeneratedArticleAction(
   generatedId: string,
   publishNow: boolean,
 ): Promise<PublishGeneratedArticleResult> {
+  await requireAdmin()
   try {
     const db = getDb()
 
@@ -38,6 +40,7 @@ export async function publishGeneratedArticleAction(
       excerpt: gen.excerpt,
       body: gen.body,
       coverImageUrl: gen.coverImageUrl,
+      imageUrls: gen.imageUrls,
       categoryId: null,
       isPublished: publishNow,
       views: 0,
@@ -47,6 +50,7 @@ export async function publishGeneratedArticleAction(
 
     return { ok: true, articleId: newId }
   } catch (err) {
-    return { ok: false, error: err instanceof Error ? err.message : "حدث خطأ غير متوقع." }
+    console.error("publishGeneratedArticleAction failed:", err)
+    return { ok: false, error: "حدث خطأ غير متوقع." }
   }
 }

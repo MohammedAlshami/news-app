@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server"
 
+import { requireCronOrAdmin } from "@/lib/admin-guard.server"
+
 import { saveScrapeResult } from "@/lib/db-scraped-news.server"
 import { getEnabledSourceKeys } from "@/lib/db-news-sources.server"
 import { findKnownUrls } from "@/lib/db-scraped-news.server"
@@ -49,6 +51,8 @@ async function runSource(
 }
 
 export async function GET(request: Request) {
+  const denied = await requireCronOrAdmin(request)
+  if (denied) return denied
   const url = new URL(request.url)
   // ?limit=N caps total articles inserted across all sources (default: unlimited)
   const limitParam = url.searchParams.get("limit")
@@ -67,17 +71,22 @@ export async function GET(request: Request) {
   // Split limit evenly across sources
   const perSource = limit === Infinity ? Infinity : Math.ceil(limit / enabledKeys.length)
 
-  const results = await Promise.all(
-    enabledKeys.map(async (key) => ({
-      key,
-      summaries: await runSource(key, perSource === Infinity ? 999999 : perSource, categoryParam ?? undefined),
-    })),
-  )
+  // sequential: bounded concurrency/subrequests; one failing source must not lose the others
+  const results: { key: ScraperSourceKey; summaries: CronSummary[] }[] = []
+  for (const key of enabledKeys) {
+    try {
+      results.push({ key, summaries: await runSource(key, perSource === Infinity ? 999999 : perSource, categoryParam ?? undefined) })
+    } catch (err) {
+      console.error(`scrape-news ${key} failed: ${err instanceof Error ? err.message : String(err)}`)
+      results.push({ key, summaries: [] })
+    }
+  }
 
   const sources = Object.fromEntries(results.map(({ key, summaries }) => [key, summaries]))
 
   // 2. Cluster freshly scraped articles into topics
-  const topicSummary = await runClusteringNow()
+  const clustered = await runClusteringNow({ budgetMs: 120_000 })
+  const topicSummary = clustered.busy ? { busy: true } : clustered.stats
 
   return NextResponse.json({ ok: true, sources, topics: topicSummary })
 }

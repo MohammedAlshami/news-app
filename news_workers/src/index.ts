@@ -1,89 +1,96 @@
+// Scheduler Worker. Every cron trigger runs ONE bounded step against the site Worker (service binding):
+//
+//   "*/10 * * * *"      write    – up to 4 articles/updates (+ health check, + prices every 30 min)
+//   "3-59/10 * * * *"   cluster  – cluster pending rows into topics
+//   "6-59/10 * * * *"   scrape   – a rotating slice of the sources (each source once per hour)
+//
+// Steps are offset by minutes so they rarely overlap, and the site additionally holds a lease per step
+// (overlap → "busy", not double work). Each step awaits its work with a hard timeout and logs ONE JSON line.
+// No public `fetch` handler: the pipeline can only be started by cron (or by an admin on the site itself).
 const SOURCE_KEYS = [
   "rt", "independent", "bbc", "youm7", "skynews", "alquds",
   "elwatan", "alaraby", "aawsat", "shabiba", "addustour",
 ]
+/** The scrape trigger fires 6× per hour; source i belongs to slot i % 6. */
+const SLOTS_PER_HOUR = 6
 
-function delay(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms))
-}
+type Env = { NEWS_SITE: { fetch: (input: URL | Request | string, init?: RequestInit) => Promise<Response> }; CRON_SECRET?: string }
 
-async function fetchSource(env: any, key: string): Promise<string> {
-  const url = new URL(`https://internal/api/cron/scrape-source/${key}`)
-  const res = await env.NEWS_SITE.fetch(url, {
-    headers: { accept: "application/json", "user-agent": "news-cron-worker/1.0" },
+const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
+
+async function callSite(env: Env, path: string, timeoutMs: number): Promise<{ status: number; body: string }> {
+  const res = await env.NEWS_SITE.fetch(new URL(`https://internal${path}`), {
+    headers: {
+      accept: "application/json",
+      "user-agent": "news-cron-worker/2.0",
+      authorization: `Bearer ${env.CRON_SECRET}`,
+    },
+    signal: AbortSignal.timeout(timeoutMs),
   })
-  return `scrape/${key}: ${res.status}`
+  return { status: res.status, body: (await res.text()).slice(0, 1500) }
 }
 
-async function fetchCron(env: any, path: string, label: string): Promise<string> {
-  const url = new URL(`https://internal${path}`)
+async function step(env: Env, name: string, path: string, timeoutMs: number): Promise<Record<string, unknown>> {
+  const started = Date.now()
   try {
-    const res = await env.NEWS_SITE.fetch(url, {
-      headers: { accept: "text/event-stream", "user-agent": "news-cron-worker/1.0" },
-    })
-    const body = await res.text()
-    // Surface failures in the Worker logs instead of only a status code.
-    if (!res.ok || /event: error/.test(body)) console.error(`${label} FAILED (${res.status}): ${body.slice(0, 500)}`)
-    return `${label}: ${res.status}`
+    const { status, body } = await callSite(env, path, timeoutMs)
+    const ok = status >= 200 && status < 300
+    const out = { step: name, status, ok, ms: Date.now() - started, body: ok ? undefined : body }
+    if (!ok) console.error(JSON.stringify({ ...out, level: "error" }))
+    return out
   } catch (e) {
-    console.error(`${label} threw: ${e}`)
-    return `${label}: ERR ${e}`
+    const out = { step: name, ok: false, ms: Date.now() - started, error: String(e) }
+    console.error(JSON.stringify({ ...out, level: "error" }))
+    return out
   }
 }
 
-/** Alerts land in the Worker logs (wrangler tail / Workers Logs) as console.error. */
-async function checkHealth(env: any): Promise<string> {
-  try {
-    const res = await env.NEWS_SITE.fetch(new URL("https://internal/api/cron/health"), {
-      headers: { accept: "application/json", "user-agent": "news-cron-worker/1.0" },
-    })
-    const body = await res.text()
-    if (res.status !== 200) console.error(`HEALTH ALERT: ${body}`)
-    return `health: ${res.status}`
-  } catch (e) {
-    console.error(`health threw: ${e}`)
-    return `health: ERR ${e}`
-  }
+export function sourcesForSlot(slot: number): string[] {
+  return SOURCE_KEYS.filter((_, i) => i % SLOTS_PER_HOUR === slot % SLOTS_PER_HOUR)
 }
 
-async function processAllSources(env: any, staggerMs: number): Promise<string[]> {
-  const lines: string[] = []
-  for (const key of SOURCE_KEYS) {
-    const r = await fetchSource(env, key).catch((e) => `scrape/${key}: ${e}`)
-    lines.push(r)
-    await delay(staggerMs)
-  }
-  return lines
+/** Which step a cron expression stands for (kept in sync with wrangler.toml). */
+export function stepFor(cron: string): "write" | "cluster" | "scrape" | null {
+  if (cron === "*/10 * * * *") return "write"
+  if (cron === "3-59/10 * * * *") return "cluster"
+  if (cron === "6-59/10 * * * *") return "scrape"
+  return null
 }
 
-/** One pipeline tick. Every step is idempotent, so retries and overlaps are safe. */
-async function pipelineTick(env: any, scrape: boolean, staggerMs: number): Promise<string[]> {
-  const lines: string[] = []
-  if (scrape) lines.push(...(await processAllSources(env, staggerMs)))
-  // cluster once per tick (also retries anything a previous tick left pending), then write
-  lines.push(await fetchCron(env, "/api/cron/cluster", "cluster"))
-  lines.push(await fetchCron(env, "/api/cron/write-pipeline", "write"))
-  lines.push(await fetchCron(env, "/api/cron/update-price-rates", "price-rates"))
-  lines.push(await checkHealth(env))
-  return lines
+export async function runStep(kind: "write" | "cluster" | "scrape", env: Env, scheduledTime: number): Promise<Record<string, unknown>[]> {
+  const out: Record<string, unknown>[] = []
+  const d = new Date(scheduledTime)
+  const minute = d.getUTCMinutes()
+  if (kind === "write") {
+    out.push(await step(env, "write", "/api/cron/write-pipeline", 280_000))
+    out.push(await step(env, "health", "/api/cron/health", 20_000))
+    if (minute % 30 === 0) out.push(await step(env, "price-rates", "/api/cron/update-price-rates", 40_000))
+  } else if (kind === "cluster") {
+    out.push(await step(env, "cluster", "/api/cron/cluster", 200_000))
+  } else {
+    const slot = Math.floor(minute / 10) % SLOTS_PER_HOUR
+    for (const key of sourcesForSlot(slot)) {
+      out.push(await step(env, `scrape/${key}`, `/api/cron/scrape-source/${key}`, 90_000))
+      await delay(2000)
+    }
+  }
+  return out
 }
 
 export default {
-  async fetch(request: Request, env: any) {
-    if (request.method !== "GET" && request.method !== "HEAD") {
-      return new Response("Method Not Allowed", { status: 405 })
+  async scheduled(event: { cron: string; scheduledTime: number }, env: Env) {
+    if (!env.CRON_SECRET || env.CRON_SECRET.length < 16) {
+      console.error(JSON.stringify({ level: "error", error: "CRON_SECRET is not set on the scheduler Worker (wrangler secret put CRON_SECRET)" }))
+      return
     }
-    const lines = await pipelineTick(env, true, 2000)
-    return new Response(lines.join("\n"), {
-      status: 200,
-      headers: { "Content-Type": "text/plain; charset=utf-8" },
-    })
-  },
-
-  async scheduled(_event: any, env: any) {
-    const minute = new Date().getUTCMinutes()
-    // Scrape on the hour; cluster + write + prices + health check on every 10-minute tick.
-    const lines = await pipelineTick(env, minute === 0, 5000)
-    for (const line of lines) console.log(line)
+    const kind = stepFor(event.cron)
+    if (!kind) {
+      console.error(JSON.stringify({ level: "error", error: `unknown cron expression: ${event.cron}` }))
+      return
+    }
+    const results = await runStep(kind, env, event.scheduledTime)
+    console.log(JSON.stringify({ cron: event.cron, kind, results }))
+    const health = results.find((r) => r.step === "health")
+    if (health && health.ok === false) console.error(JSON.stringify({ level: "error", alert: "HEALTH ALERT", detail: health }))
   },
 }

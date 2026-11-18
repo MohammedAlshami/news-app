@@ -23,6 +23,19 @@ export const generatedArticles = sqliteTable("generated_articles", {
   topicId: text("topic_id").references(() => topics.id, { onDelete: "set null" }),
   /** IDs of the scraped_news rows used as sources (JSON array string) */
   sourceArticleIds: text("source_article_ids").notNull().default("[]"),
+  /** Public `articles.id` this row was published as (null for drafts / legacy rows). */
+  articleId: text("article_id"),
+  /** `generated_articles.id` of the article this one updates (follow-ups). */
+  updateOf: text("update_of"),
+  kind: text("kind").notNull().default("original"),
+  model: text("model"),
+  promptVersion: text("prompt_version"),
+  promptTokens: integer("prompt_tokens"),
+  completionTokens: integer("completion_tokens"),
+  reasoningTokens: integer("reasoning_tokens"),
+  /** JSON event signature used for paraphrase de-duplication. */
+  eventSig: text("event_sig"),
+  gateFlags: text("gate_flags"),
   isPublished: integer("is_published", { mode: "boolean" }).notNull().default(false),
   views: integer("views").notNull().default(0),
   createdAt: integer("created_at", { mode: "timestamp_ms" })

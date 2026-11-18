@@ -1,11 +1,11 @@
 import type { Metadata } from "next"
 import Image from "next/image"
 import Link from "next/link"
-import { notFound, redirect } from "next/navigation"
+import { notFound, permanentRedirect } from "next/navigation"
 
 import { ArticleHighlights } from "@/components/article-highlights"
 import { ArticleImageSection } from "@/components/article-image-section"
-import { ArticleTiptapReadOnly } from "@/components/article-tiptap-read-only"
+import { ArticleBody } from "@/components/article-body"
 import { NewsArticleView } from "@/components/news-article-view"
 import { RecommendedArticles } from "@/components/recommended-articles"
 import { SubscriptionPageGate } from "@/components/subscription-page-gate"
@@ -15,19 +15,27 @@ import {
   newsArticleBackFromCategoryIds,
   newsArticleCategoryBylineFromIds,
 } from "@/lib/news-article-display"
-import { getCategories } from "@/lib/categories"
 import { formatArticleDate } from "@/lib/format-date"
 import { getActiveSiteAdsForArticle } from "@/lib/db-site-ads.server"
-import { getPublishedArticleRowById, getPublishedArticleRowBySlugId } from "@/lib/articles"
 import { getRecommendedArticles } from "@/lib/db-public-articles.server"
+import {
+  findCategory,
+  getArticleForPage,
+  getCategoriesCached,
+  isSubscribedCached,
+} from "@/lib/db-site-cache.server"
+import {
+  SITE_LOCALE,
+  SITE_NAME,
+  absoluteUrl,
+  alternatesFor,
+  buildBreadcrumbJsonLd,
+  buildNewsArticleJsonLd,
+  jsonLdString,
+} from "@/lib/seo"
 import { areSiteAdsEnabled } from "@/lib/site-ads-enabled"
-import { getArticlePath } from "@/lib/site-routes"
-import { isSubscribed } from "@/lib/subscription"
+import { getArticlePath, getCategoryPagePath } from "@/lib/site-routes"
 import { ar } from "@/lib/ui-ar"
-
-function pageTitle(segment: string) {
-  return `${segment} | ${ar.newsBrand}`
-}
 
 type PageProps = {
   params: Promise<{ id: string }>
@@ -37,29 +45,46 @@ export const dynamic = "force-dynamic"
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { id } = await params
-  const article = await (isFullUuid(id)
-    ? getPublishedArticleRowById(id)
-    : getPublishedArticleRowBySlugId(id))
+  const article = await getArticleForPage(id)
   if (!article) {
-    return { title: ar.storyNotFound }
+    return { title: ar.storyNotFound, robots: { index: false } }
   }
+  const path = getArticlePath(article.id, article.title)
+  const cover = article.coverImageUrl?.trim()
   return {
-    title: pageTitle(article.title),
+    title: article.title,
     description: article.excerpt,
-    openGraph: { title: article.title, description: article.excerpt },
+    alternates: alternatesFor(path),
+    openGraph: {
+      type: "article",
+      url: path,
+      siteName: SITE_NAME,
+      locale: SITE_LOCALE,
+      title: article.title,
+      description: article.excerpt,
+      publishedTime: article.createdAt.toISOString(),
+      modifiedTime: article.updatedAt.toISOString(),
+      images: cover ? [{ url: absoluteUrl(cover), width: 1200, alt: article.title }] : undefined,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: article.title,
+      description: article.excerpt,
+      images: cover ? [absoluteUrl(cover)] : undefined,
+    },
   }
 }
 
 export default async function NewsArticlePage({ params }: PageProps) {
   const { id } = await params
 
-  const subscribed = await isSubscribed()
+  const subscribed = await isSubscribedCached()
   const showAds = areSiteAdsEnabled() && !subscribed
-  const [article, categories, articleAds, recommendedArticles] = await Promise.all([
-    isFullUuid(id) ? getPublishedArticleRowById(id) : getPublishedArticleRowBySlugId(id),
-    getCategories(),
+  const [article, categories, articleAds, recommendedRaw] = await Promise.all([
+    getArticleForPage(id),
+    getCategoriesCached(),
     showAds ? getActiveSiteAdsForArticle() : Promise.resolve([]),
-    getRecommendedArticles(id, 8),
+    getRecommendedArticles(id, 9),
   ])
 
   if (!article) {
@@ -67,36 +92,78 @@ export default async function NewsArticlePage({ params }: PageProps) {
   }
 
   const canonical = getArticlePath(article.id, article.title)
-  if (canonical !== `/news/${id}`) redirect(canonical)
+  if (canonical !== `/news/${id}`) permanentRedirect(canonical)
+
+  // `id` may be a short slug, so the SQL exclusion can miss: filter again by the real id.
+  const recommendedArticles = recommendedRaw.filter((a) => a.id !== article.id).slice(0, 8)
 
   const categoryIds = article.categoryId ? [article.categoryId] : []
   const back = newsArticleBackFromCategoryIds(categoryIds, categories)
   const categoryByline = newsArticleCategoryBylineFromIds(categoryIds, categories)
   const date = article.createdAt.toISOString().slice(0, 10)
+  const category = findCategory(categories, article.categoryId ?? "")
+  const cover = article.coverImageUrl?.trim()
+  const jsonLd = [
+    buildNewsArticleJsonLd({
+      path: canonical,
+      title: article.title,
+      description: article.excerpt,
+      images: cover ? [cover] : [],
+      datePublished: article.createdAt,
+      dateModified: article.updatedAt,
+      memberOnly: article.isMemberOnly,
+      section: category?.name,
+    }),
+    buildBreadcrumbJsonLd([
+      { name: ar.home, path: "/" },
+      ...(category ? [{ name: category.name, path: getCategoryPagePath(category.slug) }] : []),
+      { name: article.title, path: canonical },
+    ]),
+  ]
+  const jsonLdScript = (
+    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdString(jsonLd) }} />
+  )
 
   const adSlot =
     showAds && articleAds.length > 0 ? <SiteAdSpots ads={articleAds} /> : undefined
 
-  function extractBodyImages(body: string): { src: string; alt: string }[] {
+  function parseImageUrls(raw: string | null | undefined): string[] {
     try {
-      const doc = JSON.parse(body)
-      if (!doc.content) return []
-      return doc.content
-        .filter((node: any) => node.type === "image" && node.attrs?.src)
-        .map((node: any) => ({ src: node.attrs.src, alt: node.attrs.alt || "" }))
+      const v = raw ? JSON.parse(raw) : []
+      return Array.isArray(v) ? v.filter((u): u is string => typeof u === "string" && /^https?:\/\//.test(u)) : []
     } catch {
       return []
     }
   }
 
-  const bodyImages = extractBodyImages(article.body)
+  function extractBodyImages(body: string, fallbackAlt: string): { src: string; alt: string }[] {
+    try {
+      const doc = JSON.parse(body)
+      if (!doc.content) return []
+      return doc.content
+        .filter((node: any) => node.type === "image" && node.attrs?.src)
+        .map((node: any) => ({
+          src: node.attrs.src,
+          alt: node.attrs.alt || node.attrs.title || fallbackAlt,
+        }))
+    } catch {
+      return []
+    }
+  }
+
+  const galleryImages = parseImageUrls(article.imageUrls).map((src) => ({ src, alt: article.title }))
+  const bodyImages = [...galleryImages, ...extractBodyImages(article.body, article.title)].filter(
+    (img, i, all) => img.src !== article.coverImageUrl && all.findIndex((o) => o.src === img.src) === i,
+  )
 
   if (article.isMemberOnly && !subscribed) {
     return (
       <>
+        {jsonLdScript}
         <TrackArticleView articleId={article.id} />
         <SubscriptionPageGate
           title={article.title}
+          excerpt={article.excerpt}
           coverImageUrl={article.coverImageUrl}
           back={back}
         />
@@ -108,6 +175,7 @@ export default async function NewsArticlePage({ params }: PageProps) {
 
   return (
     <>
+      {jsonLdScript}
       <TrackArticleView articleId={article.id} />
       <div className="mx-auto w-full max-w-[90rem] px-4 sm:px-6 md:px-10">
         <div className="grid grid-cols-1 gap-10 lg:grid-cols-12">
@@ -135,7 +203,7 @@ export default async function NewsArticlePage({ params }: PageProps) {
                 <NewsArticleView
                   adSlot={adSlot}
                 >
-                  <ArticleTiptapReadOnly
+                  <ArticleBody
                     body={article.body}
                     className="min-w-0 max-w-full [&_.simple-editor-content]:overflow-x-hidden"
                   />
@@ -163,10 +231,11 @@ export default async function NewsArticlePage({ params }: PageProps) {
                         <div className="relative h-16 w-24 shrink-0 overflow-hidden rounded-lg bg-neutral-100">
                           <Image
                             src={imgSrc}
-                            alt=""
+                            alt={a.title}
                             fill
                             className="object-cover"
                             sizes="96px"
+                            // Unoptimized: no Images binding yet (CDN follow-up).
                             unoptimized
                           />
                         </div>
@@ -190,8 +259,4 @@ export default async function NewsArticlePage({ params }: PageProps) {
       <RecommendedArticles articles={recommendedArticles} />
     </>
   )
-}
-
-function isFullUuid(s: string): boolean {
-  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s)
 }

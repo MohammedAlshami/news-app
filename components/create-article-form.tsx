@@ -1,11 +1,13 @@
 "use client"
 
 import { Info } from "lucide-react"
+import { useRouter } from "next/navigation"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
 import { AdminCategoryModals } from "@/components/admin-category-modals"
 import { AdminCategorySelect } from "@/components/admin-category-select"
 import { ArticleCoverField } from "@/components/article-cover-field"
+import type { Editor } from "@tiptap/core"
 import { SimpleEditor } from "@/components/tiptap-templates/simple/simple-editor"
 import { Button } from "@/components/ui/button"
 import { Button as TiptapButton } from "@/components/tiptap-ui-primitive/button"
@@ -22,6 +24,25 @@ import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
 import { updateArticleAction } from "@/app/admin/articles/actions"
 import type { SiteCategory } from "@/lib/site-types"
+import {
+  buildArticleSnapshot,
+  normalizeArticleBodyJson,
+  type ArticleFields,
+} from "@/lib/article-snapshot"
+import { createDirtyDebouncer } from "@/lib/editor-debounce"
+import {
+  classifyDraft,
+  clearDraft,
+  readDraft,
+  writeDraft,
+  type ArticleDraft,
+} from "@/lib/editor-draft"
+import { internalNavTarget } from "@/lib/editor-nav-guard"
+import {
+  createSaveController,
+  type SaveResult,
+  type SaveStatus,
+} from "@/lib/editor-save-controller"
 import { tiptapEmptyDocument } from "@/lib/tiptap-empty-doc"
 import { ar } from "@/lib/ui-ar"
 
@@ -35,42 +56,18 @@ type Props = {
   initialIsPublished: boolean
   initialIsMemberOnly: boolean
   initialBodyJson: string
+  /** Server `updatedAt` (ISO string or ms) for the loaded row; enables conflict detection + draft staleness. */
+  initialUpdatedAt?: string | number | null
 }
-
-type AutosaveStatus = "idle" | "pending" | "saving" | "saved" | "error"
 
 const AUTOSAVE_DEBOUNCE_MS = 1500
+const DRAFT_DEBOUNCE_MS = 800
 const SAVED_LABEL_HIDE_MS = 2500
 
-function normalizeArticleBodyJson(bodyJson: string | null | undefined) {
-  const fallback = JSON.stringify(tiptapEmptyDocument)
-  const trimmed = bodyJson?.trim() ?? ""
-  if (!trimmed) return fallback
-
-  try {
-    const parsed = JSON.parse(trimmed) as { type?: string }
-    return parsed?.type === "doc" ? trimmed : fallback
-  } catch {
-    return fallback
-  }
-}
-
-function buildArticleSnapshot(input: {
-  title: string
-  excerpt: string
-  categoryIds: Set<string>
-  isPublished: boolean
-  isMemberOnly: boolean
-  bodyJson: string
-}) {
-  return JSON.stringify({
-    title: input.title.trim(),
-    excerpt: input.excerpt.trim(),
-    categoryIds: Array.from(input.categoryIds).sort(),
-    isPublished: input.isPublished,
-    isMemberOnly: input.isMemberOnly,
-    bodyJson: normalizeArticleBodyJson(input.bodyJson),
-  })
+function toMs(value: string | number | null | undefined): number | null {
+  if (value === null || value === undefined) return null
+  const n = typeof value === "number" ? value : Date.parse(value)
+  return Number.isFinite(n) ? n : null
 }
 
 function ArticleInfoSheet({
@@ -239,7 +236,9 @@ export function CreateArticleForm({
   initialIsPublished,
   initialIsMemberOnly,
   initialBodyJson,
+  initialUpdatedAt,
 }: Props) {
+  const router = useRouter()
   const [title, setTitle] = useState(initialTitle)
   const [excerpt, setExcerpt] = useState(initialExcerpt)
   const [categoryIds, setCategoryIds] = useState<Set<string>>(
@@ -256,192 +255,255 @@ export function CreateArticleForm({
       return tiptapEmptyDocument as Record<string, unknown>
     }
   }, [initialNormalizedBodyJson])
-  const [bodyJson, setBodyJson] = useState(initialNormalizedBodyJson)
   const [addCategoryOpen, setAddCategoryOpen] = useState(false)
   const [editCategoryOpen, setEditCategoryOpen] = useState(false)
   const [isPublished, setIsPublished] = useState(initialIsPublished)
   const [isMemberOnly, setIsMemberOnly] = useState(initialIsMemberOnly)
   const [infoOpen, setInfoOpen] = useState(false)
-  const [autosaveStatus, setAutosaveStatus] = useState<AutosaveStatus>("idle")
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle")
   const [saveError, setSaveError] = useState<string | null>(null)
+  const [draftOffer, setDraftOffer] = useState<{
+    draft: ArticleDraft
+    kind: "restore" | "stale"
+  } | null>(null)
 
-  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  // The editor body is NOT React state (typing must not re-render this form); it is read from the
+  // editor only when a save / draft write actually happens.
+  const editorRef = useRef<Editor | null>(null)
+  const fieldsRef = useRef({ title, excerpt, categoryIds, isPublished, isMemberOnly })
+  const updatedAtRef = useRef<string | number | null>(initialUpdatedAt ?? null)
   const savedLabelTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const saveInFlightRef = useRef(false)
-  const pendingSaveAfterFlightRef = useRef(false)
-  const performSaveRef = useRef<(() => Promise<void>) | null>(null)
-  const lastSavedSnapshotRef = useRef(
-    buildArticleSnapshot({
+
+  const readFields = useCallback((): ArticleFields => {
+    const f = fieldsRef.current
+    const editor = editorRef.current
+    return {
+      title: f.title,
+      excerpt: f.excerpt,
+      categoryIds: Array.from(f.categoryIds).sort(),
+      isPublished: f.isPublished,
+      isMemberOnly: f.isMemberOnly,
+      bodyJson:
+        editor && !editor.isDestroyed
+          ? JSON.stringify(editor.getJSON())
+          : initialNormalizedBodyJson,
+    }
+  }, [initialNormalizedBodyJson])
+
+  const [controller] = useState(() =>
+    createSaveController<ArticleFields>({
+      getValue: readFields,
+      serialize: buildArticleSnapshot,
+      initialSnapshot: buildArticleSnapshot({
+        title: initialTitle,
+        excerpt: initialExcerpt,
+        categoryIds: initialCategoryIds,
+        isPublished: initialIsPublished,
+        isMemberOnly: initialIsMemberOnly,
+        bodyJson: initialNormalizedBodyJson,
+      }),
+      debounceMs: AUTOSAVE_DEBOUNCE_MS,
+      onStatus: (status, error) => {
+        setSaveStatus(status)
+        setSaveError(error)
+      },
+      onBeforeSave: (value) => {
+        writeDraft(articleId, { ...value, baseUpdatedAt: toMs(updatedAtRef.current) })
+      },
+      onSaved: ({ stillDirty }) => {
+        if (!stillDirty) clearDraft(articleId)
+      },
+      save: async (value): Promise<SaveResult> => {
+        // `expectedUpdatedAt` is the optimistic-concurrency token. The server action must accept it
+        // (see documentation/09-editor-notes.md); until it does it is simply ignored.
+        const input = {
+          id: articleId,
+          title: value.title,
+          excerpt: value.excerpt,
+          bodyJson: value.bodyJson,
+          categoryIds: value.categoryIds,
+          isPublished: value.isPublished,
+          isMemberOnly: value.isMemberOnly,
+          expectedUpdatedAt: updatedAtRef.current,
+        }
+        const result = (await updateArticleAction(
+          input as Parameters<typeof updateArticleAction>[0],
+        )) as { ok: boolean; error?: string; code?: string; updatedAt?: string | number }
+        if (result.ok) {
+          if (result.updatedAt !== undefined) updatedAtRef.current = result.updatedAt
+          return { ok: true }
+        }
+        const error = result.error ?? "تعذر حفظ المقال."
+        if (result.code === "conflict") return { ok: false, error, conflict: true }
+        // Validation failures will not succeed on retry; wait for the next edit instead.
+        return { ok: false, error, retryable: false }
+      },
+    }),
+  )
+
+  const draftWriter = useMemo(
+    () =>
+      createDirtyDebouncer(() => {
+        writeDraft(articleId, {
+          ...readFields(),
+          baseUpdatedAt: toMs(updatedAtRef.current),
+        })
+      }, DRAFT_DEBOUNCE_MS),
+    [articleId, readFields],
+  )
+
+  const markDirty = useCallback(() => {
+    controller.markDirty()
+    draftWriter.markDirty()
+  }, [controller, draftWriter])
+
+  // Metadata fields: keep the ref current and mark dirty on change (skip the initial mount).
+  const fieldsMountedRef = useRef(false)
+  useEffect(() => {
+    fieldsRef.current = { title, excerpt, categoryIds, isPublished, isMemberOnly }
+    if (!fieldsMountedRef.current) {
+      fieldsMountedRef.current = true
+      return
+    }
+    markDirty()
+  }, [title, excerpt, categoryIds, isPublished, isMemberOnly, markDirty])
+
+  // Offer to restore an unsaved local draft (tab crashed / navigation cancelled the last save).
+  useEffect(() => {
+    const draft = readDraft(articleId)
+    if (!draft) return
+    const serverSnapshot = buildArticleSnapshot({
       title: initialTitle,
       excerpt: initialExcerpt,
-      categoryIds: new Set(initialCategoryIds),
+      categoryIds: initialCategoryIds,
       isPublished: initialIsPublished,
       isMemberOnly: initialIsMemberOnly,
       bodyJson: initialNormalizedBodyJson,
-    }),
-  )
-  const latestStateRef = useRef({
-    title: initialTitle,
-    excerpt: initialExcerpt,
-    categoryIds: new Set(initialCategoryIds),
-    isPublished: initialIsPublished,
-    isMemberOnly: initialIsMemberOnly,
-    bodyJson: initialNormalizedBodyJson,
-  })
-
-  const clearSavedLabelTimeout = useCallback(() => {
-    if (savedLabelTimeoutRef.current) {
-      clearTimeout(savedLabelTimeoutRef.current)
-      savedLabelTimeoutRef.current = null
-    }
-  }, [])
-
-  const showSavedLabel = useCallback(() => {
-    setAutosaveStatus("saved")
-    clearSavedLabelTimeout()
-    savedLabelTimeoutRef.current = setTimeout(() => {
-      setAutosaveStatus("idle")
-      savedLabelTimeoutRef.current = null
-    }, SAVED_LABEL_HIDE_MS)
-  }, [clearSavedLabelTimeout])
-
-  const performSave = useCallback(async () => {
-    const current = latestStateRef.current
-    const snapshot = buildArticleSnapshot(current)
-
-    if (snapshot === lastSavedSnapshotRef.current) {
-      setSaveError(null)
-      showSavedLabel()
+    })
+    const kind = classifyDraft(
+      draft,
+      serverSnapshot,
+      buildArticleSnapshot(draft),
+      toMs(initialUpdatedAt),
+    )
+    if (kind === "none") {
+      clearDraft(articleId)
       return
     }
+    setDraftOffer({ draft, kind })
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- run once per article
+  }, [articleId])
 
-    if (saveInFlightRef.current) {
-      pendingSaveAfterFlightRef.current = true
-      return
-    }
-
-    saveInFlightRef.current = true
-    setSaveError(null)
-    setAutosaveStatus("saving")
-
+  const restoreDraft = useCallback(() => {
+    if (!draftOffer) return
+    const { draft } = draftOffer
+    setDraftOffer(null)
+    setTitle(draft.title)
+    setExcerpt(draft.excerpt)
+    setCategoryIds(new Set(draft.categoryIds))
+    setIsPublished(draft.isPublished)
+    setIsMemberOnly(draft.isMemberOnly)
     try {
-      const result = await updateArticleAction({
-        id: articleId,
-        title: current.title,
-        excerpt: current.excerpt,
-        bodyJson: current.bodyJson,
-        categoryIds: Array.from(current.categoryIds).sort(),
-        isPublished: current.isPublished,
-        isMemberOnly: current.isMemberOnly,
+      editorRef.current?.commands.setContent(JSON.parse(draft.bodyJson), {
+        emitUpdate: true,
       })
-
-      if (!result.ok) {
-        setSaveError(result.error)
-        setAutosaveStatus("error")
-        return
-      }
-
-      lastSavedSnapshotRef.current = snapshot
-      showSavedLabel()
-    } catch (error) {
-      setSaveError(error instanceof Error ? error.message : "تعذر حفظ المقال.")
-      setAutosaveStatus("error")
-    } finally {
-      saveInFlightRef.current = false
-      if (pendingSaveAfterFlightRef.current) {
-        pendingSaveAfterFlightRef.current = false
-        window.setTimeout(() => {
-          void performSaveRef.current?.()
-        }, 0)
-      }
+    } catch {
+      clearDraft(articleId)
     }
-  }, [articleId, showSavedLabel])
+    markDirty()
+  }, [articleId, draftOffer, markDirty])
 
+  const discardDraft = useCallback(() => {
+    clearDraft(articleId)
+    setDraftOffer(null)
+  }, [articleId])
+
+  // Flush paths. A server action started while the page is going away is usually cancelled, so the
+  // synchronous localStorage draft is the real safety net; the save is best effort on top.
   useEffect(() => {
-    performSaveRef.current = performSave
-  }, [performSave])
+    const flushNow = () => {
+      draftWriter.flush()
+      void controller.flush()
+    }
+    const onVisibility = () => {
+      if (document.visibilityState === "hidden") flushNow()
+    }
+    const onBeforeUnload = (event: BeforeUnloadEvent) => {
+      if (!controller.hasUnsaved()) return
+      draftWriter.flush()
+      event.preventDefault()
+      event.returnValue = ""
+    }
+    const onOnline = () => {
+      if (controller.hasUnsaved()) void controller.flush()
+    }
+    const onClickCapture = (event: MouseEvent) => {
+      if (!controller.hasUnsaved()) return
+      const anchor = (event.target as Element | null)?.closest?.("a[href]") as HTMLAnchorElement | null
+      if (!anchor) return
+      const target = internalNavTarget(
+        {
+          href: anchor.href,
+          target: anchor.target,
+          hasDownload: anchor.hasAttribute("download"),
+        },
+        event,
+        window.location.href,
+      )
+      if (!target) return
+      event.preventDefault()
+      event.stopPropagation()
+      draftWriter.flush()
+      void controller.flush().then((ok) => {
+        if (
+          ok ||
+          window.confirm("لم يتم حفظ بعض التغييرات بعد. هل تريد المغادرة رغم ذلك؟ (نسخة محلية محفوظة في هذا المتصفح)")
+        ) {
+          router.push(target)
+        }
+      })
+    }
 
-  const scheduleDebouncedSave = useCallback(() => {
-    const snapshot = buildArticleSnapshot(latestStateRef.current)
-    if (snapshot === lastSavedSnapshotRef.current) {
-      setSaveError(null)
-      if (saveTimeoutRef.current) {
-        clearTimeout(saveTimeoutRef.current)
-        saveTimeoutRef.current = null
-      }
-      if (!saveInFlightRef.current) {
-        setAutosaveStatus("idle")
-      }
+    window.addEventListener("pagehide", flushNow)
+    window.addEventListener("popstate", flushNow)
+    window.addEventListener("beforeunload", onBeforeUnload)
+    window.addEventListener("online", onOnline)
+    document.addEventListener("visibilitychange", onVisibility)
+    document.addEventListener("click", onClickCapture, true)
+    return () => {
+      window.removeEventListener("pagehide", flushNow)
+      window.removeEventListener("popstate", flushNow)
+      window.removeEventListener("beforeunload", onBeforeUnload)
+      window.removeEventListener("online", onOnline)
+      document.removeEventListener("visibilitychange", onVisibility)
+      document.removeEventListener("click", onClickCapture, true)
+      // Unmount (in-app navigation that bypassed the click guard): same best effort.
+      flushNow()
+    }
+  }, [controller, draftWriter, router])
+
+  // "Saved" label disappears after a moment; other statuses stay visible.
+  const [savedVisible, setSavedVisible] = useState(false)
+  useEffect(() => {
+    if (saveStatus !== "saved") {
+      setSavedVisible(false)
       return
     }
-
-    setAutosaveStatus((status) => (status === "saving" ? status : "pending"))
-    if (saveTimeoutRef.current) {
-      clearTimeout(saveTimeoutRef.current)
-    }
-    saveTimeoutRef.current = setTimeout(() => {
-      saveTimeoutRef.current = null
-      void performSaveRef.current?.()
-    }, AUTOSAVE_DEBOUNCE_MS)
-  }, [])
-
-  useEffect(() => {
-    latestStateRef.current = {
-      title,
-      excerpt,
-      categoryIds: new Set(categoryIds),
-      isPublished,
-      isMemberOnly,
-      bodyJson,
-    }
-    scheduleDebouncedSave()
-  }, [bodyJson, categoryIds, excerpt, isMemberOnly, isPublished, scheduleDebouncedSave, title])
-
-  useEffect(() => {
-    const flushSave = () => {
-      if (saveTimeoutRef.current) {
-        clearTimeout(saveTimeoutRef.current)
-        saveTimeoutRef.current = null
-      }
-      void performSaveRef.current?.()
-    }
-
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === "hidden") {
-        flushSave()
-      }
-    }
-
-    window.addEventListener("pagehide", flushSave)
-    document.addEventListener("visibilitychange", handleVisibilityChange)
-
+    setSavedVisible(true)
+    savedLabelTimeoutRef.current = setTimeout(() => setSavedVisible(false), SAVED_LABEL_HIDE_MS)
     return () => {
-      window.removeEventListener("pagehide", flushSave)
-      document.removeEventListener("visibilitychange", handleVisibilityChange)
+      if (savedLabelTimeoutRef.current) clearTimeout(savedLabelTimeoutRef.current)
     }
-  }, [performSave])
-
-  useEffect(() => {
-    return () => {
-      if (saveTimeoutRef.current) {
-        clearTimeout(saveTimeoutRef.current)
-        saveTimeoutRef.current = null
-      }
-      const snapshot = buildArticleSnapshot(latestStateRef.current)
-      if (snapshot !== lastSavedSnapshotRef.current) {
-        void performSaveRef.current?.()
-      }
-    }
-  }, [])
+  }, [saveStatus])
 
   const autosaveLabel =
-    autosaveStatus === "pending"
+    saveStatus === "pending"
       ? "جارٍ الحفظ تلقائياً…"
-      : autosaveStatus === "saving"
+      : saveStatus === "saving"
         ? ar.adminArticleSaving
-        : autosaveStatus === "saved"
+        : saveStatus === "saved" && savedVisible
           ? ar.adminArticleUpdated
-          : autosaveStatus === "error"
+          : saveStatus === "error"
             ? saveError ?? "تعذر حفظ المقال."
             : null
   return (
@@ -455,13 +517,54 @@ export function CreateArticleForm({
         </p>
       ) : null}
 
+      {draftOffer ? (
+        <div
+          className="flex flex-wrap items-center gap-3 rounded-lg border border-amber-500/35 bg-amber-500/10 px-3 py-2 text-sm text-amber-950 dark:text-amber-100"
+          role="alert"
+          dir="rtl"
+        >
+          <span>
+            {draftOffer.kind === "stale"
+              ? "وُجدت نسخة محلية غير محفوظة، لكن المقال حُفظ من مكان آخر بعدها. استعادتها ستستبدل النسخة الأحدث عند الحفظ."
+              : "وُجدت نسخة محلية غير محفوظة من هذا المقال."}
+          </span>
+          <Button type="button" size="sm" variant="outline" onClick={restoreDraft}>
+            استعادة
+          </Button>
+          <Button type="button" size="sm" variant="ghost" onClick={discardDraft}>
+            تجاهل
+          </Button>
+        </div>
+      ) : null}
+
+      {saveStatus === "conflict" ? (
+        <div
+          className="flex flex-wrap items-center gap-3 rounded-lg border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-300"
+          role="alert"
+          dir="rtl"
+        >
+          <span>
+            تم تعديل هذا المقال من نافذة أخرى. أُوقف الحفظ التلقائي حتى لا تُفقد التعديلات؛ انسخ عملك
+            ثم أعد تحميل الصفحة.
+          </span>
+          <Button type="button" size="sm" variant="outline" onClick={() => window.location.reload()}>
+            إعادة التحميل
+          </Button>
+        </div>
+      ) : null}
+
       {autosaveLabel ? (
         <div
-          className="fixed bottom-4 left-4 z-50 rounded-full border border-border bg-card/70 px-3 py-1.5 text-xs text-muted-foreground shadow-sm"
+          className="fixed bottom-4 left-4 z-50 flex items-center gap-2 rounded-full border border-border bg-card/70 px-3 py-1.5 text-xs text-muted-foreground shadow-sm"
           role="status"
           aria-live="polite"
         >
-          {autosaveLabel}
+          <span>{autosaveLabel}</span>
+          {saveStatus === "error" ? (
+            <button type="button" className="underline" onClick={() => void controller.flush()}>
+              إعادة المحاولة
+            </button>
+          ) : null}
         </div>
       ) : null}
 
@@ -508,9 +611,10 @@ export function CreateArticleForm({
                   embedded
                   articleId={articleId}
                   initialDocument={initialDocument}
-                  onContentChange={(json) => {
-                    setBodyJson(JSON.stringify(json))
+                  onEditorReady={(editor) => {
+                    editorRef.current = editor
                   }}
+                  onDirty={markDirty}
                   toolbarActions={
                     <>
                       <TiptapButton

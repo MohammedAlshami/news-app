@@ -239,12 +239,14 @@ test("topics without a category are classified by title afterwards; empty stale 
   assert.ok(left.includes("young") && left.includes("written"))
 })
 
-test("insertScrapedNewsRows: canonical URLs, image required, duplicate-safe, real publish time, pending state", async () => {
+test("insertScrapedNewsRows: canonical URLs, imageless rows kept, duplicate-safe, real publish time, unknown dates parked", async () => {
   const { sqlite, db } = freshDb()
   const item = (over: Record<string, unknown> = {}) => ({ title: "t", excerpt: "e", url: "https://Example.com/a/1/?utm_source=x#top", imageUrl: "https://img/x.jpg", publishedAt: "سبت, 09/19/2026 - 10:00", rawJson: {}, ...over }) as any
   const input = { sourceKey: "youm7" as const, source: "YOUM7", category: "world", items: [item(), item({ url: "https://example.com/a/1/" }), item({ url: "https://example.com/noimg", imageUrl: "" }), item({ url: "https://example.com/b", imageUrl: undefined })] }
-  assert.equal(await insertScrapedNewsRows(input, db, NOW), 1, "1 inserted: dup canonical url, empty image and missing image dropped")
-  const row = one(sqlite, "SELECT url, status, published_ts FROM scraped_news")
+  // rule change (audit): imageless items are stored now (an image is only required at write time); only the duplicate is dropped
+  assert.equal(await insertScrapedNewsRows(input, db, NOW), 3, "3 inserted: dup canonical url dropped, imageless kept")
+  assert.equal(one(sqlite, "SELECT count(*) n FROM scraped_news WHERE image_url IS NULL").n, 2)
+  const row = one(sqlite, "SELECT url, status, published_ts FROM scraped_news WHERE image_url IS NOT NULL")
   assert.equal(row.url, "https://example.com/a/1/")
   assert.equal(row.status, "pending")
   assert.equal(row.published_ts, Date.parse("2026-09-19T07:00:00Z"), "parsed from the Arabic-format date (UTC+3)")
@@ -252,4 +254,9 @@ test("insertScrapedNewsRows: canonical URLs, image required, duplicate-safe, rea
   assert.deepEqual([...(await findKnownUrls("youm7", ["https://example.com/a/1/", "https://example.com/zzz"], db))], ["https://example.com/a/1/"])
   assert.equal((await findKnownUrls("rt", ["https://example.com/a/1/"], db)).size, 0, "known-ness is per source")
   assert.throws(() => sqlite.prepare("INSERT INTO scraped_news (id, source, source_key, category, title, url, raw_json) VALUES ('x','S','youm7','c','t','https://example.com/a/1/','{}')").run(), /UNIQUE/)
+
+  // an unparseable date is NOT "now": NULL + flag, parked out of clustering
+  await insertScrapedNewsRows({ ...input, items: [item({ url: "https://example.com/nodate", publishedAt: "garbage" })] }, db, NOW)
+  const nd = one(sqlite, "SELECT status, published_ts, date_unknown FROM scraped_news WHERE url = 'https://example.com/nodate'")
+  assert.deepEqual(nd, { status: "skipped", published_ts: null, date_unknown: 1 })
 })

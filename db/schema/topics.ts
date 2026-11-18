@@ -21,6 +21,12 @@ export const topics = sqliteTable("topics", {
   claimedAt: integer("claimed_at"),
   /** Number of sources at the time the article was written (for follow-ups). */
   writtenSourceCount: integer("written_source_count").notNull().default(0),
+  /** Random token of the writer that holds the claim (fences persistence against stale writers). */
+  claimToken: text("claim_token"),
+  /** Status before the claim ('open' | 'written'); where a failed/skipped attempt returns to. */
+  preClaimStatus: text("pre_claim_status"),
+  /** Why the topic was skipped / merged (debugging). */
+  skipReason: text("skip_reason"),
   startDate: text("start_date"),
   endDate: text("end_date"),
   createdAt: integer("created_at", { mode: "timestamp_ms" })

@@ -38,11 +38,15 @@ function ArticleCard({
           {article.coverImageUrl ? (
             <Image
               src={article.coverImageUrl}
-              alt=""
+              alt={article.title}
               fill
               className="object-cover transition-transform duration-700 group-hover:scale-105"
               sizes={sizes}
+              // Only the featured story is the LCP image; everything else lazy-loads.
               priority={size === "large"}
+              fetchPriority={size === "large" ? "high" : "auto"}
+              // Unoptimized: no Images binding; legacy covers hot-link source CDNs that 403 the server-side optimizer.
+              unoptimized
             />
           ) : null}
         </div>
@@ -115,10 +119,12 @@ export function HomeHeroSection({ featured, side, row, isSubscribed }: Props) {
                   {row.coverImageUrl ? (
                     <Image
                       src={row.coverImageUrl}
-                      alt=""
+                      alt={row.title}
                       fill
                       className="object-cover"
                       sizes="(max-width: 768px) 33vw, 200px"
+              // Unoptimized: no Images binding; legacy covers hot-link source CDNs that 403 the server-side optimizer.
+              unoptimized
                     />
                   ) : null}
                 </SubscriptionGate>

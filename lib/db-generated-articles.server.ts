@@ -4,7 +4,6 @@ import { desc, eq, like, or, sql } from "drizzle-orm"
 
 import { getDb } from "@/db/client"
 import { generatedArticles, scrapedNews, topics } from "@/db/schema"
-import { generateArticleFromSources } from "@/lib/article-generator"
 
 export const ADMIN_GENERATED_PAGE_SIZE = 20
 
@@ -164,81 +163,17 @@ export async function getGeneratedArticleWithSources(
 }
 
 /**
- * Generate and save one article for the given topic.
- * Fetches all scraped_news rows for the topic, calls the AI generator,
- * and inserts the result into generated_articles.
+ * Manual (admin) generation: writes an UNPUBLISHED draft for the topic through the same prompt, quality gates
+ * and cover handling as the pipeline (lib/generation/core.ts). The old standalone generator was removed.
  */
-export async function generateAndSaveArticleForTopic(topicId: string): Promise<{
-  id: string
-  title: string
-}> {
-  const db = getDb()
-
-  // Guard: skip if this topic already has a generated article
-  const existing = await db
-    .select({ id: generatedArticles.id })
-    .from(generatedArticles)
-    .where(eq(generatedArticles.topicId, topicId))
-    .limit(1)
-  if (existing.length > 0) {
-    throw new Error(`Topic ${topicId} already has a generated article`)
-  }
-
-  // Load topic
-  const [topic] = await db
-    .select()
-    .from(topics)
-    .where(eq(topics.id, topicId))
-    .limit(1)
-
-  if (!topic) throw new Error(`Topic not found: ${topicId}`)
-
-  // Load source articles for this topic
-  const sourceRows = await db
-    .select()
-    .from(scrapedNews)
-    .where(eq(scrapedNews.topicId, topicId))
-
-  if (sourceRows.length === 0) {
-    throw new Error(`No scraped articles found for topic: ${topicId}`)
-  }
-
-  const sources = sourceRows.map((r) => ({
-    id: r.id,
-    title: r.title,
-    excerpt: r.excerpt,
-    content: r.content,
-    url: r.url,
-    source: r.source,
-    imageUrl: r.imageUrl,
-  }))
-
-  // Generate via AI
-  const generated = await generateArticleFromSources(topic.title, sources)
-
-  // Save to DB
-  const newId = crypto.randomUUID()
-  await db.insert(generatedArticles).values({
-    id: newId,
-    title: generated.title,
-    excerpt: generated.excerpt,
-    body: generated.body,
-    coverImageUrl: generated.coverImageUrl,
-    originalCoverImageUrl: generated.originalCoverImageUrl,
-    imageUrls: JSON.stringify(generated.imageUrls),
-    highlights: JSON.stringify(generated.highlights),
+export async function generateAndSaveArticleForTopic(topicId: string): Promise<{ id: string; title: string }> {
+  const { generateDraftForTopic } = await import("@/lib/generation/core")
+  const { openCodeJson } = await import("@/lib/llm-json")
+  const { uploadCoverWithDedup } = await import("@/lib/upload-image-dedup.server")
+  return generateDraftForTopic(
+    { db: getDb(), llm: openCodeJson, uploadCover: uploadCoverWithDedup, deadlineAt: Date.now() + 120_000 },
     topicId,
-    sourceArticleIds: JSON.stringify(generated.sourceArticleIds),
-    isPublished: false,
-  })
-
-  // Update topic updatedAt
-  await db
-    .update(topics)
-    .set({ updatedAt: new Date() })
-    .where(eq(topics.id, topicId))
-
-  return { id: newId, title: generated.title }
+  )
 }
 
 /** Paginated list of topics with article counts for the admin topics page */

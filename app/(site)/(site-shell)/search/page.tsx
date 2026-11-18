@@ -9,6 +9,8 @@ export const dynamic = "force-dynamic"
 export const metadata: Metadata = {
   title: ar.searchMetaTitle,
   description: ar.searchMetaDescription,
+  // Internal search results are thin/duplicate: keep them out of the index (also disallowed in robots.txt).
+  robots: { index: false, follow: true },
 }
 
 type PageProps = {

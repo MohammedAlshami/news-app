@@ -1,8 +1,13 @@
+import type { Metadata } from "next"
 import { redirect } from "next/navigation"
 
 import { AdminLayoutShell } from "@/components/admin-layout-shell"
 import { getAuthSessionUserId } from "@/lib/auth-session.server"
 import { getUserById } from "@/lib/users"
+
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+}
 
 export default async function AdminLayout({
   children,

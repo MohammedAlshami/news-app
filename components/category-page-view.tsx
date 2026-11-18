@@ -1,3 +1,4 @@
+import Image from "next/image"
 import Link from "next/link"
 
 import { SiteAdSpots } from "@/components/site-ad-spots"
@@ -20,6 +21,15 @@ type CategoryPageViewProps = {
   categoryNameById: Record<string, string>
   isSubscribed: boolean
   ads?: SiteAdPublic[]
+  /** `basePath` is the canonical path of page 1 (e.g. `/category/politics`). */
+  pagination?: { page: number; hasNext: boolean; basePath: string }
+}
+
+const pagerLinkClass =
+  "rounded-full border border-neutral-900 bg-neutral-900 px-8 py-3 text-sm font-bold text-white transition-colors hover:bg-neutral-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-900"
+
+function pageHref(basePath: string, page: number) {
+  return page <= 1 ? basePath : `${basePath}?page=${page}`
 }
 
 function labelForArticle(article: Article, categoryNameById: Record<string, string>) {
@@ -33,11 +43,13 @@ function CategoryArticleRow({
   categoryNameById,
   alternate,
   isSubscribed,
+  priorityImage,
 }: {
   article: Article
   categoryNameById: Record<string, string>
   alternate: boolean
   isSubscribed: boolean
+  priorityImage: boolean
 }) {
   const imgSrc = article.coverImageUrl?.trim()
   const label = labelForArticle(article, categoryNameById)
@@ -54,10 +66,16 @@ function CategoryArticleRow({
     >
       {imgSrc ? (
         <div className="relative aspect-[16/10] w-full shrink-0 overflow-hidden rounded-3xl bg-neutral-100 md:w-[min(100%,380px)] md:max-w-[42%]">
-          <img
+          <Image
             src={imgSrc}
-            alt=""
-            className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.02]"
+            alt={article.title}
+            fill
+            sizes="(max-width: 768px) 100vw, 380px"
+            className="object-cover transition duration-500 group-hover:scale-[1.02]"
+            // Unoptimized: no Images binding yet, so /_next/image would return the same bytes. Follow-up: CDN/resizing.
+            unoptimized
+            // Only the first row's image can be the LCP element.
+            priority={priorityImage}
           />
         </div>
       ) : null}
@@ -94,6 +112,7 @@ export function CategoryPageView({
   categoryNameById,
   isSubscribed,
   ads = [],
+  pagination,
 }: CategoryPageViewProps) {
   const mostRead = articles.slice(0, 3)
   const blurb = description.trim() || feedSubheading.trim()
@@ -146,18 +165,37 @@ export function CategoryPageView({
                         categoryNameById={categoryNameById}
                         alternate={index % 2 === 1}
                         isSubscribed={isSubscribed}
+                        priorityImage={index === 0}
                       />
                     </div>
                   ))}
                 </div>
-                <div className="flex justify-center pt-12 md:pt-14">
-                  <button
-                    type="button"
-                    className="rounded-full border border-neutral-900 bg-neutral-900 px-10 py-3.5 text-sm font-bold text-white transition-colors hover:bg-neutral-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-900"
+                {pagination && (pagination.page > 1 || pagination.hasNext) ? (
+                  <nav
+                    aria-label="التنقل بين الصفحات"
+                    className="flex items-center justify-center gap-4 pt-12 md:pt-14"
                   >
-                    {ar.categoryLoadMore}
-                  </button>
-                </div>
+                    {pagination.page > 1 ? (
+                      <Link
+                        href={pageHref(pagination.basePath, pagination.page - 1)}
+                        rel="prev"
+                        className={pagerLinkClass}
+                      >
+                        {"الصفحة السابقة"}
+                      </Link>
+                    ) : null}
+                    <span className="text-sm text-neutral-500">{pagination.page}</span>
+                    {pagination.hasNext ? (
+                      <Link
+                        href={pageHref(pagination.basePath, pagination.page + 1)}
+                        rel="next"
+                        className={pagerLinkClass}
+                      >
+                        {"الصفحة التالية"}
+                      </Link>
+                    ) : null}
+                  </nav>
+                ) : null}
               </>
             )}
           </div>

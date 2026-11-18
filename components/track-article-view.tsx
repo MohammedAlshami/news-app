@@ -2,7 +2,7 @@
 
 import { useEffect } from "react"
 
-import { incrementArticleViewAction } from "@/app/admin/articles/actions"
+import { incrementArticleViewAction } from "@/lib/view-actions"
 
 export function TrackArticleView({ articleId }: { articleId: string }) {
   useEffect(() => {

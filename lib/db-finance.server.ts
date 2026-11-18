@@ -16,11 +16,12 @@ export type FinanceSummary = {
 
 export async function getFinanceSummary(days = 30): Promise<FinanceSummary> {
   const db = getDb()
+  const safeDays = Math.min(3650, Math.max(1, Math.trunc(Number(days)) || 30))
 
   const all = await db
     .select()
     .from(financeRevenue)
-    .where(sql`date >= date('now', '-${sql.raw(String(days))} days')`)
+    .where(sql`date >= date('now', ${`-${safeDays} days`})`)
     .orderBy(financeRevenue.date)
 
   const totalRevenue = all.reduce((s, r) => s + r.amount, 0)

@@ -48,24 +48,46 @@ pnpm exec opennextjs-cloudflare build && pm2 restart news-app
 ## Environment variables & secrets
 
 **Worker vars** (`wrangler.toml [vars]`):
-`CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_DATABASE_ID`, `R2_PUBLIC_URL`, `NEXT_PRIVATE_MINIMAL_MODE`, `OPENROUTER_MODEL`.
+`CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_DATABASE_ID`, `R2_PUBLIC_URL`, `NEXT_PRIVATE_MINIMAL_MODE`, `OPENCODE_MODEL`.
 
 **Worker secrets:**
-- `OPENROUTER_API_KEY` — AI calls.
+- `SESSION_SECRET` — HMAC key for signed session cookies (random, 32+ bytes: `openssl rand -base64 48`).
+- `CRON_SECRET` — bearer token required by `/api/cron/*` (random, 32+ bytes). Must be set on **both** the site
+  Worker (`news-site`) and the scheduler Worker (`news-latest`).
+- `AUTH_USERS` — JSON array of users with PBKDF2 hashes. Make each entry with `pnpm auth:hash-password '<password, 12+ chars>'`
+  (prints `{id, role, passwordHash}` with a fresh UUID; add `email` and combine into the array; never commit plaintext passwords).
+- `OPENCODE_API_KEY` — AI calls.
 - `CLOUDFLARE_D1_TOKEN` — build-time/HTTP fallback only (runtime uses the D1 binding).
 
 ```bash
 npx wrangler secret list
-npx wrangler secret put OPENROUTER_API_KEY
+npx wrangler secret put OPENCODE_API_KEY
 npx wrangler secret delete <NAME>
 ```
 
-**Local `.env.local`** (gitignored): `OPENROUTER_API_KEY`, `OPENROUTER_MODEL`,
+**Local `.env.local`** (gitignored): `OPENCODE_API_KEY`, `OPENCODE_MODEL`,
 `R2_PUBLIC_URL`, `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_DATABASE_ID`, `CLOUDFLARE_D1_TOKEN`.
 These let local dev / build / scripts talk to remote D1 over the HTTP API and build R2 URLs.
 
 > Build-time static generation (site-shell layout) needs the D1 HTTP vars; the production
 > runtime itself uses the `DB` binding and needs no token.
+
+### Auth rollout and deploy order
+
+1. Generate the three secrets, then `wrangler secret put SESSION_SECRET|CRON_SECRET|AUTH_USERS` on the site
+   Worker, and `wrangler secret put CRON_SECRET` on the scheduler Worker (`news_workers`, same value).
+2. **Set secrets on both Workers before deploying.** A site that requires `CRON_SECRET` before the scheduler
+   sends it stops the scrape/cluster/write pipeline (every cron call returns 401). Deploy the scheduler
+   (which adds the header) first or together with the site, never after.
+3. Verify: `curl -i https://<site>/api/cron/health` returns 401; with `Authorization: Bearer $CRON_SECRET` it returns 200.
+4. **Old credentials are burned.** The previous `data/users.json` passwords and user UUIDs (which were the
+   session token) remain in git history. Treat them as compromised: use new passwords and new user ids,
+   and do not reuse them anywhere.
+5. Add a Cloudflare WAF rate-limiting rule on `POST /login`.
+6. Security headers (CSP, HSTS, frame-ancestors, etc.) come from `next.config.mjs` `headers()` and apply to
+   Worker-rendered responses. Static assets served straight from the `ASSETS` binding do not get them unless a
+   `public/_headers` file is added. The CSP needs `'unsafe-inline'` for scripts (Next inline bootstrap, no nonce)
+   and has `connect-src 'self'`, so third-party scripts (e.g. unpkg) are blocked by design.
 
 ## Cloudflare resources
 
@@ -132,9 +154,9 @@ so installs don't need the private registry token. The `.npmrc` no longer carrie
 
 ## Known issues / gotchas
 
-- `/api/cron/*` is unauthenticated.
-- Admin auth is dev-grade (cookie stores the raw user id; users from `data/users.json`).
+- `/api/cron/*` requires `CRON_SECRET`; admin auth uses signed session cookies and `AUTH_USERS` (see above).
+- Login throttling is per-isolate only; rely on a WAF rate-limit rule for real protection.
 - `articles.category_id` has no FK; the `articles`→`topics` link is by **title** (unique).
-- No OpenRouter provider preference → spend can vary by routed provider.
+- No OpenCode provider preference → spend can vary by routed provider.
 - `.next` can hold stale route types after deleting a route; `rm -rf .next` before typecheck.
 - `pnpm lint` reports thousands of pre-existing warnings/errors (not a gate).

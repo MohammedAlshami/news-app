@@ -12,7 +12,7 @@
 | Database | Cloudflare D1 (SQLite), accessed via the `DB` binding |
 | Object storage | Cloudflare R2 via the `MEDIA` binding |
 | ORM | Drizzle ORM (`drizzle-orm/d1`, plus a `sqlite-proxy` HTTP fallback) |
-| AI | OpenRouter (`deepseek/deepseek-v4-flash`) |
+| AI | OpenCode (`deepseek-v4.1-flash`) |
 | Package manager | pnpm 10 |
 | Scheduler | Separate Worker `news_workers` → deployed as `news-latest` |
 
@@ -23,8 +23,8 @@
   - `DB` → D1 database `news-site`
   - `MEDIA` → R2 bucket `news`
   - `ASSETS` → static assets
-  - plain vars: `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_DATABASE_ID`, `R2_PUBLIC_URL`, `NEXT_PRIVATE_MINIMAL_MODE`, `OPENROUTER_MODEL`
-- Secrets (not in `wrangler.toml`): `OPENROUTER_API_KEY`, `CLOUDFLARE_D1_TOKEN`.
+  - plain vars: `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_DATABASE_ID`, `R2_PUBLIC_URL`, `NEXT_PRIVATE_MINIMAL_MODE`, `OPENCODE_MODEL`
+- Secrets (not in `wrangler.toml`): `OPENCODE_API_KEY`, `CLOUDFLARE_D1_TOKEN`.
 
 ### Data access (`db/client.ts`)
 
@@ -45,7 +45,7 @@ Binding-only: `getMediaBucket()` reads `env.MEDIA` via `getCloudflareContext()`.
 
 ```
 app/
-  layout.tsx                 Root layout: fonts, theme, react-grab
+  layout.tsx                 Root layout: fonts, theme, base metadata (SITE_URL)
   fonts.ts                   Shubbak + Neirizi (next/font/local)
   globals.css                Tailwind v4 theme, admin text scale, font overrides
   (site)/(site-shell)/       Public site (header/footer shell)
@@ -55,6 +55,8 @@ app/
     search/                  Search
     tools/currency-converter/ Currency tool
     login/ subscribe/ user/ advertise/ privacy/ terms/
+  robots.ts                  robots.txt (metadata route)
+  sitemap.xml/ news-sitemap.xml/ rss.xml/   SEO feeds (route handlers, public s-maxage)
   admin/                     Admin panel (auth-gated)
   api/                       Route handlers (AI, cron, data, exchange-rate)
   notion-like/, simple/      Tiptap demo pages
@@ -89,3 +91,7 @@ documentation/               This folder
 - [`drizzle.config.ts`](../drizzle.config.ts) — Drizzle Kit (`d1-http` driver).
 - [`tsconfig.json`](../tsconfig.json) — path alias `@/*` → project root.
 - [`opencode.json`](../opencode.json) — dev tooling (Next.js MCP).
+
+## SEO / indexing
+
+The site is indexable: `app/robots.ts` replaces the old `Disallow: /` file. Canonical origin comes from `SITE_URL` (`wrangler.toml [vars]`, `.env.example`; default `https://news-site.mshami2021.workers.dev`) via `lib/seo.ts` (`siteUrl()` / `absoluteUrl()`), and is read per request. Sitemap, Google News sitemap and RSS are generated from bounded, column-limited D1 queries (`lib/db-sitemap.server.ts`). Article bodies are server-rendered (see `05-frontend.md`, "SEO & indexing", for metadata, JSON-LD, caching constraints and the Search Console checklist). With only a `workers.dev` hostname, attach a custom domain, update `SITE_URL` and 301 the old host.

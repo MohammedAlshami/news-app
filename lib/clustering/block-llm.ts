@@ -55,7 +55,7 @@ export function validateGroups(raw: unknown, items: BlockItem[]): string[][] {
 
 /** Throws on transport/parse failure so the caller can retry later instead of guessing. */
 export async function judgeBlock(llm: LlmJson, items: BlockItem[]): Promise<string[][]> {
-  const raw = await llm({ system: SYSTEM, user: renderItems(items), temperature: 0, timeoutMs: 90000 })
+  const raw = await llm({ system: SYSTEM, user: renderItems(items), temperature: 0, timeoutMs: 60000, maxTokens: 1200, label: "cluster-judge" })
   if (!raw || typeof raw !== "object" || !Array.isArray((raw as any).groups)) throw new Error("block judge returned no groups array")
   return validateGroups(raw, items)
 }

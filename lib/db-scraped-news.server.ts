@@ -58,17 +58,17 @@ export async function insertScrapedNewsRows(
     .map((item) => ({ ...item, url: canonicalizeUrl(item.url) }))
     .filter((item) => (seen.has(item.url) ? false : (seen.add(item.url), true)))
 
-  // Skip any item without an image — no fallback images allowed
-  const withImages = unique.filter((item) => !!item.imageUrl?.trim())
-  if (withImages.length === 0) return 0
-
-  const known = await findKnownUrls(input.sourceKey, withImages.map((i) => i.url), db)
-  const newItems = withImages.filter((item) => !known.has(item.url))
+  // Imageless items are STORED (they still corroborate a story and may lend text); an image is only required
+  // at write time, where another outlet's image can be used.
+  const known = await findKnownUrls(input.sourceKey, unique.map((i) => i.url), db)
+  const newItems = unique.filter((item) => !known.has(item.url))
   if (newItems.length === 0) return 0
 
   // One row at a time (D1 statement size); the unique (source_key, url) index makes races harmless.
   let inserted = 0
   for (const item of newItems) {
+    // An unparseable date must NOT look fresh: store NULL + flag and park the row (kept out of clustering/generation).
+    const ts = parsePublishedTs(item.publishedAt, now)
     const rows = await db
       .insert(scrapedNews)
       .values({
@@ -80,10 +80,12 @@ export async function insertScrapedNewsRows(
         excerpt: item.excerpt,
         content: item.content ?? null,
         url: item.url,
-        imageUrl: item.imageUrl ?? null,
+        imageUrl: item.imageUrl?.trim() || null,
         publishedAt: item.publishedAt ?? null,
-        publishedTs: parsePublishedTs(item.publishedAt, now) ?? now,
-        status: "pending",
+        publishedTs: ts,
+        dateUnknown: ts === null ? 1 : 0,
+        contentLen: item.content ? item.content.length : null,
+        status: ts === null ? "skipped" : "pending",
         rawJson: JSON.stringify(item.rawJson),
       })
       .onConflictDoNothing()

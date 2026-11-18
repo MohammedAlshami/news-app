@@ -15,14 +15,20 @@ export class IdfIndex {
   private df = new Map<string, number>()
   private n = 0
 
+  /**
+   * `prior` adds pseudo-documents in which every term has document frequency `priorDf`: with a small corpus the
+   * weights then barely move when a few documents are added, so cosine thresholds stay stable.
+   */
+  constructor(private prior: { n: number; df: number } = { n: 0, df: 0 }) {}
+
   add(v: TermVec) {
     this.n++
     for (const t of v.keys()) this.df.set(t, (this.df.get(t) ?? 0) + 1)
   }
 
   idf(t: string): number {
-    const df = this.df.get(t) ?? 0
-    return Math.log(1 + (this.n + 1) / (1 + df))
+    const df = (this.df.get(t) ?? 0) + this.prior.df
+    return Math.log(1 + (this.n + this.prior.n + 1) / (1 + df))
   }
 
   docFreq(t: string): number {

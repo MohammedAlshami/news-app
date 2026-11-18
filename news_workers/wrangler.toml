@@ -4,7 +4,8 @@ compatibility_date = "2026-05-07"
 compatibility_flags = ["nodejs_compat"]
 
 [triggers]
-crons = ["*/10 * * * *"]
+# write every 10 min; cluster and a rotating scrape slice are offset by 3 and 6 minutes (see src/index.ts)
+crons = ["*/10 * * * *", "3-59/10 * * * *", "6-59/10 * * * *"]
 
 [[services]]
 binding = "NEWS_SITE"

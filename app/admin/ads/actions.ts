@@ -1,28 +1,17 @@
 "use server"
 
-import { unlink } from "node:fs/promises"
-import { join } from "node:path"
-
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 
 import { getDb } from "@/db/client"
 import { siteAds } from "@/db/schema"
 import { getAdminSiteAdById } from "@/lib/db-site-ads.server"
-import {
-  deleteStoredImageIfR2,
-  putR2Object,
-} from "@/lib/r2.server"
+import { requireAdmin } from "@/lib/admin-guard.server"
+import { deleteStoredImageIfR2 } from "@/lib/r2.server"
+import { storeUploadedImage } from "@/lib/upload-image.server"
+import { isSafeHref } from "@/lib/tiptap-sanitize"
 import { ar } from "@/lib/ui-ar"
 import { eq } from "drizzle-orm"
-
-const imageMimeToExt: Record<string, "jpg" | "png" | "webp" | "gif"> = {
-  "image/jpeg": "jpg",
-  "image/pjpeg": "jpg",
-  "image/png": "png",
-  "image/webp": "webp",
-  "image/gif": "gif",
-}
 
 function revalidatePublicAds() {
   revalidatePath("/")
@@ -30,6 +19,7 @@ function revalidatePublicAds() {
 }
 
 export async function createSiteAdAction() {
+  await requireAdmin()
   const [row] = await getDb()
     .insert(siteAds)
     .values({ name: "" })
@@ -43,22 +33,14 @@ export async function createSiteAdAction() {
 export async function deleteSiteAdAction(
   id: string,
 ): Promise<{ ok: true } | { ok: false; error: string }> {
+  await requireAdmin()
   const row = await getAdminSiteAdById(id)
   if (!row) {
     return { ok: false, error: ar.adminSiteAdNotFound }
   }
   if (row.imageUrl) {
     const u = row.imageUrl
-    if (u.startsWith("/")) {
-      const abs = join(process.cwd(), "public", u)
-      try {
-        await unlink(abs)
-      } catch {
-        // ignore
-      }
-    } else {
-      await deleteStoredImageIfR2(u)
-    }
+    await deleteStoredImageIfR2(u)
   }
   await getDb().delete(siteAds).where(eq(siteAds.id, id))
   revalidatePublicAds()
@@ -85,6 +67,7 @@ const TIER_SET = new Set([
 export async function updateSiteAdAction(
   input: UpdateSiteAdInput,
 ): Promise<{ ok: true } | { ok: false; error: string }> {
+  await requireAdmin()
   const [existing] = await getDb()
     .select({ id: siteAds.id })
     .from(siteAds)
@@ -102,11 +85,14 @@ export async function updateSiteAdAction(
   if (href === "") {
     href = "#"
   }
+  if (href !== "#" && (href.length > 2000 || !isSafeHref(href))) {
+    return { ok: false, error: "رابط الإعلان غير صالح." }
+  }
 
   await getDb()
     .update(siteAds)
     .set({
-      name: input.name.trim(),
+      name: input.name.trim().slice(0, 200),
       href,
       showOnHome: input.showOnHome,
       showOnArticle: input.showOnArticle,
@@ -124,27 +110,7 @@ export async function uploadSiteAdBannerAction(
   adId: string,
   formData: FormData,
 ): Promise<{ ok: true; url: string } | { ok: false; error: string }> {
-  const file = formData.get("file")
-  if (!(file instanceof File) || file.size === 0) {
-    return { ok: false, error: ar.adminSiteAdNoFile }
-  }
-  if (file.size > 5 * 1024 * 1024) {
-    return { ok: false, error: ar.adminSiteAdImageTooBig }
-  }
-
-  const fromMime = imageMimeToExt[file.type]
-  const finalExt =
-    fromMime ||
-    (() => {
-      const raw = (file.name.split(".").pop() || "").toLowerCase()
-      if (raw === "jpeg" || raw === "jpg") return "jpg" as const
-      if (raw === "png" || raw === "webp" || raw === "gif") return raw
-      return null
-    })()
-  if (!finalExt) {
-    return { ok: false, error: ar.adminSiteAdImageType }
-  }
-
+  await requireAdmin()
   const [existing] = await getDb()
     .select({ imageUrl: siteAds.imageUrl })
     .from(siteAds)
@@ -154,48 +120,26 @@ export async function uploadSiteAdBannerAction(
     return { ok: false, error: ar.adminSiteAdNotFound }
   }
 
-  if (existing.imageUrl) {
-    const prev = existing.imageUrl
-    if (prev.startsWith("/")) {
-      const abs = join(process.cwd(), "public", prev)
-      try {
-        await unlink(abs)
-      } catch {
-        // ignore
-      }
-    } else {
-      await deleteStoredImageIfR2(prev)
-    }
-  }
-
-  const buffer = Buffer.from(await file.arrayBuffer())
-  const contentType =
-    file.type ||
-    (finalExt === "jpg" ? "image/jpeg" : `image/${finalExt}`)
-  const filename = `banner.${finalExt}`
-
-  const key = `ads/${adId}/${filename}`
-  const publicUrl = await putR2Object({
-    key,
-    body: buffer,
-    contentType,
-  })
+  const stored = await storeUploadedImage(formData.get("file"), `ads/${adId}`)
+  if (!stored.ok) return stored
 
   await getDb()
     .update(siteAds)
-    .set({
-      imageUrl: publicUrl,
-      updatedAt: new Date(),
-    })
+    .set({ imageUrl: stored.url, updatedAt: new Date() })
     .where(eq(siteAds.id, adId))
 
+  if (existing.imageUrl && existing.imageUrl !== stored.url) {
+    await deleteStoredImageIfR2(existing.imageUrl)
+  }
+
   revalidatePublicAds()
-  return { ok: true, url: publicUrl }
+  return { ok: true, url: stored.url }
 }
 
 export async function removeSiteAdBannerAction(
   adId: string,
 ): Promise<{ ok: true } | { ok: false; error: string }> {
+  await requireAdmin()
   const [row] = await getDb()
     .select({ imageUrl: siteAds.imageUrl })
     .from(siteAds)
@@ -206,16 +150,7 @@ export async function removeSiteAdBannerAction(
   }
   if (row.imageUrl) {
     const u = row.imageUrl
-    if (u.startsWith("/")) {
-      const abs = join(process.cwd(), "public", u)
-      try {
-        await unlink(abs)
-      } catch {
-        // ignore
-      }
-    } else {
-      await deleteStoredImageIfR2(u)
-    }
+    await deleteStoredImageIfR2(u)
   }
   await getDb()
     .update(siteAds)

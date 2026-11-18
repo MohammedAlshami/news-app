@@ -1,4 +1,5 @@
 import "server-only"
+import { cleanImageUrl } from "@/lib/image-url"
 
 import { and, desc, eq, like, sql } from "drizzle-orm"
 
@@ -79,7 +80,7 @@ function mapRow(r: {
     excerpt: r.excerpt,
     date: r.createdAt.toISOString().slice(0, 10),
     categoryIds: r.categoryId ? [r.categoryId] : [],
-    coverImageUrl: r.coverImageUrl,
+    coverImageUrl: cleanImageUrl(r.coverImageUrl),
     isMemberOnly: r.isMemberOnly,
   }
 }
@@ -90,7 +91,7 @@ export async function getPublishedArticleRowById(id: string) {
     .from(articles)
     .where(and(eq(articles.id, id), eq(articles.isPublished, true)))
     .limit(1)
-  return row
+  return row ? { ...row, coverImageUrl: cleanImageUrl(row.coverImageUrl) } : row
 }
 
 export async function getPublishedArticleRowBySlugId(slugId: string) {
@@ -106,7 +107,7 @@ export async function getPublishedArticleRowBySlugId(slugId: string) {
       ),
     )
     .limit(1)
-  return row
+  return row ? { ...row, coverImageUrl: cleanImageUrl(row.coverImageUrl) } : row
 }
 
 export async function getRecommendedArticles(excludeId: string, limit = 8) {
@@ -132,7 +133,7 @@ export async function getRecommendedArticles(excludeId: string, limit = 8) {
     excerpt: r.excerpt,
     date: r.createdAt.toISOString().slice(0, 10),
     categoryIds: r.categoryId ? [r.categoryId] : [],
-    coverImageUrl: r.coverImageUrl,
+    coverImageUrl: cleanImageUrl(r.coverImageUrl),
     isMemberOnly: r.isMemberOnly,
   }))
 }
@@ -191,7 +192,7 @@ export async function getFeedArticlesByPageId(
     excerpt: r.excerpt,
     date: r.createdAt.toISOString().slice(0, 10),
     categoryIds: r.categoryId ? [r.categoryId] : [],
-    coverImageUrl: r.coverImageUrl,
+    coverImageUrl: cleanImageUrl(r.coverImageUrl),
     isMemberOnly: r.isMemberOnly,
   }))
 }

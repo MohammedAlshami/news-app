@@ -9,6 +9,7 @@ import { ar } from "@/lib/ui-ar"
 export const metadata: Metadata = {
   title: ar.loginMetaTitle,
   description: ar.loginMetaDescription,
+  robots: { index: false, follow: false },
 }
 
 export default async function LoginPage() {

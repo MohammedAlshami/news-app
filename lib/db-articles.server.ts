@@ -1,4 +1,5 @@
 import "server-only"
+import { cleanImageUrl } from "@/lib/image-url"
 
 import { desc, eq, like, or, sql } from "drizzle-orm"
 
@@ -45,7 +46,7 @@ export async function getAdminArticleListPage(input: {
       isPublished: r.isPublished,
       isMemberOnly: r.isMemberOnly,
       views: r.views,
-      coverImageUrl: r.coverImageUrl,
+      coverImageUrl: cleanImageUrl(r.coverImageUrl),
     })),
   }
 }

@@ -3,6 +3,8 @@ import { desc } from "drizzle-orm"
 
 import { getDb } from "@/db/client"
 import { priceRates } from "@/db/schema"
+import { requireCronOrAdmin } from "@/lib/admin-guard.server"
+import { atomicBatch } from "@/lib/generation/core"
 
 export const dynamic = "force-dynamic"
 
@@ -99,6 +101,7 @@ function parseRows(section: string, market: MarketKey, assetType: RateRow["asset
 
 async function scrapeRates(): Promise<RateRow[]> {
   const res = await fetch(SOURCE_URL, {
+    signal: AbortSignal.timeout(15_000),
     headers: {
       "user-agent": "news-rate-sync/1.0",
       accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
@@ -118,21 +121,28 @@ async function scrapeRates(): Promise<RateRow[]> {
   ]
 }
 
-export async function GET() {
-  const rows = await scrapeRates()
-  const db = getDb()
-  await db.delete(priceRates)
-  for (const row of rows) {
-    await db.insert(priceRates).values({
-      market: row.market,
-      assetType: row.assetType,
-      currencyCode: row.currencyCode,
-      currencyName: row.currencyName,
-      sellRate: row.sellRate,
-      buyRate: row.buyRate,
-      sourceUrl: row.sourceUrl,
-    })
+export async function GET(request: Request) {
+  const denied = await requireCronOrAdmin(request)
+  if (denied) return denied
+  try {
+    const rows = await scrapeRates()
+    // never wipe the table with an empty / failed scrape; replace atomically (one D1 batch)
+    if (rows.length === 0) return NextResponse.json({ ok: false, error: "no rates parsed; table left untouched" }, { status: 502 })
+    const db = getDb()
+    await atomicBatch(db, [
+      db.delete(priceRates),
+      ...rows.map((row) =>
+        db.insert(priceRates).values({
+          market: row.market, assetType: row.assetType, currencyCode: row.currencyCode, currencyName: row.currencyName,
+          sellRate: row.sellRate, buyRate: row.buyRate, sourceUrl: row.sourceUrl,
+        }),
+      ),
+    ])
+    const latest = await db.select().from(priceRates).orderBy(desc(priceRates.scrapedAt)).limit(5)
+    return NextResponse.json({ ok: true, rows: rows.length, latest: latest.length })
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err)
+    console.error(`update-price-rates failed: ${message}`)
+    return NextResponse.json({ ok: false, error: message }, { status: 500 })
   }
-  const latest = await db.select().from(priceRates).orderBy(desc(priceRates.scrapedAt)).limit(5)
-  return NextResponse.json({ ok: true, rows: rows.length, latest: latest.length })
 }

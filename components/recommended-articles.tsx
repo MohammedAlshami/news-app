@@ -44,10 +44,11 @@ export function RecommendedArticles({ articles }: Props) {
               <div className="relative aspect-[16/10] w-full overflow-hidden bg-neutral-100">
                 <Image
                   src={imgSrc}
-                  alt=""
+                  alt={article.title}
                   fill
                   className="object-cover transition duration-500 group-hover:scale-[1.02]"
                   sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                  // Unoptimized: no Images binding yet, so /_next/image would return the same bytes. Follow-up: CDN/resizing.
                   unoptimized
                 />
               </div>

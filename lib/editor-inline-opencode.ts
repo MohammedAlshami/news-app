@@ -1,5 +1,15 @@
 import type { AiTextResolverOptions } from "@tiptap-pro/extension-ai"
 
+import {
+  AI_EMPTY_MESSAGE,
+  AI_TRUNCATED_EMPTY_MESSAGE,
+  AiRequestError,
+  createCleanAiStream,
+  describeAiHttpError,
+  stripAiControlMarks,
+  type AiStreamCallbacks,
+} from "@/lib/ai-stream"
+
 type InlineAiBody = {
   prompt: string
   editorInline: true
@@ -94,12 +104,11 @@ function instructionForAction(
   return sections.join("\n\n")
 }
 
-async function fetchInlineEditorStream(prompt: string, signal?: AbortSignal) {
+async function postInline(prompt: string, signal?: AbortSignal): Promise<Response> {
+  // Network failures (TypeError) and aborts (AbortError) propagate as-is; the caller maps them.
   const response = await fetch("/api/ai", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       editorInline: true,
       mode: "write",
@@ -110,51 +119,33 @@ async function fetchInlineEditorStream(prompt: string, signal?: AbortSignal) {
 
   if (!response.ok) {
     const errorText = await response.text().catch(() => "")
-    throw new Error(errorText || `AI request failed with ${response.status}`)
+    throw new AiRequestError(describeAiHttpError(response.status, errorText))
   }
-
-  return response.body
+  return response
 }
 
-export function createEditorOpenCodeStreamResolver() {
+/**
+ * Streaming resolver for the Tiptap Ai extension. Errors are thrown (never swallowed) so the
+ * extension's `onError` fires; aborts surface as AbortError and must be treated as a clean cancel.
+ */
+export function createEditorOpenCodeStreamResolver(callbacks: AiStreamCallbacks = {}) {
   return async ({ action, text, textOptions, aborter }: AiTextResolverOptions) => {
     const prompt = instructionForAction(action, text, textOptions)
-    try {
-      return await fetchInlineEditorStream(prompt, aborter?.signal)
-    } catch {
-      return new ReadableStream<Uint8Array>({
-        start(controller) {
-          controller.close()
-        },
-      })
-    }
+    const response = await postInline(prompt, aborter?.signal)
+    if (!response.body) throw new AiRequestError(AI_EMPTY_MESSAGE)
+    return createCleanAiStream(response.body, callbacks)
   }
 }
 
-export function createEditorOpenCodeCompletionResolver() {
+export function createEditorOpenCodeCompletionResolver(callbacks: AiStreamCallbacks = {}) {
   return async ({ action, text, textOptions, aborter }: AiTextResolverOptions) => {
     const prompt = instructionForAction(action, text, textOptions)
-    try {
-      const response = await fetch("/api/ai", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          editorInline: true,
-          mode: "write",
-          prompt,
-        } satisfies InlineAiBody),
-        signal: aborter?.signal,
-      })
-
-      if (!response.ok) {
-        return ""
-      }
-
-      return await response.text()
-    } catch {
-      return ""
+    const response = await postInline(prompt, aborter?.signal)
+    const r = stripAiControlMarks(await response.text())
+    if (r.truncated) callbacks.onTruncated?.()
+    if (!r.text.trim()) {
+      throw new AiRequestError(r.truncated ? AI_TRUNCATED_EMPTY_MESSAGE : AI_EMPTY_MESSAGE)
     }
+    return r.text
   }
 }

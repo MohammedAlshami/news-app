@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server"
+
+import { requireAdminApi } from "@/lib/admin-guard.server"
 import { eq } from "drizzle-orm"
 
 import { getDb } from "@/db/client"
@@ -10,6 +12,8 @@ export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  const denied = await requireAdminApi()
+  if (denied) return denied
   const { id } = await params
   if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 })
 

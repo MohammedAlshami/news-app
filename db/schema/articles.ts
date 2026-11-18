@@ -23,6 +23,8 @@ export const articles = sqliteTable("articles", {
   coverImageUrl: text("cover_image_url"),
   /** Original source URL before R2 upload — for dedup detection. */
   originalCoverImageUrl: text("original_cover_image_url"),
+  /** JSON array of R2 image URLs (cover first) mirrored from the source articles — the article gallery. */
+  imageUrls: text("image_urls"),
   /** SHA256 hash of the cover image — for dedup detection. */
   coverImageHash: text("cover_image_hash"),
   /** JSON array of 3-5 bullet-point highlights for this article. */

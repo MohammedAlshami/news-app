@@ -1,19 +1,31 @@
 import { NextResponse } from "next/server"
+import { requireCronOrAdmin } from "@/lib/admin-guard.server"
 import { getNewsSourceByKey, getLastScrapedAt, updateLastScrapedAt } from "@/lib/db-news-sources.server"
 import { findKnownUrls, insertScrapedNewsRows } from "@/lib/db-scraped-news.server"
 import { createNewsScraper, getSupportedCategories, type ScraperSourceKey } from "@/lib/news-scraper"
 
 export const dynamic = "force-dynamic"
 
+function getSupportedCategoriesSafe(key: string): boolean {
+  try {
+    return getSupportedCategories(key as ScraperSourceKey).length >= 0
+  } catch {
+    return false
+  }
+}
+
 /**
  * Scrape one source. Clustering is NOT run here any more: `/api/cron/cluster` runs it once
  * per cycle for all sources (running it per source re-processed the same rows 12× an hour).
  */
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ key: string }> },
 ): Promise<Response> {
+  const denied = await requireCronOrAdmin(request)
+  if (denied) return denied
   const { key } = await params
+  if (!(getSupportedCategoriesSafe(key))) return NextResponse.json({ ok: false, error: "unknown source" }, { status: 404 })
   const source = await getNewsSourceByKey(key)
   if (!source) {
     return NextResponse.json({ ok: false, error: `Source "${key}" not found` }, { status: 404 })
@@ -41,12 +53,9 @@ export async function GET(
         continue
       }
 
-      // Duplicates are handled by URL (unique index); no date filter here — a date filter
-      // silently drops late-discovered items and mis-parses timezone-less dates.
-      const filled = result.items.map((item) => ({
-        ...item,
-        publishedAt: item.publishedAt || now.toISOString(),
-      }))
+      // Duplicates are handled by URL (unique index). Items whose date cannot be parsed are stored parked
+      // (no more "unknown date = now": that made every re-listed old item look fresh).
+      const filled = result.items
 
       const inserted = await insertScrapedNewsRows({
         sourceKey: result.sourceKey,

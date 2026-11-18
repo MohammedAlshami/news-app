@@ -15,6 +15,9 @@ export function ArticleImageGallery({ images, activeIndex, onSelect }: Props) {
         {images.map((img, i) => (
           <button
             key={i}
+            type="button"
+            aria-label={img.alt || String(i + 1)}
+            aria-current={i === activeIndex}
             onClick={() => onSelect(i)}
             className={`relative h-20 w-32 shrink-0 overflow-hidden rounded-lg transition-all duration-200 ${
               i === activeIndex ? "ring-2 ring-neutral-400" : "hover:opacity-80"
@@ -26,6 +29,7 @@ export function ArticleImageGallery({ images, activeIndex, onSelect }: Props) {
               fill
               className="object-cover"
               sizes="128px"
+              // Unoptimized: no Images binding yet (CDN follow-up).
               unoptimized
             />
           </button>

@@ -1,5 +1,61 @@
 import { canonicalizeUrl } from "@/lib/url-canonical"
 
+
+/** Hosts the scrapers may talk to (a poisoned feed cannot point us at internal or arbitrary hosts). */
+const ALLOWED_HOST_SUFFIXES = [
+  "rt.com", "independentarabia.com", "aajeg.com", "alaraby.co.uk", "youm7.com", "skynewsarabia.com", "shabiba.com",
+  "elwatannews.com", "alquds.com", "addustour.com", "aawsat.com", "bbc.com", "bbc.co.uk",
+]
+const FETCH_TIMEOUT_MS = 10_000
+const MAX_REDIRECTS = 3
+const MAX_BODY_BYTES = 3 * 1024 * 1024
+
+export function isAllowedScrapeUrl(raw: string): boolean {
+  try {
+    const u = new URL(raw)
+    if (u.protocol !== "https:" && u.protocol !== "http:") return false
+    const h = u.hostname.toLowerCase()
+    return ALLOWED_HOST_SUFFIXES.some((d) => h === d || h.endsWith(`.${d}`))
+  } catch {
+    return false
+  }
+}
+
+/**
+ * fetch with: 10 s timeout, host allow-list re-checked on every redirect hop (max 3), and a response-size cap.
+ * Returns a plain Response built from the (bounded) body so existing `.text()` callers keep working.
+ */
+async function safeFetch(input: string, init: RequestInit = {}): Promise<Response> {
+  let url = input
+  for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
+    if (!isAllowedScrapeUrl(url)) throw new Error(`blocked URL (host not allowed): ${url.slice(0, 120)}`)
+    const res = await fetch(url, { ...init, redirect: "manual", signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) })
+    if (res.status >= 300 && res.status < 400 && res.headers.get("location")) {
+      url = new URL(res.headers.get("location")!, url).toString()
+      continue
+    }
+    const reader = res.body?.getReader()
+    if (!reader) return res
+    const chunks: Uint8Array[] = []
+    let size = 0
+    for (;;) {
+      const { done, value } = await reader.read()
+      if (done) break
+      size += value.byteLength
+      if (size > MAX_BODY_BYTES) {
+        await reader.cancel()
+        throw new Error(`response too large (> ${MAX_BODY_BYTES} bytes): ${url.slice(0, 120)}`)
+      }
+      chunks.push(value)
+    }
+    const body = new Uint8Array(size)
+    let off = 0
+    for (const c of chunks) { body.set(c, off); off += c.byteLength }
+    return new Response(body, { status: res.status, statusText: res.statusText, headers: res.headers })
+  }
+  throw new Error("too many redirects")
+}
+
 /** Max NEW (not yet stored) articles fetched per category page per run. */
 const MAX_NEW_PER_CATEGORY = 10
 
@@ -368,7 +424,7 @@ function parseIndependent(html: string): ScrapedNewsItem[] {
 }
 
 async function fetchRtArticleContent(url: string): Promise<{ excerpt: string; imageUrl: string; publishedAt: string; content: string }> {
-  const html = await fetch(url, {
+  const html = await safeFetch(url, {
     cache: "no-store",
     headers: {
       "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
@@ -444,7 +500,7 @@ async function fetchRtArticleContent(url: string): Promise<{ excerpt: string; im
 
 async function fetchIndependentArticleContent(url: string): Promise<{ title: string; excerpt: string; imageUrl: string; publishedAt: string; content: string }> {
   try {
-    const html = await fetch(url, {
+    const html = await safeFetch(url, {
       cache: "no-store",
       headers: {
         "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
@@ -626,7 +682,7 @@ function parseElwatan(html: string): ScrapedNewsItem[] {
 
 async function fetchElwatanArticleContent(url: string): Promise<{ title: string; excerpt: string; imageUrl: string; publishedAt: string; content: string }> {
   try {
-    const html = await fetch(url, {
+    const html = await safeFetch(url, {
       cache: "no-store",
       headers: {
         "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
@@ -678,7 +734,7 @@ async function fetchSkynewsArticleContent(url: string): Promise<{ title: string;
   try {
     // Fetch AMP version which has server-rendered content
     const ampUrl = url.replace("https://www.skynewsarabia.com", "https://www.skynewsarabia.com/amp")
-    const html = await fetch(ampUrl, {
+    const html = await safeFetch(ampUrl, {
       cache: "no-store",
       headers: {
         "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
@@ -740,7 +796,7 @@ async function fetchSkynewsArticleContent(url: string): Promise<{ title: string;
 
 async function fetchYoum7ArticleContent(url: string): Promise<{ title: string; excerpt: string; imageUrl: string; publishedAt: string; content: string }> {
   try {
-    const html = await fetch(url, {
+    const html = await safeFetch(url, {
       cache: "no-store",
       headers: {
         "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
@@ -808,7 +864,7 @@ async function fetchYoum7ArticleContent(url: string): Promise<{ title: string; e
 
 async function fetchBbcArticleContent(url: string): Promise<{ title: string; excerpt: string; imageUrl: string; publishedAt: string; content: string }> {
   try {
-    const html = await fetch(url, {
+    const html = await safeFetch(url, {
       cache: "no-store",
       headers: {
         "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
@@ -853,7 +909,7 @@ async function fetchBbcArticleContent(url: string): Promise<{ title: string; exc
     // Try AMP version for content
     const ampUrl = url + ".amp"
     try {
-      const ampHtml = await fetch(ampUrl, {
+      const ampHtml = await safeFetch(ampUrl, {
         cache: "no-store",
         headers: {
           "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
@@ -905,7 +961,7 @@ function parseAlaraby(html: string): ScrapedNewsItem[] {
 
 async function fetchAlarabyArticleContent(url: string): Promise<{ title: string; excerpt: string; imageUrl: string; publishedAt: string; content: string }> {
   try {
-    const html = await fetch(url, {
+    const html = await safeFetch(url, {
       cache: "no-store",
       headers: {
         "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
@@ -992,7 +1048,7 @@ function parseAlquds(html: string): ScrapedNewsItem[] {
 
 async function fetchAlqudsArticleContent(url: string): Promise<{ title: string; excerpt: string; imageUrl: string; publishedAt: string; content: string }> {
   try {
-    const html = await fetch(url, {
+    const html = await safeFetch(url, {
       cache: "no-store",
       headers: {
         "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
@@ -1079,7 +1135,7 @@ function parseAawsat(html: string): ScrapedNewsItem[] {
 
 async function fetchAawsatArticleContent(url: string): Promise<{ title: string; excerpt: string; imageUrl: string; publishedAt: string; content: string }> {
   try {
-    const html = await fetch(url, {
+    const html = await safeFetch(url, {
       cache: "no-store",
       headers: {
         "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
@@ -1185,7 +1241,7 @@ function parseAddustour(html: string): ScrapedNewsItem[] {
 
 async function fetchShabibaArticleContent(url: string): Promise<{ title: string; excerpt: string; imageUrl: string; publishedAt: string; content: string }> {
   try {
-    const html = await fetch(url, {
+    const html = await safeFetch(url, {
       cache: "no-store",
       headers: {
         "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
@@ -1238,7 +1294,7 @@ async function fetchShabibaArticleContent(url: string): Promise<{ title: string;
 
 async function fetchAddustourArticleContent(url: string): Promise<{ title: string; excerpt: string; imageUrl: string; publishedAt: string; content: string }> {
   try {
-    const html = await fetch(url, {
+    const html = await safeFetch(url, {
       cache: "no-store",
       headers: {
         "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
@@ -1664,7 +1720,7 @@ export class NewsScraper {
     const category = (input.category ?? "").trim().toLowerCase()
     const url = this.resolveUrl(query, category)
     const headers = category ? cfg.categoryHeaders ?? cfg.searchHeaders : cfg.searchHeaders
-    const html = await fetch(url, { headers, cache: "no-store" }).then(async (res) => {
+    const html = await safeFetch(url, { headers, cache: "no-store" }).then(async (res) => {
       const text = await res.text()
       if (!res.ok) throw new Error(`Fetch failed: ${res.status} ${text.slice(0, 200)}`)
       return text
@@ -1679,7 +1735,7 @@ export class NewsScraper {
     }
 
     // Fetch content for each new article to get full text + images
-    const itemsWithContent = await Promise.all(
+    const settled = await Promise.allSettled(
       items.slice(0, MAX_NEW_PER_CATEGORY).map(async (item) => {
         if (this.source === "rt") {
           const { excerpt, imageUrl, publishedAt, content } = await fetchRtArticleContent(item.url)
@@ -1793,7 +1849,10 @@ export class NewsScraper {
         }
       })
     )
-    
+    // one failing article page must not drop the whole category (it is simply retried next run)
+    const itemsWithContent = settled.flatMap((r) => (r.status === "fulfilled" ? [r.value] : []))
+    for (const r of settled) if (r.status === "rejected") console.warn(`[scrape] ${this.source} article fetch failed: ${r.reason instanceof Error ? r.reason.message : String(r.reason)}`)
+
     return {
       sourceKey: this.source,
       source: this.source.toUpperCase(),

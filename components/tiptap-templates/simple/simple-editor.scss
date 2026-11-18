@@ -160,3 +160,36 @@ body,
 [data-preview-readonly] .tiptap.ProseMirror > p:first-child {
   margin-top: 0;
 }
+
+/* =====================
+   RTL / mixed-direction (Arabic articles)
+   Blocks get dir="auto" via lib/tiptap-article-rtl, so default text-align is "start" (inline
+   styles from the toolbar still win).
+   ===================== */
+.tiptap.ProseMirror.simple-editor {
+  text-align: start;
+
+  p,
+  h1,
+  h2,
+  h3,
+  h4,
+  li {
+    text-align: start;
+  }
+
+  /* Latin runs, numbers and URLs inside Arabic text keep their own order. */
+  code,
+  a {
+    unicode-bidi: isolate;
+  }
+
+  pre {
+    direction: ltr;
+    text-align: left;
+  }
+
+  hr {
+    margin-inline: 0;
+  }
+}
