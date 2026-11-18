@@ -43,7 +43,7 @@ function VariantA({ u, href }: { u: Usd; href: string }) {
   return (
     <section dir="rtl" lang="ar" className="py-6 md:py-10">
       <div className={WRAP}>
-        <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-emerald-500 via-emerald-600 to-teal-800 p-6 text-white md:p-12">
+        <div className="relative overflow-hidden rounded-[2rem] bg-emerald-600 p-6 text-white md:p-12">
           <Tag>تصميم A</Tag>
           <span aria-hidden className="pointer-events-none absolute -bottom-24 -left-6 select-none text-[24rem] font-black leading-none text-white/10">$</span>
           <div className="relative flex flex-wrap items-center justify-between gap-5">
@@ -88,13 +88,13 @@ function VariantB({ u, href }: { u: Usd; href: string }) {
             <Cta href={href} className="bg-black text-white" />
           </div>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6">
-            <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-amber-300 to-orange-500 p-7 text-neutral-900 md:p-10">
+            <div className="relative overflow-hidden rounded-[2rem] bg-amber-400 p-7 text-neutral-900 md:p-10">
               <MapPin className="absolute -left-4 -top-4 h-40 w-40 text-white/25" aria-hidden />
               <div className="relative text-2xl font-extrabold md:text-3xl">صنعاء</div>
               <div className="relative mt-4 text-7xl font-black tabular-nums md:text-9xl">{fmt(u.sanaa.sell)}</div>
               <div className="relative mt-2 text-xl font-bold">ريال لكل دولار · شراء {fmt(u.sanaa.buy)}</div>
             </div>
-            <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-sky-400 to-blue-700 p-7 text-white md:p-10">
+            <div className="relative overflow-hidden rounded-[2rem] bg-blue-600 p-7 text-white md:p-10">
               <Landmark className="absolute -left-4 -top-4 h-40 w-40 text-white/15" aria-hidden />
               <div className="relative text-2xl font-extrabold md:text-3xl">عدن</div>
               <div className="relative mt-4 text-7xl font-black tabular-nums md:text-9xl">{fmt(u.aden.sell)}</div>
@@ -117,7 +117,7 @@ function VariantC({ u, href }: { u: Usd; href: string }) {
   return (
     <section dir="rtl" lang="ar" className="py-6 md:py-10">
       <div className={WRAP}>
-        <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-indigo-600 via-violet-700 to-fuchsia-700 p-6 text-white md:p-12">
+        <div className="relative overflow-hidden rounded-[2rem] bg-violet-700 p-6 text-white md:p-12">
           <Tag>تصميم C</Tag>
           <svg aria-hidden viewBox="0 0 400 120" className="pointer-events-none absolute inset-x-0 bottom-0 h-40 w-full opacity-25" preserveAspectRatio="none">
             <path d="M0 90 L40 70 L80 80 L120 40 L160 60 L200 25 L240 50 L280 20 L320 45 L360 10 L400 30 L400 120 L0 120 Z" fill="white" />
@@ -152,7 +152,7 @@ function VariantD({ u, href }: { u: Usd; href: string }) {
   return (
     <section dir="rtl" lang="ar" className="py-6 md:py-10">
       <div className={WRAP}>
-        <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-amber-100 to-yellow-200 p-6 md:p-12">
+        <div className="relative overflow-hidden rounded-[2rem] bg-amber-100 p-6 md:p-12">
           <Tag>تصميم D</Tag>
           <div className="grid items-start gap-8 lg:grid-cols-12 lg:gap-12">
             <div className="lg:col-span-5">
@@ -175,11 +175,11 @@ function VariantE({ u, href }: { u: Usd; href: string }) {
   return (
     <section dir="rtl" lang="ar" className="py-6 md:py-10">
       <div className={WRAP}>
-        <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-rose-100 via-pink-100 to-orange-100 p-6 md:p-12">
+        <div className="relative overflow-hidden rounded-[2rem] bg-rose-100 p-6 md:p-12">
           <Tag>تصميم E</Tag>
           <div className="grid items-center gap-8 lg:grid-cols-12 lg:gap-12">
             <div className="lg:col-span-5">
-              <div className="relative mx-auto aspect-[16/9] w-full max-w-md -rotate-3 overflow-hidden rounded-3xl bg-gradient-to-br from-lime-300 to-emerald-500 shadow-xl shadow-emerald-900/20">
+              <div className="relative mx-auto aspect-[16/9] w-full max-w-md -rotate-3 overflow-hidden rounded-3xl bg-emerald-400 shadow-xl shadow-emerald-900/20">
                 <div className="absolute inset-3 rounded-2xl bg-white/20" />
                 <span className="absolute right-6 top-4 text-4xl font-black text-emerald-900/70">1</span>
                 <span className="absolute bottom-3 left-6 text-4xl font-black text-emerald-900/70">1</span>

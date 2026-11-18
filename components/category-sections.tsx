@@ -127,8 +127,8 @@ export function CategoryStream({
   return (
     <section dir="rtl" lang="ar" aria-label="آخر أخبار القسم" className="py-8 md:py-12">
       <div className={WRAP}>
-        <div className={aside ? "grid grid-cols-1 gap-10 lg:grid-cols-12 lg:gap-14" : "mx-auto max-w-5xl"}>
-          <div className={aside ? "lg:col-span-8" : ""}>
+        <div className={aside ? "grid grid-cols-1 gap-10 lg:grid-cols-12 lg:gap-12" : ""}>
+          <div className={aside ? "lg:col-span-9" : ""}>
             {articles.length === 0 ? <p className="text-right text-neutral-500">{emptyLabel}</p> : null}
             {groups.map((g) => (
               <div key={g.label} className="mb-10 last:mb-0">
@@ -136,20 +136,20 @@ export function CategoryStream({
                   <h2 className="rounded-full bg-black px-5 py-1.5 text-base font-extrabold text-white">{g.label}</h2>
                   <span className="text-sm font-bold text-neutral-400">{g.items.length.toLocaleString("ar-EG")} خبر</span>
                 </div>
-                <ul className="space-y-3">
+                <ul className={`grid grid-cols-1 gap-4 ${aside ? "xl:grid-cols-2" : "lg:grid-cols-2"}`}>
                   {g.items.map((a) => (
                     <li key={a.id}>
                       <SubscriptionGate
                         isMemberOnly={a.isMemberOnly}
                         isSubscribed={isSubscribed}
                         href={getArticlePath(a.id, a.title)}
-                        className="group flex gap-4 rounded-3xl p-3 text-right transition-colors hover:bg-neutral-100 md:gap-6 md:p-4"
+                        className="group flex h-full gap-4 rounded-3xl bg-neutral-50 p-3 text-right transition-colors hover:bg-neutral-100 md:gap-5 md:p-4"
                       >
-                        <Img a={a} sizes="(max-width: 768px) 40vw, 260px" className="aspect-[4/3] w-36 shrink-0 rounded-2xl sm:w-48 md:w-64" />
-                        <span className="flex min-w-0 flex-1 flex-col justify-center">
+                        <Img a={a} sizes="(max-width: 768px) 40vw, 180px" className="aspect-[4/3] w-32 shrink-0 self-start rounded-2xl sm:w-44" />
+                        <span className="flex min-w-0 flex-1 flex-col">
                           <time dateTime={a.publishedAt} className="text-xs font-bold text-red-600">{formatRelativeAr(a.publishedAt)}</time>
-                          <span className="mt-1.5 line-clamp-3 block text-lg font-extrabold leading-snug text-neutral-900 md:text-2xl">{a.title}</span>
-                          <span className="mt-2 line-clamp-2 hidden text-[15px] leading-relaxed text-neutral-500 sm:block">{a.excerpt}</span>
+                          <span className="mt-1.5 line-clamp-3 block text-lg font-extrabold leading-snug text-neutral-900 md:text-xl">{a.title}</span>
+                          <span className="mt-2 line-clamp-2 hidden text-sm leading-relaxed text-neutral-500 sm:block">{a.excerpt}</span>
                         </span>
                       </SubscriptionGate>
                     </li>
@@ -175,7 +175,7 @@ export function CategoryStream({
               </nav>
             ) : null}
           </div>
-          {aside ? <aside className="lg:col-span-4"><div className="sticky top-28 space-y-6">{aside}</div></aside> : null}
+          {aside ? <aside className="lg:col-span-3"><div className="sticky top-28 space-y-6">{aside}</div></aside> : null}
         </div>
       </div>
     </section>
