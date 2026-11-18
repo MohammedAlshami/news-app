@@ -80,7 +80,7 @@ function SelectField({
       <button
         type="button"
         onClick={() => setOpen((next) => !next)}
-        className="flex w-full items-center justify-between gap-3 rounded-full bg-white/25 py-2 pl-4 pr-2 text-right transition-colors hover:bg-white/35"
+        className="flex w-full items-center justify-between gap-3 rounded-full bg-white/60 py-2 pl-4 pr-2 text-right transition-colors hover:bg-white/80"
       >
         <span className="flex min-w-0 items-center gap-3">
           <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-lg font-black ${badge}`}>{SYMBOLS[value] ?? value.slice(0, 1)}</span>
@@ -176,9 +176,9 @@ export function CurrencyConverter() {
       <p className="mt-3 max-w-2xl text-lg leading-8 text-neutral-500">{ar.currencyConverterSub}</p>
 
       <div className="mt-8 grid items-stretch gap-4 lg:grid-cols-[1fr_auto_1fr]">
-        <div className="rounded-[2rem] bg-amber-400 p-6 text-neutral-900 md:p-8">
-          <span className="mb-4 block text-sm font-extrabold text-neutral-900/60">{ar.currencyConverterFrom}</span>
-          <SelectField value={from} onChange={setFrom} market={market} badge="bg-neutral-900 text-amber-300" />
+        <div className="rounded-[2rem] bg-[#f4e4c1] p-6 text-[#5a4410] md:p-8">
+          <span className="mb-4 block text-sm font-extrabold text-[#5a4410]/60">{ar.currencyConverterFrom}</span>
+          <SelectField value={from} onChange={setFrom} market={market} badge="bg-[#8a6a1f] text-white" />
           <input
             type="number"
             min="0"
@@ -186,7 +186,7 @@ export function CurrencyConverter() {
             value={amount}
             onChange={(e) => onAmountChange(e.target.value)}
             aria-label={ar.currencyConverterAmount}
-            className="mt-6 w-full bg-transparent text-6xl font-black tabular-nums outline-none md:text-8xl"
+            className="mt-6 w-full bg-transparent text-6xl font-black tabular-nums outline-none md:text-8xl [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
           />
         </div>
 
@@ -195,16 +195,16 @@ export function CurrencyConverter() {
             type="button"
             size="icon"
             onClick={swap}
-            className="h-14 w-14 rounded-full border-0 bg-black text-white hover:bg-neutral-800 lg:rotate-0"
+            className="h-14 w-14 rounded-full border-0 bg-[#0d4a6e] text-white hover:bg-[#0a6b8a] lg:rotate-0"
             aria-label={ar.currencyConverterSwap}
           >
             <ArrowRightLeft className="h-6 w-6" />
           </Button>
         </div>
 
-        <div className="rounded-[2rem] bg-blue-600 p-6 text-white md:p-8">
-          <span className="mb-4 block text-sm font-extrabold text-white/70">{ar.currencyConverterTo}</span>
-          <SelectField value={to} onChange={setTo} market={market} badge="bg-white text-blue-700" />
+        <div className="rounded-[2rem] bg-[#cfe6ec] p-6 text-[#0d4a6e] md:p-8">
+          <span className="mb-4 block text-sm font-extrabold text-[#0d4a6e]/60">{ar.currencyConverterTo}</span>
+          <SelectField value={to} onChange={setTo} market={market} badge="bg-[#0d4a6e] text-white" />
           <input
             type="number"
             min="0"
@@ -212,19 +212,19 @@ export function CurrencyConverter() {
             value={resultAmount}
             onChange={(e) => onResultChange(e.target.value)}
             aria-label={ar.currencyConverterResult}
-            className="mt-6 w-full bg-transparent text-6xl font-black tabular-nums outline-none md:text-8xl"
+            className="mt-6 w-full bg-transparent text-6xl font-black tabular-nums outline-none md:text-8xl [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
           />
         </div>
       </div>
 
       <div className="mt-5 flex flex-wrap items-center gap-3">
-        {rateLine ? <span className="rounded-full bg-black px-5 py-2.5 text-base font-extrabold tabular-nums text-white">{rateLine}</span> : null}
+        {rateLine ? <span className="rounded-full bg-[#0d4a6e] px-5 py-2.5 text-base font-extrabold tabular-nums text-white">{rateLine}</span> : null}
         {result ? (
-          <span className="rounded-full bg-amber-100 px-5 py-2.5 text-base font-bold text-amber-900">
+          <span className="rounded-full bg-[#f4e4c1] px-5 py-2.5 text-base font-bold text-[#5a4410]">
             {to === "YER_ADEN" || from === "YER_ADEN" ? "سعر عدن" : "سعر صنعاء"}
           </span>
         ) : null}
-        {error ? <span className="rounded-full bg-red-100 px-5 py-2.5 text-base font-bold text-red-700">{error}</span> : null}
+        {error ? <span className="rounded-full bg-[#f6d9d6] px-5 py-2.5 text-base font-bold text-[#8a2b22]">{error}</span> : null}
       </div>
     </div>
   )

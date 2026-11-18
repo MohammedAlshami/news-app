@@ -17,9 +17,9 @@ const MAIN = ["USD", "SAR", "EUR", "AED", "GBP", "KWD"]
 const fmt = (n: number) => n.toLocaleString("en-US", { maximumFractionDigits: 2 })
 
 const TONES = {
-  amber: { dot: "bg-amber-400", badge: "bg-amber-400 text-neutral-900" },
-  blue: { dot: "bg-blue-600", badge: "bg-blue-600 text-white" },
-  yellow: { dot: "bg-yellow-500", badge: "bg-yellow-500 text-neutral-900" },
+  amber: { dot: "bg-[#e3c98f]", badge: "bg-[#f4e4c1] text-[#5a4410]" },
+  blue: { dot: "bg-[#9fcbd6]", badge: "bg-[#cfe6ec] text-[#0d4a6e]" },
+  yellow: { dot: "bg-[#e6d58f]", badge: "bg-[#f6ecc6] text-[#6b5800]" },
 } as const
 
 function RatesColumn({ title, lines, tone }: { title: string; lines: RateLine[]; tone: keyof typeof TONES }) {
