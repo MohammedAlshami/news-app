@@ -1,12 +1,12 @@
 "use client"
 
-import { ExternalLink, Eye, MoreVertical, Pencil, PencilLine } from "lucide-react"
+import { ExternalLink, Eye, MoreVertical, Pencil, PencilLine, Trash2 } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 
-import { setArticleMemberOnlyAction, setArticlePublishedAction } from "@/app/admin/articles/actions"
+import { deleteArticleAction, setArticleMemberOnlyAction, setArticlePublishedAction } from "@/app/admin/articles/actions"
 import { AdminArticlePreviewModal } from "@/components/admin-article-preview-modal"
 import { Button } from "@/components/ui/button"
 import {
@@ -87,6 +87,8 @@ export function AdminArticlesTable({ articles, categories, labels }: Props) {
     id: string
     next: boolean
   } | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string } | null>(null)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
   const categoryById = categoryLabelMap(categories)
 
   async function confirmPublish() {
@@ -97,6 +99,20 @@ export function AdminArticlesTable({ articles, categories, labels }: Props) {
     const result = await setArticlePublishedAction(id, next)
     setBusyId(null)
     if (result.ok) router.refresh()
+  }
+
+  async function confirmDelete() {
+    if (!deleteTarget) return
+    setBusyId(deleteTarget.id)
+    const result = await deleteArticleAction(deleteTarget.id)
+    setBusyId(null)
+    if (result.ok) {
+      setDeleteTarget(null)
+      setDeleteError(null)
+      router.refresh()
+    } else {
+      setDeleteError(result.error)
+    }
   }
 
   async function confirmMemberOnly() {
@@ -164,6 +180,33 @@ export function AdminArticlesTable({ articles, categories, labels }: Props) {
               disabled={busyId === publishTarget?.id}
             >
               تأكيد
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <Dialog
+        open={deleteTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setDeleteTarget(null)
+            setDeleteError(null)
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-md" dir="rtl">
+          <DialogHeader>
+            <DialogTitle>حذف المقال</DialogTitle>
+            <DialogDescription>
+              سيُحذف المقال «{deleteTarget?.title || "بدون عنوان"}» نهائياً ولا يمكن التراجع عن ذلك.
+            </DialogDescription>
+          </DialogHeader>
+          {deleteError ? <p className="px-2 text-sm text-destructive">{deleteError}</p> : null}
+          <DialogFooter className="gap-2 sm:justify-start">
+            <Button variant="outline" onClick={() => setDeleteTarget(null)}>
+              إلغاء
+            </Button>
+            <Button variant="destructive" onClick={confirmDelete} disabled={busyId === deleteTarget?.id}>
+              حذف نهائياً
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -301,7 +344,7 @@ export function AdminArticlesTable({ articles, categories, labels }: Props) {
                   <span className="block truncate whitespace-nowrap">{a.excerpt || "—"}</span>
                 </TableCell>
                 <TableCell className="sticky left-0 z-10 h-16 min-w-[5rem] bg-card px-2 text-center shadow-[2px_0_0_0_theme(colors.border)]">
-                  <DropdownMenu dir="rtl">
+                  <DropdownMenu dir="rtl" modal={false}>
                     <DropdownMenuTrigger asChild>
                       <Button variant="outline" size="icon" className="h-8 w-8">
                         <MoreVertical className="size-4" />
@@ -316,8 +359,7 @@ export function AdminArticlesTable({ articles, categories, labels }: Props) {
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem
-                        onSelect={(e) => {
-                          e.preventDefault()
+                        onSelect={() => {
                           setPreviewId(a.id)
                           setPreviewOpen(true)
                         }}
@@ -327,8 +369,7 @@ export function AdminArticlesTable({ articles, categories, labels }: Props) {
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
-                        onSelect={(e) => {
-                          e.preventDefault()
+                        onSelect={() => {
                           setPublishTarget({ id: a.id, next: a.isPublished })
                         }}
                       >
@@ -336,13 +377,22 @@ export function AdminArticlesTable({ articles, categories, labels }: Props) {
                         {a.isPublished ? labels.publishModalUnpublish : labels.publishModalPublish}
                       </DropdownMenuItem>
                       <DropdownMenuItem
-                        onSelect={(e) => {
-                          e.preventDefault()
+                        onSelect={() => {
                           setMemberOnlyTarget({ id: a.id, next: a.isMemberOnly })
                         }}
                       >
                         <PencilLine className="size-4" />
                         {labels.memberOnlyToggle}
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        className="text-destructive focus:text-destructive"
+                        onSelect={() => {
+                          setDeleteTarget({ id: a.id, title: a.title })
+                        }}
+                      >
+                        <Trash2 className="size-4" />
+                        حذف
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       {a.isPublished ? (

@@ -139,6 +139,11 @@ export function useLinkHandler(props: LinkHandlerProps) {
   const setLink = useCallback(() => {
     if (!url || !editor) return
 
+    // Only http(s)/mailto/tel/relative links: an unsafe URL must neither become a link nor leak into the text.
+    const trimmed = url.trim()
+    if (!/^(https?:\/\/|mailto:|tel:|\/(?!\/)|#)/i.test(trimmed) && /^[a-z][a-z0-9+.-]*:/i.test(trimmed)) return
+    if (sanitizeUrl(trimmed, window.location.href) === "#" && !trimmed.startsWith("#")) return
+
     const { selection } = editor.state
     const isEmpty = selection.empty
 
@@ -292,7 +297,7 @@ export function useLinkPopover(config?: UseLinkPopoverConfig) {
     isVisible,
     canSet,
     isActive,
-    label: "Link",
+    label: "رابط",
     Icon: LinkIcon,
     ...linkHandler,
   }

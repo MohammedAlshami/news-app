@@ -216,7 +216,7 @@ export function useDuplicate(config?: UseDuplicateConfig) {
     isVisible,
     handleDuplicate,
     canDuplicate,
-    label: "Duplicate node",
+    label: "تكرار",
     shortcutKeys: DUPLICATE_SHORTCUT_KEY,
     Icon: CopyIcon,
   }

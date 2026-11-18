@@ -50,17 +50,17 @@ export interface ListOption {
 
 export const listOptions: ListOption[] = [
   {
-    label: "Bullet List",
+    label: "قائمة نقطية",
     type: "bulletList",
     icon: ListIcon,
   },
   {
-    label: "Ordered List",
+    label: "قائمة مرقمة",
     type: "orderedList",
     icon: ListOrderedIcon,
   },
   {
-    label: "Task List",
+    label: "قائمة مهام",
     type: "taskList",
     icon: ListTodoIcon,
   },

@@ -251,7 +251,7 @@ export function useCopyToClipboard(config?: UseCopyToClipboardConfig) {
     isVisible,
     handleCopyToClipboard,
     canCopyToClipboard: canCopyToClipboardState,
-    label: "Copy to clipboard",
+    label: "نسخ",
     shortcutKeys: COPY_TO_CLIPBOARD_SHORTCUT_KEY,
     Icon: ClipboardIcon,
   }

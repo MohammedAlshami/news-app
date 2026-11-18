@@ -270,7 +270,7 @@ export function useImproveDropdown(config?: UseImproveDropdownConfig) {
     executeAICommand,
     adjustTone,
     translate,
-    label: "Improve",
+    label: "تحسين",
     Icon: AiSparklesIcon,
   }
 }

@@ -574,10 +574,10 @@ export function CreateArticleForm({
             <Sheet open={infoOpen} onOpenChange={setInfoOpen}>
               <SheetContent side="right" className="w-[22rem] sm:w-[24rem]">
                 <div className="flex h-full min-h-0 flex-col px-5 py-6">
-                  <SheetHeader className="px-0 pt-0">
-                    <SheetTitle>Article info</SheetTitle>
+                  <SheetHeader className="px-0 pt-0 pr-8 text-right">
+                    <SheetTitle>معلومات المقال</SheetTitle>
                     <SheetDescription>
-                      Title, excerpt, categories, and publish state.
+                      العنوان والملخص والأقسام وحالة النشر.
                     </SheetDescription>
                   </SheetHeader>
                   <div className="min-h-0 flex-1 overflow-y-auto pr-1">
@@ -620,8 +620,8 @@ export function CreateArticleForm({
                       <TiptapButton
                         type="button"
                         variant="ghost"
-                        tooltip="Article info"
-                        aria-label="Article info"
+                        tooltip="معلومات المقال"
+                        aria-label="معلومات المقال"
                         onClick={() => setInfoOpen(true)}
                       >
                         <Info

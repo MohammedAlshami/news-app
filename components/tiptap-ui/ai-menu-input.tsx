@@ -143,7 +143,7 @@ export function AiPromptInputToolbar({
           onClick={handleSubmit}
           disabled={isEmpty}
           data-style="primary"
-          aria-label="Submit prompt"
+          aria-label="إرسال"
         >
           <ArrowUpIcon className="tiptap-button-icon" />
         </Button>

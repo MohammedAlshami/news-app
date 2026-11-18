@@ -280,7 +280,7 @@ export function useSlashCommandTrigger(config?: UseSlashCommandTriggerConfig) {
     isVisible,
     handleSlashCommand,
     canInsert,
-    label: "Insert block",
+    label: "إدراج",
     shortcutKeys: SLASH_COMMAND_TRIGGER_SHORTCUT_KEY,
     trigger,
     Icon: PlusIcon,

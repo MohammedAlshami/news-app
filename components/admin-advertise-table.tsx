@@ -114,7 +114,7 @@ export function AdminAdvertiseTable({ rows, labels }: Props) {
                   {statusLabel(r.status)}
                 </TableCell>
                 <TableCell className="h-16 px-2 text-center">
-                  <DropdownMenu dir="rtl">
+                  <DropdownMenu dir="rtl" modal={false}>
                     <DropdownMenuTrigger asChild>
                       <Button variant="outline" size="icon" className="h-8 w-8">
                         <MoreVertical className="size-4" />
@@ -123,8 +123,7 @@ export function AdminAdvertiseTable({ rows, labels }: Props) {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="start" className="min-w-40">
                       <DropdownMenuItem
-                        onSelect={(e) => {
-                          e.preventDefault()
+                        onSelect={() => {
                           setModalId(r.id)
                           setModalOpen(true)
                         }}

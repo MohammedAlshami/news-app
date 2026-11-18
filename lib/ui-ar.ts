@@ -9,7 +9,7 @@ export const ar = {
   no: "لا",
   login: "تسجيل الدخول",
 
-  loginMetaTitle: "تسجيل الدخول | أخبار",
+  loginMetaTitle: "تسجيل الدخول",
   loginMetaDescription: "تسجيل الدخول إلى «أخبار».",
   loginTitle: "سجّل دخولك",
   loginEmail: "البريد الإلكتروني",
@@ -19,7 +19,7 @@ export const ar = {
   loginSubmit: "دخول",
   loginError: "البريد أو كلمة المرور غير صحيحة.",
 
-  currencyConverterMetaTitle: "محول العملات | أخبار",
+  currencyConverterMetaTitle: "محول العملات",
   currencyConverterMetaDescription:
     "حوّل أي عملة إلى الريال اليمني أو من الريال اليمني إلى أي عملة أخرى باستخدام أسعار محدثة.",
   currencyConverterKicker: "أدوات مالية",
@@ -41,7 +41,7 @@ export const ar = {
   currencyConverterYERToAny: "الريال اليمني إلى أي عملة",
   currencyConverterAnyToYER: "أي عملة إلى الريال اليمني",
 
-  adminMetaTitle: "لوحة التحكم | أخبار",
+  adminMetaTitle: "لوحة التحكم",
   adminPageTitle: "لوحة التحكم",
   adminKicker: "واجهة الإدارة",
   adminWelcome: "هذه شاشة لوحة التحكم. يمكنك توسيع القائمة الجانبية لاحقاً.",
@@ -288,7 +288,7 @@ export const ar = {
   siteAdsAriaLabel: "مساحات إعلانية",
 
   /** Public — advertise */
-  advertiseMetaTitle: "أعلن معنا | أخبار",
+  advertiseMetaTitle: "أعلن معنا",
   advertiseMetaDescription: "تواصل معنا لعرض إعلانك على الموقع.",
   advertiseKicker: "الإعلانات",
   advertisePageTitle: "أعلن معنا",
@@ -393,7 +393,7 @@ export const ar = {
   adminSearchPlaceholder: "بحث…",
 
   /** البحث */
-  searchMetaTitle: "البحث | أخبار",
+  searchMetaTitle: "البحث",
   searchMetaDescription: "ابحث عن المقالات والأخبار في موقع أخبار.",
   searchKicker: "البحث",
   searchTitle: "عما تبحث؟",

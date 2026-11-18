@@ -1,13 +1,14 @@
 import "server-only"
 
-import { and, desc, eq, like, or, sql } from "drizzle-orm"
-
-import { getDb } from "@/db/client"
-import { users } from "@/db/schema"
+import { getUsers } from "@/lib/users"
 import type { AdminUserListItem } from "@/lib/site-types"
 
 export const ADMIN_PAGE_SIZE = 10
 
+/**
+ * Accounts live in the `AUTH_USERS` secret (see lib/users.ts), not in the database, so the admin lists
+ * read from there. Read-only: passwords/hashes are never exposed, only id / email / role.
+ */
 export async function getAdminUserListPage(input: {
   page: number
   pageSize?: number
@@ -16,39 +17,22 @@ export async function getAdminUserListPage(input: {
 }): Promise<{ rows: AdminUserListItem[]; total: number }> {
   const pageSize = input.pageSize ?? ADMIN_PAGE_SIZE
   const page = Math.max(1, input.page)
+  const q = (input.q ?? "").trim().toLowerCase()
+
+  const all = getUsers()
+    .filter((u) => (input.role ? u.role === input.role : true))
+    .filter((u) => (q ? u.email.toLowerCase().includes(q) : true))
+    .sort((a, b) => a.email.localeCompare(b.email))
+
   const offset = (page - 1) * pageSize
-
-  const db = getDb()
-
-  const whereClauses = []
-  if (input.role) whereClauses.push(eq(users.role, input.role))
-  if (input.q) {
-    whereClauses.push(or(like(users.email, `%${input.q}%`), like(users.name, `%${input.q}%`)))
-  }
-
-  const filter = whereClauses.length > 0 ? and(...whereClauses) : undefined
-
-  const [{ total }] = await db
-    .select({ total: sql<number>`count(*)` })
-    .from(users)
-    .where(filter)
-
-  const rows = await db
-    .select()
-    .from(users)
-    .where(filter)
-    .orderBy(desc(users.createdAt))
-    .limit(pageSize)
-    .offset(offset)
-
   return {
-    total: Number(total ?? 0),
-    rows: rows.map((r) => ({
-      id: r.id,
-      email: r.email,
-      name: r.name,
-      role: r.role,
-      createdAt: r.createdAt.toISOString().slice(0, 10),
+    total: all.length,
+    rows: all.slice(offset, offset + pageSize).map((u) => ({
+      id: u.id,
+      email: u.email,
+      name: u.email.split("@")[0] ?? null,
+      role: u.role,
+      createdAt: "",
     })),
   }
 }

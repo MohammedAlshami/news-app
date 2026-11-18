@@ -266,7 +266,7 @@ export function useBlockquote(config?: UseBlockquoteConfig) {
     isActive,
     handleToggle,
     canToggle,
-    label: "Blockquote",
+    label: "اقتباس",
     shortcutKeys: BLOCKQUOTE_SHORTCUT_KEY,
     Icon: BlockquoteIcon,
   }

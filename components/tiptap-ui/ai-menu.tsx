@@ -365,7 +365,7 @@ export function AiMenuProgress({ editor }: { editor: Editor }) {
         </div>
       </div>
 
-      <Button variant="ghost" title="Stop" onClick={handleStop}>
+      <Button variant="ghost" title="إيقاف" onClick={handleStop}>
         <StopCircle2Icon className="tiptap-button-icon" />
       </Button>
     </div>

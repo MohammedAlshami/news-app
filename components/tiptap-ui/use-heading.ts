@@ -341,7 +341,7 @@ export function useHeading(config: UseHeadingConfig) {
     isActive,
     handleToggle,
     canToggle: canToggleState,
-    label: `Heading ${level}`,
+    label: `عنوان ${level}`,
     shortcutKeys: HEADING_SHORTCUT_KEYS[level],
     Icon: headingIcons[level],
   }

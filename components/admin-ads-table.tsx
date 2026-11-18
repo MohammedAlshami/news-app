@@ -1,11 +1,15 @@
 "use client"
 
-import { Eye, MoreVertical, Pencil, Image as ImageIcon } from "lucide-react"
+import { Eye, MoreVertical, Pencil, Trash2 } from "lucide-react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { useState } from "react"
+
+import { deleteSiteAdAction } from "@/app/admin/ads/actions"
 
 import { AdminSiteAdPreviewModal } from "@/components/admin-site-ad-preview-modal"
 import { Button } from "@/components/ui/button"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -61,6 +65,22 @@ function tierCellLabel(tier: string, labels: Props["labels"]): string {
 export function AdminAdsTable({ rows, labels }: Props) {
   const [viewAd, setViewAd] = useState<AdminSiteAdListItem | null>(null)
   const [viewOpen, setViewOpen] = useState(false)
+  const router = useRouter()
+  const [deleteTarget, setDeleteTarget] = useState<AdminSiteAdListItem | null>(null)
+  const [deleteBusy, setDeleteBusy] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
+
+  async function confirmDelete() {
+    if (!deleteTarget) return
+    setDeleteBusy(true)
+    const r = await deleteSiteAdAction(deleteTarget.id)
+    setDeleteBusy(false)
+    if (r.ok) {
+      setDeleteTarget(null)
+      setDeleteError(null)
+      router.refresh()
+    } else setDeleteError(r.error)
+  }
 
   if (rows.length === 0) {
     return (
@@ -90,6 +110,31 @@ export function AdminAdsTable({ rows, labels }: Props) {
         yes={labels.yes}
         no={labels.no}
       />
+      <Dialog
+        open={deleteTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setDeleteTarget(null)
+            setDeleteError(null)
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-md" dir="rtl">
+          <DialogHeader>
+            <DialogTitle>حذف الإعلان</DialogTitle>
+            <DialogDescription>سيُحذف الإعلان «{deleteTarget?.name || "بدون تسمية"}» نهائياً.</DialogDescription>
+          </DialogHeader>
+          {deleteError ? <p className="px-2 text-sm text-destructive">{deleteError}</p> : null}
+          <DialogFooter className="gap-2 sm:justify-start">
+            <Button variant="outline" onClick={() => setDeleteTarget(null)}>
+              إلغاء
+            </Button>
+            <Button variant="destructive" onClick={confirmDelete} disabled={deleteBusy}>
+              حذف نهائياً
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       <div className="w-full min-w-0 max-w-full overflow-x-auto rounded-lg border bg-card">
         <Table dir="rtl">
           <TableHeader>
@@ -147,7 +192,7 @@ export function AdminAdsTable({ rows, labels }: Props) {
                   {tierCellLabel(r.tier, labels)}
                 </TableCell>
                 <TableCell className="h-16 px-2 text-center">
-                  <DropdownMenu dir="rtl">
+                  <DropdownMenu dir="rtl" modal={false}>
                     <DropdownMenuTrigger asChild>
                       <Button variant="outline" size="icon" className="h-8 w-8">
                         <MoreVertical className="size-4" />
@@ -162,8 +207,7 @@ export function AdminAdsTable({ rows, labels }: Props) {
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem
-                        onSelect={(e) => {
-                          e.preventDefault()
+                        onSelect={() => {
                           setViewAd(r)
                           setViewOpen(true)
                         }}
@@ -171,9 +215,12 @@ export function AdminAdsTable({ rows, labels }: Props) {
                         <Eye className="size-4" />
                         {labels.view}
                       </DropdownMenuItem>
-                      <DropdownMenuItem disabled>
-                        <ImageIcon className="size-4" />
-                        {r.imageUrl ? labels.yes : labels.no}
+                      <DropdownMenuItem
+                        className="text-destructive focus:text-destructive"
+                        onSelect={() => setDeleteTarget(r)}
+                      >
+                        <Trash2 className="size-4" />
+                        حذف
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>

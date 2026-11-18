@@ -258,7 +258,7 @@ export function useCopyAnchorLink(config?: UseCopyAnchorLinkConfig) {
     isVisible,
     handleCopyAnchorLink,
     canCopyAnchorLink: canCopyAnchor,
-    label: "Copy anchor link",
+    label: "نسخ رابط الفقرة",
     shortcutKeys: COPY_ANCHOR_LINK_SHORTCUT_KEY,
     Icon: LinkIcon,
   }

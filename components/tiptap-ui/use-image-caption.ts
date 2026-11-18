@@ -209,7 +209,7 @@ export function useImageCaption(config?: UseImageCaptionConfig) {
     isActive,
     canToggle,
     handleToggleCaption,
-    label: "Caption",
+    label: "تعليق",
     Icon: ImageCaptionIcon,
   }
 }

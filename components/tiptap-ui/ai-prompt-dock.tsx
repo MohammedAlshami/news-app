@@ -57,8 +57,13 @@ export function AiPromptDock({ editor: providedEditor, articleId }: AiPromptDock
       const fullText = editor.state.doc
         .textBetween(0, editor.state.doc.content.size, "\n", "\n")
         .slice(0, 40_000) // stay under the /api/ai prompt cap
+      const sel = editor.state.selection
+      const selectedText = sel.empty ? "" : editor.state.doc.textBetween(sel.from, sel.to, "\n", "\n").slice(0, 10_000)
       if (fullText.trim()) {
         promptWithContext = `Article content:\n${fullText}\n\nUser request: ${prompt}`
+      }
+      if (selectedText.trim()) {
+        promptWithContext += `\n\nApply the request ONLY to this selected text and reply with just its replacement:\n${selectedText}`
       }
       if (articleContext) {
         promptWithContext = `${articleContext}\n\n${promptWithContext}`
@@ -108,14 +113,14 @@ export function AiPromptDock({ editor: providedEditor, articleId }: AiPromptDock
           )
           .join("")
 
-        // Replace entire document content
-        const { doc } = editor.state
-        const from = 1
-        const to = doc.content.size - 1
-        if (from < to) {
-          editor.chain().focus().deleteRange({ from, to }).insertContent(html).run()
+        // Never overwrite the whole article. Replace the selection when there is one, otherwise add the
+        // new text after the block the cursor is in (or at the end of the document).
+        const { selection, doc } = editor.state
+        if (!selection.empty) {
+          editor.chain().focus().insertContentAt({ from: selection.from, to: selection.to }, html).run()
         } else {
-          editor.chain().focus().insertContent(html).run()
+          const pos = selection.$to.depth >= 1 ? selection.$to.after(1) : doc.content.size
+          editor.chain().focus().insertContentAt(Math.min(pos, doc.content.size), html).run()
         }
       } catch (err) {
         if (isAbortError(err) || controller.signal.aborted) return
@@ -139,7 +144,7 @@ export function AiPromptDock({ editor: providedEditor, articleId }: AiPromptDock
       <button
         onClick={() => setIsExpanded(true)}
         className="absolute bottom-6 right-6 z-50 flex h-10 w-10 items-center justify-center rounded-full bg-white text-foreground transition-all hover:scale-110 dark:bg-white dark:text-foreground"
-        aria-label="Open AI assistant"
+        aria-label="فتح مساعد الذكاء الاصطناعي"
       >
         <Sparkles className="h-6 w-6" />
       </button>

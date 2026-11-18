@@ -292,7 +292,7 @@ export function useLinkPopover(config?: UseLinkPopoverConfig) {
     isVisible,
     canSet,
     isActive,
-    label: "Link",
+    label: "رابط",
     Icon: LinkIcon,
     ...linkHandler,
   }

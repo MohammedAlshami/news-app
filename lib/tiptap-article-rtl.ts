@@ -3,22 +3,23 @@ import { Plugin, PluginKey } from "@tiptap/pm/state"
 import { Decoration, DecorationSet } from "@tiptap/pm/view"
 import type { Node as PMNode } from "@tiptap/pm/model"
 
+import { firstStrongDir } from "@/lib/text-dir"
+
 const KEY = new PluginKey("articleDirAuto")
 
 /** Node types that start a new "line of text" whose direction should follow its own content. */
-const DIR_AUTO_TYPES = new Set([
-  "paragraph",
-  "heading",
-  "listItem",
-  "taskItem",
-  "codeBlock",
-])
+const DIR_AUTO_TYPES = new Set(["paragraph", "heading", "codeBlock"])
+
+/** Containers whose text lives in children that carry their own dir: they need an explicit direction. */
+const DIR_EXPLICIT_TYPES = new Set(["bulletList", "orderedList", "taskList", "listItem", "taskItem", "blockquote"])
 
 export function buildDirDecorations(doc: PMNode): DecorationSet {
   const decos: Decoration[] = []
   doc.descendants((node, pos) => {
     if (DIR_AUTO_TYPES.has(node.type.name)) {
       decos.push(Decoration.node(pos, pos + node.nodeSize, { dir: "auto" }))
+    } else if (DIR_EXPLICIT_TYPES.has(node.type.name)) {
+      decos.push(Decoration.node(pos, pos + node.nodeSize, { dir: firstStrongDir(node.textContent) }))
     }
     return true
   })

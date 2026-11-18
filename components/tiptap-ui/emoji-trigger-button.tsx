@@ -105,7 +105,7 @@ export const EmojiTriggerButton = forwardRef<
         disabled={!canAddTrigger}
         data-disabled={!canAddTrigger}
         aria-label={label}
-        tooltip="Add emoji"
+        tooltip="إضافة رمز تعبيري"
         onClick={handleClick}
         {...buttonProps}
         ref={ref}

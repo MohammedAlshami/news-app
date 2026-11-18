@@ -1,5 +1,10 @@
 "use server"
 
+import { eq } from "drizzle-orm"
+import { revalidatePath } from "next/cache"
+
+import { getDb } from "@/db/client"
+import { advertiseInquiries } from "@/db/schema"
 import { requireAdmin } from "@/lib/admin-guard.server"
 import { getAdminAdvertiseInquiryById } from "@/lib/db-advertise-inquiries.server"
 import { ar } from "@/lib/ui-ar"
@@ -43,4 +48,26 @@ export async function getAdminAdvertiseInquiryAction(
       updatedAtIso: row.updatedAt.toISOString(),
     },
   }
+}
+
+const STATUSES = new Set(["new", "read", "archived"])
+
+/** Sets the workflow status and the internal notes of an advertising request. */
+export async function updateAdvertiseInquiryAction(
+  id: string,
+  status: string,
+  adminNotes: string,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  await requireAdmin()
+  if (!STATUSES.has(status)) return { ok: false, error: "حالة غير صالحة." }
+  const notes = adminNotes.trim().slice(0, 4000)
+  const res = await getDb()
+    .update(advertiseInquiries)
+    .set({ status, adminNotes: notes || null, updatedAt: new Date() })
+    .where(eq(advertiseInquiries.id, id))
+    .returning({ id: advertiseInquiries.id })
+  if (res.length === 0) return { ok: false, error: ar.adminAdvertiseNotFound }
+  revalidatePath("/admin/advertise")
+  revalidatePath(`/admin/advertise/${id}`)
+  return { ok: true }
 }

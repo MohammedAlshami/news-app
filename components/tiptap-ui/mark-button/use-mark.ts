@@ -129,8 +129,10 @@ export function shouldShowButton(props: {
 /**
  * Gets the formatted mark name
  */
+const MARK_LABELS_AR: Record<string, string> = {"bold": "غامق", "italic": "مائل", "strike": "يتوسطه خط", "underline": "تحته خط", "code": "كود", "superscript": "نص مرتفع", "subscript": "نص منخفض"}
+
 export function getFormattedMarkName(type: Mark): string {
-  return type.charAt(0).toUpperCase() + type.slice(1)
+  return MARK_LABELS_AR[type] ?? type.charAt(0).toUpperCase() + type.slice(1)
 }
 
 /**

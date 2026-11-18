@@ -250,7 +250,7 @@ export function AdminGeneratedArticlesTable({ articles }: Props) {
                   )}
                 </TableCell>
                 <TableCell className="sticky left-0 z-10 h-16 min-w-[5rem] bg-card px-2 text-center shadow-[2px_0_0_0_theme(colors.border)]">
-                  <DropdownMenu dir="rtl">
+                  <DropdownMenu dir="rtl" modal={false}>
                     <DropdownMenuTrigger asChild>
                       <Button variant="outline" size="icon" className="h-8 w-8">
                         <MoreVertical className="size-4" />
@@ -259,8 +259,7 @@ export function AdminGeneratedArticlesTable({ articles }: Props) {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="start" className="min-w-44">
                       <DropdownMenuItem
-                        onSelect={(e) => {
-                          e.preventDefault()
+                        onSelect={() => {
                           setPreviewId(a.id)
                           setPreviewOpen(true)
                         }}
@@ -269,8 +268,7 @@ export function AdminGeneratedArticlesTable({ articles }: Props) {
                         معاينة المقال
                       </DropdownMenuItem>
                       <DropdownMenuItem
-                        onSelect={(e) => {
-                          e.preventDefault()
+                        onSelect={() => {
                           openSources(a)
                         }}
                       >
@@ -279,8 +277,7 @@ export function AdminGeneratedArticlesTable({ articles }: Props) {
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
-                        onSelect={(e) => {
-                          e.preventDefault()
+                        onSelect={() => {
                           setPublishTarget({ id: a.id, title: a.title })
                         }}
                       >

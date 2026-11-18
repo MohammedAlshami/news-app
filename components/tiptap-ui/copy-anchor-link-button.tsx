@@ -100,7 +100,7 @@ export const CopyAnchorLinkButton = forwardRef<
         role="button"
         tabIndex={-1}
         aria-label={label}
-        tooltip="Copy anchor link"
+        tooltip="نسخ رابط الفقرة"
         onClick={handleClick}
         {...buttonProps}
         ref={ref}

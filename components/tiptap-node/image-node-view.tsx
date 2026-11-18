@@ -337,7 +337,7 @@ export const ResizableImage: React.FC<ResizableImageProps> = ({
           <NodeViewContent
             as="div"
             className="tiptap-image-caption"
-            data-placeholder="Add a caption..."
+            data-placeholder="أضف تعليقاً..."
           />
         )}
       </div>

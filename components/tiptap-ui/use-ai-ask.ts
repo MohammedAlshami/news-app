@@ -166,7 +166,7 @@ export function useAiAsk(config: UseAiAskConfig = {}) {
     isVisible,
     handleAiAsk,
     canAiAsk,
-    label: "Ask AI Assistant",
+    label: "اسأل المساعد",
     shortcutKeys: AI_ASK_SHORTCUT_KEY,
     Icon: AiSparklesIcon,
   }

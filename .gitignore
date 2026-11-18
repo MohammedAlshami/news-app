@@ -58,3 +58,5 @@ deploy.log
 test-results/
 
 playwright-report/
+wrangler.test.toml
+.wrangler-test/

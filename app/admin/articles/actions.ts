@@ -20,7 +20,7 @@ import {
   sanitizeTiptapBody,
 } from "@/lib/tiptap-sanitize"
 import { ar } from "@/lib/ui-ar"
-import { and, eq, inArray } from "drizzle-orm"
+import { and, eq, inArray, sql } from "drizzle-orm"
 
 export async function createDraftArticleAction() {
   await requireAdmin()
@@ -328,4 +328,28 @@ export async function getAdminArticlePreviewDataAction(
       coverImageUrl: row.coverImageUrl,
     },
   }
+}
+
+/** Permanently deletes an article (and its stored cover). Generated-article rows keep existing but lose the link. */
+export async function deleteArticleAction(id: string): Promise<{ ok: true } | { ok: false; error: string }> {
+  await requireAdmin()
+  const db = getDb()
+  const [row] = await db.select({ id: articles.id, coverImageUrl: articles.coverImageUrl }).from(articles).where(eq(articles.id, id)).limit(1)
+  if (!row) return { ok: false, error: "المقال غير موجود." }
+  try {
+    await db.run(sql`UPDATE generated_articles SET article_id = NULL WHERE article_id = ${id}`)
+    await db.delete(articles).where(eq(articles.id, id))
+  } catch (err) {
+    console.error("deleteArticleAction failed:", err)
+    return { ok: false, error: "تعذّر حذف المقال." }
+  }
+  if (row.coverImageUrl) {
+    // Covers are content-hashed and may be shared; only remove when no other article uses the same URL.
+    const [still] = await db.select({ id: articles.id }).from(articles).where(eq(articles.coverImageUrl, row.coverImageUrl)).limit(1)
+    if (!still) await deleteStoredImageIfR2(row.coverImageUrl).catch(() => undefined)
+  }
+  revalidatePath("/admin/articles")
+  revalidatePath("/")
+  revalidatePath("/category/all")
+  return { ok: true }
 }

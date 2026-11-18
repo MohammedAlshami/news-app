@@ -16,5 +16,5 @@ export function getArticlePath(articleId: string, _title?: string) {
 }
 
 export function getCategoryPagePath(id: string) {
-  return `/category/${id}` as const
+  return `/category/${encodeURIComponent(id)}` as const
 }

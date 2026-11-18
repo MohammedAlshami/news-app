@@ -15,11 +15,11 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const { id } = await params
   const row = await getAdminArticleById(id)
   if (!row) {
-    return { title: "Edit article" }
+    return { title: "تعديل المقال" }
   }
   const t = row.title.trim()
   return {
-    title: t ? `${t} | Admin` : "Edit article",
+    title: t ? `${t} | إدارة` : "تعديل المقال",
   }
 }
 

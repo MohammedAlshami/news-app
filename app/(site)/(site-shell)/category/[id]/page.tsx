@@ -35,6 +35,15 @@ function parsePage(raw: string | undefined): number {
   return Number.isFinite(n) && n >= 1 ? Math.min(n, MAX_PAGE) : 1
 }
 
+/** Route params arrive percent-encoded (Arabic slugs). */
+function decodeParam(raw: string): string {
+  try {
+    return decodeURIComponent(raw)
+  } catch {
+    return raw
+  }
+}
+
 async function resolve(id: string) {
   const categories = await getCategoriesCached()
   if (id === ALL_CATEGORIES_ID) {
@@ -52,7 +61,7 @@ async function resolve(id: string) {
 }
 
 export async function generateMetadata({ params, searchParams }: PageProps): Promise<Metadata> {
-  const { id } = await params
+  const id = decodeParam((await params).id)
   const page = parsePage((await searchParams)?.page)
   const r = await resolve(id)
   if (!r) return { title: ar.notFound, robots: { index: false } }
@@ -77,7 +86,7 @@ export async function generateMetadata({ params, searchParams }: PageProps): Pro
 }
 
 export default async function CategoryPage({ params, searchParams }: PageProps) {
-  const { id } = await params
+  const id = decodeParam((await params).id)
   const page = parsePage((await searchParams)?.page)
   const r = await resolve(id)
   if (!r) notFound()

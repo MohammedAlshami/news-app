@@ -3,7 +3,7 @@
 import { eq } from "drizzle-orm"
 
 import { getDb } from "@/db/client"
-import { articles, generatedArticles } from "@/db/schema"
+import { articles, generatedArticles, topics } from "@/db/schema"
 import { requireAdmin } from "@/lib/admin-guard.server"
 
 export type PublishGeneratedArticleResult =
@@ -31,6 +31,13 @@ export async function publishGeneratedArticleAction(
 
     if (!gen) return { ok: false, error: "المقال المولّد غير موجود." }
 
+    // The article belongs to the category of its topic (was left empty, so it never showed in any category).
+    let categoryId: string | null = null
+    if (gen.topicId) {
+      const [t] = await db.select({ categoryId: topics.categoryId }).from(topics).where(eq(topics.id, gen.topicId)).limit(1)
+      categoryId = t?.categoryId ?? null
+    }
+
     const newId = crypto.randomUUID()
     const now = new Date()
 
@@ -41,7 +48,7 @@ export async function publishGeneratedArticleAction(
       body: gen.body,
       coverImageUrl: gen.coverImageUrl,
       imageUrls: gen.imageUrls,
-      categoryId: null,
+      categoryId,
       isPublished: publishNow,
       views: 0,
       createdAt: now,

@@ -1,3 +1,4 @@
+import { firstStrongDir } from "@/lib/text-dir"
 import { Fragment, type CSSProperties, type ReactNode } from "react"
 
 /**
@@ -117,6 +118,17 @@ function renderChildren(node: PMNode, depth: number, key: string): ReactNode[] {
   return (node.content ?? []).map((c, i) => renderNode(c, depth + 1, `${key}.${i}`))
 }
 
+function plainText(node: PMNode | undefined, limit = 400): string {
+  if (!node || typeof node !== "object") return ""
+  if (typeof node.text === "string") return node.text
+  let out = ""
+  for (const c of node.content ?? []) {
+    out += plainText(c, limit)
+    if (out.length >= limit) break
+  }
+  return out
+}
+
 function renderNode(node: PMNode, depth: number, key: string): ReactNode {
   if (!node || typeof node !== "object" || depth > MAX_DEPTH) return null
   const style = blockStyle(node.attrs)
@@ -145,30 +157,30 @@ function renderNode(node: PMNode, depth: number, key: string): ReactNode {
     }
     case "bulletList":
       return (
-        <ul key={key} dir="auto">
+        <ul key={key} dir={firstStrongDir(plainText(node))}>
           {kids()}
         </ul>
       )
     case "orderedList": {
       const start = typeof node.attrs?.start === "number" ? node.attrs.start : undefined
       return (
-        <ol key={key} dir="auto" start={start !== undefined && start !== 1 ? start : undefined}>
+        <ol key={key} dir={firstStrongDir(plainText(node))} start={start !== undefined && start !== 1 ? start : undefined}>
           {kids()}
         </ol>
       )
     }
     case "listItem":
-      return <li key={key}>{kids()}</li>
+      return <li key={key} dir={firstStrongDir(plainText(node))}>{kids()}</li>
     case "taskList":
       return (
-        <ul key={key} dir="auto" data-type="taskList">
+        <ul key={key} dir={firstStrongDir(plainText(node))} data-type="taskList">
           {kids()}
         </ul>
       )
     case "taskItem": {
       const checked = node.attrs?.checked === true
       return (
-        <li key={key} data-type="taskItem" data-checked={checked ? "true" : "false"}>
+        <li key={key} dir={firstStrongDir(plainText(node))} data-type="taskItem" data-checked={checked ? "true" : "false"}>
           <label>
             <input type="checkbox" checked={checked} disabled readOnly />
             <span />
@@ -179,7 +191,7 @@ function renderNode(node: PMNode, depth: number, key: string): ReactNode {
     }
     case "blockquote":
       return (
-        <blockquote key={key} dir="auto">
+        <blockquote key={key} dir={firstStrongDir(plainText(node))}>
           {kids()}
         </blockquote>
       )

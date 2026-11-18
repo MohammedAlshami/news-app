@@ -93,7 +93,7 @@ export const DeleteNodeButton = forwardRef<
         role="button"
         tabIndex={-1}
         aria-label={label}
-        tooltip="Delete"
+        tooltip="حذف"
         onClick={handleClick}
         {...buttonProps}
         ref={ref}

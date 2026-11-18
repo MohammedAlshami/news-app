@@ -100,3 +100,13 @@ test("no node:fs / process.cwd() uploads remain in admin actions", () => {
     assert.ok(!/node:fs|process\.cwd\(\)/.test(src), relative(ROOT, f))
   }
 })
+
+import { firstStrongDir } from "../../lib/text-dir"
+
+test("firstStrongDir: Arabic/Latin by first strong letter, rtl when none", () => {
+  assert.equal(firstStrongDir("بند أول"), "rtl")
+  assert.equal(firstStrongDir("First item"), "ltr")
+  assert.equal(firstStrongDir("123 — بند"), "rtl")
+  assert.equal(firstStrongDir("42"), "rtl")
+  assert.equal(firstStrongDir(""), "rtl")
+})

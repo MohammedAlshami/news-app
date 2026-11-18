@@ -235,7 +235,7 @@ export function useDeleteNode(config?: UseDeleteNodeConfig) {
     isVisible,
     handleDeleteNode,
     canDeleteNode: canDeleteNodeState,
-    label: "Delete",
+    label: "حذف",
     shortcutKeys: DELETE_NODE_SHORTCUT_KEY,
     Icon: TrashIcon,
   }

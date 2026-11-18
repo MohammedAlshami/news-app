@@ -65,7 +65,7 @@ export function AdminUsersTable({ rows, labels }: Props) {
                 {u.role === "admin" ? ar.adminUsersRoleAdmin : ar.adminUsersRoleUser}
               </TableCell>
               <TableCell className="h-16 w-[7rem] px-4 text-start text-sm text-muted-foreground">
-                {formatArticleDate(u.createdAt)}
+                {u.createdAt ? formatArticleDate(u.createdAt) : "—"}
               </TableCell>
             </TableRow>
           ))}

@@ -93,7 +93,7 @@ export const DuplicateButton = forwardRef<
         role="button"
         tabIndex={-1}
         aria-label={label}
-        tooltip="Duplicate"
+        tooltip="تكرار"
         onClick={handleClick}
         {...buttonProps}
         ref={ref}

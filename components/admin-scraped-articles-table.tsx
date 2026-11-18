@@ -149,7 +149,7 @@ export function AdminScrapedArticlesTable({ articles, labels }: Props) {
                 <span className="block truncate whitespace-nowrap">{a.excerpt || "—"}</span>
               </TableCell>
               <TableCell className="sticky left-0 z-10 h-16 min-w-[5rem] bg-card px-2 text-center shadow-[2px_0_0_0_theme(colors.border)]">
-                <DropdownMenu dir="rtl">
+                <DropdownMenu dir="rtl" modal={false}>
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline" size="icon" className="h-8 w-8">
                       <MoreVertical className="size-4" />
@@ -158,8 +158,7 @@ export function AdminScrapedArticlesTable({ articles, labels }: Props) {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="start" className="min-w-40">
                     <DropdownMenuItem
-                      onSelect={(e) => {
-                        e.preventDefault()
+                      onSelect={() => {
                         setPreviewArticle(a)
                         setPreviewOpen(true)
                       }}

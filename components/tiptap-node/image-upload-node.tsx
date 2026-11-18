@@ -165,7 +165,7 @@ function useFileUpload(options: UploadOptions) {
     if (options.limit && files.length > options.limit) {
       options.onError?.(
         new Error(
-          `Maximum ${options.limit} file${options.limit === 1 ? "" : "s"} allowed`
+          `الحد الأقصى ${options.limit} ${options.limit === 1 ? "ملف" : "ملفات"}`
         )
       )
       return []
@@ -423,10 +423,10 @@ const DropZoneContent: React.FC<{ maxSize: number; limit: number }> = ({
 
     <div className="tiptap-image-upload-content">
       <span className="tiptap-image-upload-text">
-        <em>Click to upload</em> or drag and drop
+        <em>انقر للرفع</em> أو اسحب الصورة وأفلتها
       </span>
       <span className="tiptap-image-upload-subtext">
-        Maximum {limit} file{limit === 1 ? "" : "s"}, {maxSize / 1024 / 1024}MB
+        الحد الأقصى {limit} {limit === 1 ? "ملف" : "ملفات"}، {maxSize / 1024 / 1024} ميغابايت للملف
         each.
       </span>
     </div>

@@ -241,8 +241,8 @@ export function ImproveDropdown({
           data-disabled={isDisabled}
           role="button"
           tabIndex={-1}
-          aria-label="Improve"
-          tooltip="Improve"
+          aria-label="تحسين"
+          tooltip="تحسين"
           {...props}
         >
           <AiSparklesIcon className="tiptap-button-icon" />

@@ -313,7 +313,7 @@ export function useEmojiTrigger(config?: UseEmojiTriggerConfig) {
     isVisible,
     handleAddTrigger,
     canAddTrigger,
-    label: "Add emoji",
+    label: "إضافة رمز تعبيري",
     shortcutKeys: EMOJI_TRIGGER_SHORTCUT_KEY,
     trigger,
     Icon: SmilePlusIcon,
