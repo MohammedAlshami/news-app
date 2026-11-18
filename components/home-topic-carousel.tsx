@@ -62,14 +62,14 @@ export function HomeTopicCarousel({
     <section
       dir="rtl"
       lang="ar"
-      className="bg-white py-12 md:py-16 lg:py-20"
+      className="bg-white py-10 md:py-14"
       aria-labelledby={headingId}
     >
-      <div className="mx-auto w-full max-w-[90rem] px-4 sm:px-6 lg:px-8 xl:px-8 2xl:px-10">
-        <header className="mb-8 flex flex-col gap-6 sm:mb-10 sm:flex-row sm:items-center sm:justify-between">
+      <div className="mx-auto w-full max-w-[90rem] px-4 sm:px-6 md:px-12">
+        <header className="mb-6 flex flex-col gap-4 border-b-2 border-black pb-3 sm:flex-row sm:items-end sm:justify-between">
           <h2
             id={headingId}
-            className="text-pretty text-right text-2xl font-bold tracking-tight text-black md:text-3xl"
+            className="text-pretty text-right text-2xl font-extrabold tracking-tight text-black md:text-3xl"
           >
             {title}
           </h2>

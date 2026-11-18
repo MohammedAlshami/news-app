@@ -66,6 +66,7 @@ function toFeed(r: {
     title: r.title,
     excerpt: r.excerpt,
     date: r.createdAt.toISOString().slice(0, 10),
+    publishedAt: r.createdAt.toISOString(),
     categoryIds: r.categoryId ? [r.categoryId] : [],
     coverImageUrl: cleanImageUrl(r.coverImageUrl),
     isMemberOnly: r.isMemberOnly,
@@ -98,8 +99,8 @@ export const getCategoryFeedPage = cache(
 export const HOME_SECTION_SIZE = 8
 export const HOME_MAX_SECTIONS = 6
 
-/** Home hero (3 newest with cover) in one query. */
-export const getHomeHero = cache(async (): Promise<FeedArticle[]> => {
+/** Home hero + latest feed (newest with cover) in one query. */
+export const getHomeHero = cache(async (limit = 3): Promise<FeedArticle[]> => {
   const rows = await getDb()
     .select(feedCols)
     .from(articles)
@@ -107,7 +108,24 @@ export const getHomeHero = cache(async (): Promise<FeedArticle[]> => {
       sql`${articles.isPublished} = 1 AND ${articles.coverImageUrl} IS NOT NULL AND ${articles.coverImageUrl} != ''`,
     )
     .orderBy(desc(articles.updatedAt))
-    .limit(3)
+    .limit(limit)
+  return rows.map(toFeed)
+})
+
+/**
+ * Most-read articles of the last `days` days (by view counter), with a cover. Ties fall back to newest.
+ * Empty when nothing has been viewed yet — the section then hides.
+ */
+export const getHomeTrending = cache(async (days = 7, limit = 6): Promise<FeedArticle[]> => {
+  const since = Date.now() - days * 86_400_000
+  const rows = await getDb()
+    .select(feedCols)
+    .from(articles)
+    .where(
+      sql`${articles.isPublished} = 1 AND ${articles.views} > 0 AND ${articles.createdAt} >= ${since} AND ${articles.coverImageUrl} IS NOT NULL AND ${articles.coverImageUrl} != ''`,
+    )
+    .orderBy(desc(articles.views), desc(articles.createdAt))
+    .limit(limit)
   return rows.map(toFeed)
 })
 
