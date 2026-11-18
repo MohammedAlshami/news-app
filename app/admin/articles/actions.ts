@@ -229,9 +229,11 @@ export async function uploadArticleCoverImageAction(
   const stored = await storeUploadedImage(formData.get("file"), `articles/${articleId}/cover`)
   if (!stored.ok) return stored
 
+  // updatedAt is deliberately NOT bumped: it is the editor's optimistic-concurrency token, and changing the cover
+  // from the same editor must not make the next autosave look like an edit from another window.
   await getDb()
     .update(articles)
-    .set({ coverImageUrl: stored.url, updatedAt: new Date() })
+    .set({ coverImageUrl: stored.url })
     .where(eq(articles.id, articleId))
 
   // Delete the previous cover only after the new one is stored and saved (and never the same object).
@@ -262,7 +264,7 @@ export async function removeArticleCoverImageAction(
   }
   await getDb()
     .update(articles)
-    .set({ coverImageUrl: null, updatedAt: new Date() })
+    .set({ coverImageUrl: null })
     .where(eq(articles.id, articleId))
   revalidatePath("/admin/articles")
   revalidatePath(`/admin/articles/${articleId}`)

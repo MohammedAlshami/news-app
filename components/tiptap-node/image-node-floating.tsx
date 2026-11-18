@@ -13,7 +13,6 @@ import { ImageAlignButton } from "@/components/tiptap-ui/image-align-button"
 
 // --- UI Primitive ---
 import { Separator } from "@/components/tiptap-ui-primitive/separator"
-import { ImageCaptionButton } from "@/components/tiptap-ui/image-caption-button"
 import { ImageUploadButton } from "@/components/tiptap-ui/image-upload-button"
 import { RefreshCcwIcon } from "@/components/tiptap-icons/refresh-ccw-icon"
 
@@ -35,10 +34,8 @@ export function ImageNodeFloating({
       <ImageAlignButton align="center" />
       <ImageAlignButton align="right" />
       <Separator />
-      <ImageCaptionButton />
-      <Separator />
       <ImageDownloadButton />
-      <ImageUploadButton icon={RefreshCcwIcon} tooltip="Replace" />
+      <ImageUploadButton icon={RefreshCcwIcon} tooltip="استبدال" />
       <Separator />
       <DeleteNodeButton />
     </>

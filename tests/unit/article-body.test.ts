@@ -90,6 +90,14 @@ const fixtures: Record<string, unknown> = {
 const extra: Record<string, string> = {
   align: JSON.stringify({ type: "doc", content: [{ type: "paragraph", attrs: { textAlign: "center" }, content: [t("x")] }] }),
   legacy: "just plain legacy text",
+  captioned: JSON.stringify({
+    type: "doc",
+    content: [
+      { type: "image", attrs: { src: "https://x.test/a.jpg", alt: "a", "data-align": "center", showCaption: true }, content: [{ type: "text", text: "تعليق الصورة" }] },
+      { type: "bulletList", content: [{ type: "listItem", content: [{ type: "paragraph", content: [{ type: "text", text: "بند" }] }] }] },
+      { type: "bulletList", content: [{ type: "listItem", content: [{ type: "paragraph", content: [{ type: "text", text: "First" }] }] }] },
+    ],
+  }),
   images: JSON.stringify({
     type: "doc",
     content: [
@@ -155,4 +163,11 @@ test("unsafe image src is dropped; image gets alt and lazy loading", () => {
   )
   assert.ok(!html.includes("javascript:"))
   assert.match(html, /<img src="https:\/\/x\.test\/a\.jpg" alt="وصف" width="800" height="400" loading="lazy"/)
+})
+
+test("image caption renders a figure; alignment is applied; lists/quotes get an explicit direction", () => {
+  const html = rendered.captioned
+  assert.match(html, /<figure[^>]*><img[^>]*margin-inline:auto[^>]*\/><figcaption dir="rtl">تعليق الصورة<\/figcaption><\/figure>/)
+  assert.match(html, /<ul dir="rtl"><li dir="rtl">/)
+  assert.match(html, /<ul dir="ltr"><li dir="ltr">/)
 })

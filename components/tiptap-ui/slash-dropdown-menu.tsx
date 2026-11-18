@@ -43,11 +43,12 @@ export const SlashDropdownMenu = (props: SlashDropdownMenuProps) => {
 
   return (
     <SuggestionMenu
-      char="\\"
-      allowedPrefixes={null}
+      char="/"
+      // Only at the start of a block or after a space, so dates/fractions like 12/5 do not open the menu.
+      allowedPrefixes={[" "]}
       pluginKey="slashDropdownMenu"
       decorationClass="tiptap-slash-decoration"
-      decorationContent="Filter..."
+      decorationContent="تصفية..."
       selector="tiptap-slash-dropdown-menu"
       items={({ query, editor }) =>
         filterSuggestionItems(getSlashMenuItems(editor), query)

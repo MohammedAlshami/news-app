@@ -360,7 +360,7 @@ export function useImageDownload(config?: UseImageDownloadConfig) {
     isVisible,
     canDownload,
     handleDownload,
-    label: "Download image",
+    label: "تنزيل الصورة",
     shortcutKeys: IMAGE_DOWNLOAD_SHORTCUT_KEY,
     Icon: ArrowDownToLineIcon,
   }

@@ -1,5 +1,5 @@
 import { Highlight } from "@tiptap/extension-highlight"
-import { Image } from "@tiptap/extension-image"
+import { Image } from "@/components/tiptap-node/image-node-extension"
 import { TaskItem, TaskList } from "@tiptap/extension-list"
 import { TextAlign } from "@tiptap/extension-text-align"
 import { Typography } from "@tiptap/extension-typography"

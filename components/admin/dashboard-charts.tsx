@@ -1,7 +1,7 @@
 "use client"
 
 import { TrendingUp } from "lucide-react"
-import { Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, LabelList, Pie, PieChart, XAxis, YAxis } from "recharts"
+import { Area, AreaChart, CartesianGrid, Cell, Pie, PieChart, XAxis } from "recharts"
 
 import {
   Card,
@@ -162,45 +162,28 @@ function TopArticlesChart({ data }: { data: TopArticle[] }) {
         <CardDescription>أعلى {data.length} مقال</CardDescription>
       </CardHeader>
       <CardContent>
-        <ChartContainer config={barConfig} className="aspect-auto h-[300px] w-full">
-          <BarChart
-            accessibilityLayer
-            data={data}
-            layout="vertical"
-            margin={{ left: -20, right: 0 }}
-          >
-            <CartesianGrid horizontal={false} />
-            <YAxis
-              dataKey="title"
-              type="category"
-              tickLine={false}
-              tickMargin={10}
-              axisLine={false}
-              width={180}
-              tickFormatter={(value) =>
-                value.length > 25 ? value.slice(0, 25) + "…" : value
-              }
-            />
-            <XAxis dataKey="views" type="number" hide />
-            <ChartTooltip
-              cursor={false}
-              content={<ChartTooltipContent hideLabel />}
-            />
-            <Bar dataKey="views" radius={4}>
-              <LabelList
-                dataKey="views"
-                position="insideStart"
-                className="fill-white font-bold"
-              />
-              {data.map((entry, index) => (
-                <Cell
-                  key={entry.id}
-                  fill={COLORS[index % COLORS.length]}
-                />
-              ))}
-            </Bar>
-          </BarChart>
-        </ChartContainer>
+        {/* Plain HTML bars: titles never overlap the bars (the chart axis labels did in RTL). */}
+        <ol className="space-y-4">
+          {data.map((entry, index) => {
+            const max = Math.max(1, ...data.map((d) => d.views))
+            return (
+              <li key={entry.id} className="space-y-1.5">
+                <div className="flex items-baseline justify-between gap-3 text-sm">
+                  <span className="min-w-0 flex-1 truncate font-medium" title={entry.title}>
+                    {entry.title || "بدون عنوان"}
+                  </span>
+                  <span className="shrink-0 tabular-nums text-muted-foreground">{entry.views.toLocaleString("ar-EG")}</span>
+                </div>
+                <div className="h-2.5 w-full overflow-hidden rounded-full bg-muted">
+                  <div
+                    className="h-full rounded-full"
+                    style={{ width: `${Math.max(3, (entry.views / max) * 100)}%`, background: COLORS[index % COLORS.length] }}
+                  />
+                </div>
+              </li>
+            )
+          })}
+        </ol>
       </CardContent>
     </Card>
   )

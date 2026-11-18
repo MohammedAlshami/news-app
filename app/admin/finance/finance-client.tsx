@@ -25,10 +25,10 @@ const SOURCE_LABELS: Record<string, string> = {
 function SummaryCards({ data }: { data: FinanceSummary }) {
   const cards = [
     { title: "إجمالي الإيرادات", value: `$${data.totalRevenue.toFixed(2)}`, desc: "آخر 30 يوماً" },
-    { title: "إعلانات Google", value: `$${data.googleAds.toFixed(2)}`, desc: `${((data.googleAds / data.totalRevenue) * 100).toFixed(1)}%` },
-    { title: "اشتراكات", value: `$${data.memberships.toFixed(2)}`, desc: `${((data.memberships / data.totalRevenue) * 100).toFixed(1)}%` },
-    { title: "مقالات مدفوعة", value: `$${data.paidArticles.toFixed(2)}`, desc: `${((data.paidArticles / data.totalRevenue) * 100).toFixed(1)}%` },
-    { title: "إعلانات مباشرة", value: `$${data.directAds.toFixed(2)}`, desc: `${((data.directAds / data.totalRevenue) * 100).toFixed(1)}%` },
+    { title: "إعلانات Google", value: `$${data.googleAds.toFixed(2)}`, desc: pct(data.googleAds, data.totalRevenue) },
+    { title: "اشتراكات", value: `$${data.memberships.toFixed(2)}`, desc: pct(data.memberships, data.totalRevenue) },
+    { title: "مقالات مدفوعة", value: `$${data.paidArticles.toFixed(2)}`, desc: pct(data.paidArticles, data.totalRevenue) },
+    { title: "إعلانات مباشرة", value: `$${data.directAds.toFixed(2)}`, desc: pct(data.directAds, data.totalRevenue) },
   ]
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
@@ -279,6 +279,11 @@ function MembershipsTab({ data }: { data: FinanceSummary }) {
       </div>
     </div>
   )
+}
+
+/** Share of the total as "12.5%"; "0%" when there is no revenue yet (was "NaN%"). */
+function pct(part: number, total: number): string {
+  return total > 0 ? `${((part / total) * 100).toFixed(1)}%` : "0%"
 }
 
 export function FinanceClient({ data }: { data: FinanceSummary }) {

@@ -213,8 +213,25 @@ function renderNode(node: PMNode, depth: number, key: string): ReactNode {
       if (!src) return null
       const alt = str(node.attrs?.alt) ?? str(node.attrs?.title) ?? ""
       const title = str(node.attrs?.title)
+      const align = str(node.attrs?.["data-align"])
+      const alignStyle: CSSProperties | undefined =
+        align === "center"
+          ? { display: "block", marginInline: "auto" }
+          : align === "left"
+            ? { display: "block", marginRight: "auto", marginLeft: 0 }
+            : align === "right"
+              ? { display: "block", marginLeft: "auto", marginRight: 0 }
+              : undefined
       // eslint-disable-next-line @next/next/no-img-element -- images are served unoptimized (no Images binding yet; CDN follow-up)
-      return <img key={key} src={src} alt={alt} title={title} width={num(node.attrs?.width)} height={num(node.attrs?.height)} loading="lazy" decoding="async" />
+      const img = <img src={src} alt={alt} title={title} width={num(node.attrs?.width)} height={num(node.attrs?.height)} loading="lazy" decoding="async" style={alignStyle} />
+      const caption = plainText(node).trim()
+      if (!caption) return <Fragment key={key}>{img}</Fragment>
+      return (
+        <figure key={key} style={alignStyle ? { ...alignStyle, width: "fit-content", maxWidth: "100%" } : undefined}>
+          {img}
+          <figcaption dir={firstStrongDir(caption)}>{caption}</figcaption>
+        </figure>
+      )
     }
     case "table":
       return (
