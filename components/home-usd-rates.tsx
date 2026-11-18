@@ -45,18 +45,18 @@ export function HomeUsdRates({ rates, href }: { rates: HomeRates; href: string }
         <div className="relative">
           <div className="mb-6 flex flex-wrap items-end justify-between gap-4 pt-10 md:pt-0">
             <h2 className="text-3xl font-extrabold text-black md:text-5xl">الدولار بين صنعاء وعدن</h2>
-            <Cta href={href} className="bg-black text-white" />
+            <Cta href={href} className="bg-[#0d4a6e] text-white" />
           </div>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6">
-            <div className="overflow-hidden rounded-[2rem] bg-amber-400 p-7 text-neutral-900 md:p-10">
+            <div className="overflow-hidden rounded-[2rem] bg-[#f4e4c1] p-7 text-[#5a4410] md:p-10">
               <div className="relative text-2xl font-extrabold md:text-3xl">صنعاء</div>
               <div className="relative mt-4 text-7xl font-black tabular-nums md:text-9xl">{fmt(u.sanaa.sell)}</div>
               <div className="relative mt-2 text-xl font-bold">ريال لكل دولار · شراء {fmt(u.sanaa.buy)}</div>
             </div>
-            <div className="overflow-hidden rounded-[2rem] bg-blue-600 p-7 text-white md:p-10">
+            <div className="overflow-hidden rounded-[2rem] bg-[#cfe6ec] p-7 text-[#0d4a6e] md:p-10">
               <div className="relative text-2xl font-extrabold md:text-3xl">عدن</div>
               <div className="relative mt-4 text-7xl font-black tabular-nums md:text-9xl">{fmt(u.aden.sell)}</div>
-              <div className="relative mt-2 text-xl font-bold text-white/90">ريال لكل دولار · شراء {fmt(u.aden.buy)}</div>
+              <div className="relative mt-2 text-xl font-bold text-[#0d4a6e]/75">ريال لكل دولار · شراء {fmt(u.aden.buy)}</div>
             </div>
           </div>
           <div className="mt-5 flex flex-wrap items-center justify-center gap-3 rounded-full bg-neutral-100 px-6 py-4 text-lg font-extrabold text-neutral-800">

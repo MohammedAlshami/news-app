@@ -80,7 +80,7 @@ function SelectField({
       <button
         type="button"
         onClick={() => setOpen((next) => !next)}
-        className="flex w-full items-center justify-between gap-3 rounded-full bg-white/60 py-2 pl-4 pr-2 text-right transition-colors hover:bg-white/80"
+        className="flex w-full items-center justify-between gap-3 rounded-full py-2 pl-2 pr-0 text-right transition-opacity hover:opacity-75"
       >
         <span className="flex min-w-0 items-center gap-3">
           <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-lg font-black ${badge}`}>{SYMBOLS[value] ?? value.slice(0, 1)}</span>
