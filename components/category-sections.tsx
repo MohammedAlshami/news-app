@@ -28,31 +28,11 @@ function Img({ a, sizes, className = "", priority = false }: { a: FeedArticle; s
   )
 }
 
-/** Title block with the category pills (active one is filled black; no borders). */
-export function CategoryHeader({
-  title,
-  description,
-  total,
-  categories,
-  activeSlug,
-  hrefFor,
-  allHref,
-  allLabel,
-}: {
-  title: string
-  description: string
-  total: number
-  categories: SiteCategory[]
-  activeSlug: string
-  hrefFor: (slug: string) => string
-  allHref: string
-  allLabel: string
-}) {
-  const pill = (active: boolean) =>
-    `inline-block whitespace-nowrap rounded-full px-5 py-2 text-sm font-bold transition-colors ${active ? "bg-black text-white" : "bg-neutral-100 text-neutral-800 hover:bg-neutral-200"}`
+/** Title block: breadcrumb, big title, description and a count chip. */
+export function CategoryHeader({ title, description, total }: { title: string; description: string; total: number }) {
   return (
     <header dir="rtl" lang="ar" className="bg-white">
-      <div className={`${WRAP} pb-4 pt-8 md:pt-12`}>
+      <div className={`${WRAP} pb-2 pt-8 md:pt-12`}>
         <nav className="mb-5 flex items-center gap-2 text-sm text-neutral-500" aria-label="مسار التنقل">
           <Link href="/" className="hover:text-neutral-900">الرئيسية</Link>
           <ChevronLeft className="h-3.5 w-3.5 text-neutral-300" aria-hidden />
@@ -63,16 +43,8 @@ export function CategoryHeader({
             <h1 className="text-4xl font-extrabold tracking-tight text-black md:text-6xl">{title}</h1>
             {description.trim() ? <p className="mt-3 text-base leading-relaxed text-neutral-600 md:text-lg">{description}</p> : null}
           </div>
-          {total > 0 ? <span className="rounded-full bg-neutral-100 px-4 py-2 text-sm font-bold text-neutral-600">{total.toLocaleString("ar-EG")} خبر حديث</span> : null}
+          {total > 0 ? <span className="rounded-full bg-neutral-100 px-4 py-2 text-sm font-bold text-neutral-600">{total.toLocaleString("ar-EG")} خبر في آخر ٦٠ يوماً</span> : null}
         </div>
-        <nav aria-label="الأقسام" className="mt-7 flex gap-2 overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          <Link href={allHref} className={pill(activeSlug === "all")}>{allLabel}</Link>
-          {categories.map((c) => (
-            <Link key={c.id} href={hrefFor(c.slug)} className={pill(c.slug === activeSlug)}>
-              {c.name}
-            </Link>
-          ))}
-        </nav>
       </div>
     </header>
   )
@@ -114,59 +86,97 @@ export function CategoryLead({ items, isSubscribed }: { items: FeedArticle[]; is
   )
 }
 
-/** Paginated grid of every article in the category. */
-export function CategoryGrid({
-  title,
+function dayLabel(iso: string | undefined, now: number): string {
+  if (!iso) return "سابقاً"
+  const t = Date.parse(iso)
+  const dayMs = 86_400_000
+  const today = Math.floor(now / dayMs)
+  const d = Math.floor(t / dayMs)
+  if (d === today) return "اليوم"
+  if (d === today - 1) return "أمس"
+  return new Intl.DateTimeFormat("ar-EG", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" }).format(new Date(t))
+}
+
+/**
+ * The category's running news stream: grouped by day, one row per story (image, time, headline, excerpt).
+ * Optional right-hand column for ads.
+ */
+export function CategoryStream({
   articles,
   isSubscribed,
   pagination,
   emptyLabel,
+  aside,
 }: {
-  title: string
   articles: FeedArticle[]
   isSubscribed: boolean
   pagination?: { page: number; hasNext: boolean; basePath: string }
   emptyLabel: string
+  aside?: React.ReactNode
 }) {
+  const now = Date.now()
+  const groups: { label: string; items: FeedArticle[] }[] = []
+  for (const a of articles) {
+    const label = dayLabel(a.publishedAt, now)
+    const g = groups[groups.length - 1]
+    if (g && g.label === label) g.items.push(a)
+    else groups.push({ label, items: [a] })
+  }
   const href = (n: number) => (n <= 1 ? pagination!.basePath : `${pagination!.basePath}?page=${n}`)
   const btn = "inline-flex items-center gap-1.5 rounded-full bg-black px-6 py-3 text-sm font-bold text-white transition-colors hover:bg-neutral-800"
   return (
-    <section dir="rtl" lang="ar" aria-labelledby="cat-all" className="py-10 md:py-14">
+    <section dir="rtl" lang="ar" aria-label="آخر أخبار القسم" className="py-8 md:py-12">
       <div className={WRAP}>
-        <h2 id="cat-all" className="mb-8 text-right text-2xl font-bold tracking-tight text-black md:text-3xl">{title}</h2>
-        {articles.length === 0 ? (
-          <p className="text-right text-neutral-500">{emptyLabel}</p>
-        ) : (
-          <div className="grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
-            {articles.map((a) => (
-              <article key={a.id} className="text-right">
-                <SubscriptionGate isMemberOnly={a.isMemberOnly} isSubscribed={isSubscribed} href={getArticlePath(a.id, a.title)} className="group block">
-                  <Img a={a} sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 24vw" className="aspect-[16/10] rounded-2xl" />
-                  <span className="mt-4 line-clamp-3 block text-lg font-extrabold leading-snug text-neutral-900 group-hover:underline">{a.title}</span>
-                  <span className="mt-2 line-clamp-2 block text-sm leading-relaxed text-neutral-500">{a.excerpt}</span>
-                  <span className="mt-2 block text-xs text-neutral-400">{formatRelativeAr(a.publishedAt)}</span>
-                </SubscriptionGate>
-              </article>
+        <div className={aside ? "grid grid-cols-1 gap-10 lg:grid-cols-12 lg:gap-14" : "mx-auto max-w-5xl"}>
+          <div className={aside ? "lg:col-span-8" : ""}>
+            {articles.length === 0 ? <p className="text-right text-neutral-500">{emptyLabel}</p> : null}
+            {groups.map((g) => (
+              <div key={g.label} className="mb-10 last:mb-0">
+                <div className="mb-5 flex items-center gap-3">
+                  <h2 className="rounded-full bg-black px-5 py-1.5 text-base font-extrabold text-white">{g.label}</h2>
+                  <span className="text-sm font-bold text-neutral-400">{g.items.length.toLocaleString("ar-EG")} خبر</span>
+                </div>
+                <ul className="space-y-3">
+                  {g.items.map((a) => (
+                    <li key={a.id}>
+                      <SubscriptionGate
+                        isMemberOnly={a.isMemberOnly}
+                        isSubscribed={isSubscribed}
+                        href={getArticlePath(a.id, a.title)}
+                        className="group flex gap-4 rounded-3xl p-3 text-right transition-colors hover:bg-neutral-100 md:gap-6 md:p-4"
+                      >
+                        <Img a={a} sizes="(max-width: 768px) 40vw, 260px" className="aspect-[4/3] w-36 shrink-0 rounded-2xl sm:w-48 md:w-64" />
+                        <span className="flex min-w-0 flex-1 flex-col justify-center">
+                          <time dateTime={a.publishedAt} className="text-xs font-bold text-red-600">{formatRelativeAr(a.publishedAt)}</time>
+                          <span className="mt-1.5 line-clamp-3 block text-lg font-extrabold leading-snug text-neutral-900 md:text-2xl">{a.title}</span>
+                          <span className="mt-2 line-clamp-2 hidden text-[15px] leading-relaxed text-neutral-500 sm:block">{a.excerpt}</span>
+                        </span>
+                      </SubscriptionGate>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             ))}
+            {pagination && (pagination.page > 1 || pagination.hasNext) ? (
+              <nav aria-label="التنقل بين الصفحات" className="mt-12 flex items-center justify-center gap-4">
+                {pagination.page > 1 ? (
+                  <Link href={href(pagination.page - 1)} rel="prev" className={btn}>
+                    <ChevronRight className="h-4 w-4" aria-hidden />
+                    السابقة
+                  </Link>
+                ) : null}
+                <span className="rounded-full bg-neutral-100 px-4 py-2 text-sm font-bold text-neutral-700">{pagination.page.toLocaleString("ar-EG")}</span>
+                {pagination.hasNext ? (
+                  <Link href={href(pagination.page + 1)} rel="next" className={btn}>
+                    التالية
+                    <ChevronLeft className="h-4 w-4" aria-hidden />
+                  </Link>
+                ) : null}
+              </nav>
+            ) : null}
           </div>
-        )}
-        {pagination && (pagination.page > 1 || pagination.hasNext) ? (
-          <nav aria-label="التنقل بين الصفحات" className="mt-12 flex items-center justify-center gap-4">
-            {pagination.page > 1 ? (
-              <Link href={href(pagination.page - 1)} rel="prev" className={btn}>
-                <ChevronRight className="h-4 w-4" aria-hidden />
-                السابقة
-              </Link>
-            ) : null}
-            <span className="rounded-full bg-neutral-100 px-4 py-2 text-sm font-bold text-neutral-700">{pagination.page.toLocaleString("ar-EG")}</span>
-            {pagination.hasNext ? (
-              <Link href={href(pagination.page + 1)} rel="next" className={btn}>
-                التالية
-                <ChevronLeft className="h-4 w-4" aria-hidden />
-              </Link>
-            ) : null}
-          </nav>
-        ) : null}
+          {aside ? <aside className="lg:col-span-4"><div className="sticky top-28 space-y-6">{aside}</div></aside> : null}
+        </div>
       </div>
     </section>
   )

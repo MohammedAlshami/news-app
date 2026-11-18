@@ -66,6 +66,7 @@ function toFeed(r: {
     title: r.title,
     excerpt: r.excerpt,
     date: r.createdAt.toISOString().slice(0, 10),
+    publishedAt: r.createdAt.toISOString(),
     categoryIds: r.categoryId ? [r.categoryId] : [],
     coverImageUrl: cleanImageUrl(r.coverImageUrl),
     isMemberOnly: r.isMemberOnly,
