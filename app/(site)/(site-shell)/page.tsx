@@ -28,7 +28,7 @@ import {
   jsonLdString,
 } from "@/lib/seo"
 import { HomeUsdRates } from "@/components/home-usd-rates"
-import { getHomeRates } from "@/lib/db-price-rates.server"
+import { getGoldRates, getHomeRates, getMarketRates } from "@/lib/db-price-rates.server"
 import { getActiveSiteAdsForHome } from "@/lib/db-site-ads.server"
 import { areSiteAdsEnabled } from "@/lib/site-ads-enabled"
 import { ALL_CATEGORIES_ID, getCategoryPagePath } from "@/lib/site-routes"
@@ -66,7 +66,12 @@ export default async function HomePage() {
     getHomeHero(),
     getHomePool(),
   ])
-  const rates = await getHomeRates().catch(() => ({ sanaa: [], aden: [], updatedAt: null }))
+  const [rates, rateTable] = await Promise.all([
+    getHomeRates().catch(() => ({ sanaa: [], aden: [], updatedAt: null })),
+    Promise.all([getMarketRates("sanaa"), getMarketRates("aden"), getGoldRates()])
+      .then(([sanaa, aden, gold]) => ({ sanaa, aden, gold }))
+      .catch(() => undefined),
+  ])
   const sponsoredAds = areSiteAdsEnabled() && !subscribed ? await getActiveSiteAdsForHome().catch(() => []) : []
   const heroIds = new Set(heroArticles.map((a) => a.id))
 
@@ -152,7 +157,7 @@ export default async function HomePage() {
       {blockFor("سياسة")}
       {carousels[1]}
       <HomeLongReads items={longReads} title={ar.homeLongReads} subtitle={ar.homeLongReadsSub} isSubscribed={subscribed} categoryName={categoryName} />
-      <HomeUsdRates rates={rates} href="/tools/currency-converter" />
+      <HomeUsdRates rates={rates} href="/tools/currency-converter" table={rateTable} />
       <HomePhotoMosaic items={mosaic} title={ar.homePhotos} isSubscribed={subscribed} />
       {carousels[2]}
       {blockFor("رياضة")}

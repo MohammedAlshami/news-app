@@ -10,8 +10,9 @@ import type { FeedArticle, SiteCategory } from "@/lib/site-types"
 const WRAP = "mx-auto w-full max-w-[90rem] px-4 sm:px-6 lg:px-8 xl:px-8 2xl:px-10"
 
 function Img({ a, sizes, className = "", priority = false }: { a: FeedArticle; sizes: string; className?: string; priority?: boolean }) {
+  const pos = className.includes("absolute") ? "" : "relative"
   return (
-    <div className={`relative overflow-hidden bg-neutral-200 ${className}`}>
+    <div className={`${pos} overflow-hidden bg-neutral-200 ${className}`}>
       {a.coverImageUrl ? (
         <Image
           src={a.coverImageUrl}
@@ -50,17 +51,17 @@ export function CategoryHeader({ title, description, total }: { title: string; d
   )
 }
 
-/** Lead story over the image + two stacked stories. */
+/** Lead story over the image + two stacked stories; on desktop all three share one fixed height so nothing leaves gaps. */
 export function CategoryLead({ items, isSubscribed }: { items: FeedArticle[]; isSubscribed: boolean }) {
   if (items.length === 0) return null
   const [lead, ...side] = items
   return (
     <section dir="rtl" lang="ar" className="py-6 md:py-8">
       <div className={WRAP}>
-        <div className="grid grid-cols-1 gap-5 lg:grid-cols-12 lg:gap-6">
-          <article className="lg:col-span-8">
-            <SubscriptionGate isMemberOnly={lead.isMemberOnly} isSubscribed={isSubscribed} href={getArticlePath(lead.id, lead.title)} className="group relative block overflow-hidden rounded-3xl">
-              <Img a={lead} sizes="(max-width: 1024px) 100vw, 66vw" priority className="aspect-[4/3] md:aspect-[16/9]" />
+        <div className="grid grid-cols-1 gap-5 lg:h-[34rem] lg:grid-cols-12 lg:gap-6">
+          <article className="h-80 sm:h-[26rem] lg:col-span-8 lg:h-full">
+            <SubscriptionGate isMemberOnly={lead.isMemberOnly} isSubscribed={isSubscribed} href={getArticlePath(lead.id, lead.title)} className="group relative block h-full overflow-hidden rounded-3xl">
+              <Img a={lead} sizes="(max-width: 1024px) 100vw, 66vw" priority className="absolute inset-0" />
               <span className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" aria-hidden />
               <span className="absolute inset-x-0 bottom-0 block space-y-3 p-5 text-right text-white md:p-9">
                 <span className="line-clamp-3 block text-2xl font-extrabold leading-snug md:text-4xl">{lead.title}</span>
@@ -69,11 +70,11 @@ export function CategoryLead({ items, isSubscribed }: { items: FeedArticle[]; is
               </span>
             </SubscriptionGate>
           </article>
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:col-span-4 lg:grid-cols-1 lg:gap-6">
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:col-span-4 lg:grid-cols-1 lg:grid-rows-2 lg:gap-6">
             {side.slice(0, 2).map((a) => (
-              <article key={a.id}>
-                <SubscriptionGate isMemberOnly={a.isMemberOnly} isSubscribed={isSubscribed} href={getArticlePath(a.id, a.title)} className="group relative block overflow-hidden rounded-3xl">
-                  <Img a={a} sizes="(max-width: 1024px) 100vw, 33vw" className="aspect-[16/10]" />
+              <article key={a.id} className="h-56 lg:h-full">
+                <SubscriptionGate isMemberOnly={a.isMemberOnly} isSubscribed={isSubscribed} href={getArticlePath(a.id, a.title)} className="group relative block h-full overflow-hidden rounded-3xl">
+                  <Img a={a} sizes="(max-width: 1024px) 100vw, 33vw" className="absolute inset-0" />
                   <span className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" aria-hidden />
                   <span className="absolute inset-x-0 bottom-0 line-clamp-3 block p-4 text-right text-lg font-extrabold leading-snug text-white md:p-5">{a.title}</span>
                 </SubscriptionGate>

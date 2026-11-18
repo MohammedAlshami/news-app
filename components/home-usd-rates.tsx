@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { ArrowLeftRight, Clock, TrendingUp } from "lucide-react"
 
+import { RatesColumns, type RatesColumnsData } from "@/components/rates-columns"
 import type { HomeRates } from "@/lib/db-price-rates.server"
 import { formatRelativeAr } from "@/lib/format-date"
 
@@ -34,7 +35,7 @@ const Live = ({ iso, cls = "text-white/80" }: { iso: string | null; cls?: string
   ) : null
 
 /** Dollar price in Sana'a vs Aden, with the gap between them. */
-export function HomeUsdRates({ rates, href }: { rates: HomeRates; href: string }) {
+export function HomeUsdRates({ rates, href, table }: { rates: HomeRates; href: string; table?: RatesColumnsData }) {
   const u = usdFrom(rates)
   if (!u) return null
   const gap = u.aden.sell - u.sanaa.sell
@@ -64,6 +65,11 @@ export function HomeUsdRates({ rates, href }: { rates: HomeRates; href: string }
             الفرق بين المدينتين {fmt(gap)} ريال ({pct.toLocaleString("en-US")}٪)
             <Live iso={u.updated} cls="text-neutral-500" />
           </div>
+          {table ? (
+            <div className="mt-14">
+              <RatesColumns {...table} />
+            </div>
+          ) : null}
         </div>
       </div>
     </section>
