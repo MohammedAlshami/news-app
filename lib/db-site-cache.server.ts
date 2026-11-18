@@ -123,3 +123,25 @@ export const getHomeSection = cache(async (categoryId: string): Promise<FeedArti
     .limit(HOME_SECTION_SIZE)
   return rows.map(toFeed)
 })
+
+/**
+ * One query feeding the extra home sections (most read, long reads, photo mosaic): recent published articles
+ * with a cover, with their view counter and body size. Ranking happens in JS so D1 is hit once.
+ */
+export const getHomePool = cache(async (days = 30, limit = 80): Promise<FeedArticle[]> => {
+  const since = Date.now() - days * 86_400_000
+  const rows = await getDb()
+    .select({ ...feedCols, views: articles.views, bodyLength: sql<number>`length(${articles.body})` })
+    .from(articles)
+    .where(
+      sql`${articles.isPublished} = 1 AND ${articles.createdAt} >= ${since} AND ${articles.coverImageUrl} IS NOT NULL AND ${articles.coverImageUrl} != ''`,
+    )
+    .orderBy(desc(articles.updatedAt))
+    .limit(limit)
+  return rows.map((r) => ({
+    ...toFeed(r),
+    publishedAt: r.createdAt.toISOString(),
+    views: r.views,
+    bodyLength: Number(r.bodyLength) || 0,
+  }))
+})

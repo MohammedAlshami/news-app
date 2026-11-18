@@ -13,6 +13,11 @@ export type FeedArticle = {
   /** ISO `YYYY-MM-DD` — used in `<time dateTime>`; format with `formatArticleDate`. */
   date: string
   categoryIds: string[]
+  /** Full ISO timestamp (for relative times like "منذ ساعتين"). */
+  publishedAt?: string
+  /** Reads so far / body length, used to rank home sections. */
+  views?: number
+  bodyLength?: number
   /** Hero image for cards (absolute URL or `/uploads/...`). */
   coverImageUrl?: string | null
   isMemberOnly: boolean
